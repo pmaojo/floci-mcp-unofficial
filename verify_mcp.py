@@ -10,7 +10,7 @@ async def run_mcp_handshake_test():
     print("==================================================")
     
     # Comando directo al interprete del entorno virtual para evitar buffering de uv run
-    cmd = ["mcp/.venv/Scripts/python.exe", "-u", "mcp/floci_mcp.py"]
+    cmd = ["mcp/.venv/bin/python3", "-u", "mcp/floci_mcp.py"]
     
     # Entorno limpio con PYTHONUNBUFFERED activo
     env = {**os.environ, "PYTHONUNBUFFERED": "1"}
@@ -117,7 +117,7 @@ async def run_mcp_handshake_test():
             
         content = call_response["result"]["content"][0]["text"]
         health_data = json.loads(content)
-        print(f"[Server -> Client] Ejecucion exitosa. Estado del Sidecar: {health_data['sidecar']['status']}. AWS: {health_data['aws_emulator']['status']}")
+        print(f"[Server -> Client] Ejecucion exitosa. Estado del Backend: {health_data['backend']['status']}. AWS: {health_data['aws_emulator']['status']}")
         
         print("\n==================================================")
         print("    ¡TEST COMPLETADO CON ÉXITO! EL SERVIDOR ES     ")

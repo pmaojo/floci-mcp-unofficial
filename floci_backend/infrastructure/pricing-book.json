@@ -1,0 +1,29 @@
+{
+  "rates": {
+    "s3.storage": {
+      "unit": "GB-Month",
+      "price": 0.023,
+      "description": "S3 Standard Storage (per GB)"
+    },
+    "lambda.invocation": {
+      "unit": "1M requests",
+      "price": 0.20,
+      "description": "AWS Lambda Requests (per million)"
+    },
+    "dynamodb.table": {
+      "unit": "Table-Month",
+      "price": 2.50,
+      "description": "DynamoDB Table Base Provisioned Cost"
+    },
+    "rds.instance": {
+      "unit": "Instance-Hour (db.t3.micro)",
+      "price": 0.017,
+      "description": "RDS db.t3.micro Instance (per hour)"
+    },
+    "ec2.instance": {
+      "unit": "Instance-Hour (t3.micro)",
+      "price": 0.0104,
+      "description": "EC2 t3.micro Linux Instance (per hour)"
+    }
+  }
+}

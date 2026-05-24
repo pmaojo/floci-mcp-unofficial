@@ -1,39 +1,26 @@
 import asyncio
-import httpx
-import os
 import json
-import sys
-from mcp.server.models import InitializationOptions
+import os
+import httpx
+from mcp.server.fastmcp import FastMCP
 from mcp.server import NotificationOptions, Server
-from mcp.server.stdio import stdio_server
+from mcp.server.models import InitializationOptions
 import mcp.types as types
-
-# Auto-deteccion inteligente si estamos corriendo dentro de un contenedor Docker
-is_docker = os.path.exists('/.dockerenv') or os.environ.get("RUNNING_IN_DOCKER", "false").lower() == "true"
-
-default_sidecar_url = "http://host.docker.internal:4317" if is_docker else "http://127.0.0.1:4317"
-default_aws_url = "http://host.docker.internal:4566" if is_docker else "http://127.0.0.1:4566"
-
-# Configuración leída de variables de entorno
-SIDECAR_URL = os.environ.get("SIDECAR_URL", default_sidecar_url).rstrip("/")
-SIDECAR_TOKEN = os.environ.get("SIDECAR_TOKEN", "open")
-AWS_ENDPOINT_URL = os.environ.get("AWS_ENDPOINT_URL", default_aws_url).rstrip("/")
-
-# Cabeceras requeridas para autorizar contra el Sidecar de Floci
-headers = {
-    "x-floci-sidecar-token": SIDECAR_TOKEN,
-    "Content-Type": "application/json"
-}
+from mcp.server.stdio import stdio_server
 
 server = Server("floci-mcp")
 
+# Ya no necesitamos configurar un SIDECAR_URL externo,
+# utilizaremos httpx con la app FastAPI directamente en memoria.
+from floci_backend.server import app
+
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
-    """Lista las herramientas de integracion disponibles en Floci, incluyendo orquestacion del Marketplace y AWS local."""
+    """Expone el catalogo de herramientas disponibles para el Agente."""
     return [
         types.Tool(
             name="check_floci_health",
-            description="Verifica si el emulador local de AWS y el Sidecar de Floci estan respondiendo correctamente.",
+            description="Verifica si el backend local de Floci (servidor FastAPI unificado) y el emulador de AWS (Localstack) están respondiendo correctamente.",
             inputSchema={
                 "type": "object",
                 "properties": {},
@@ -41,7 +28,7 @@ async def handle_list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="list_aws_services",
-            description="Lista todos los servicios soportados por Floci y su nivel de integracion (Nativo / Compatibilidad) en el cockpit.",
+            description="Obtiene el catalogo completo de servicios de AWS emulados que el backend de Floci puede administrar y visualizar.",
             inputSchema={
                 "type": "object",
                 "properties": {},
@@ -49,13 +36,13 @@ async def handle_list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="get_service_resources",
-            description="Consulta el estado y los recursos reales de un servicio AWS especifico (ej. buckets S3, lambdas, colas sqs, etc.) consultando el Sidecar.",
+            description="Lee el inventario de recursos emulados disponibles para un servicio de AWS en particular (ej. lambdas, buckets s3, topics sns).",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "serviceKey": {
                         "type": "string",
-                        "description": "El identificador del servicio de AWS (ej. 's3', 'lambda', 'sqs', 'kms', 'dynamodb', 'sns')"
+                        "description": "El identificador del servicio AWS (ej. 's3', 'lambda', 'dynamodb')"
                     }
                 },
                 "required": ["serviceKey"]
@@ -140,16 +127,17 @@ async def handle_call_tool(
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     """Ejecuta una herramienta y devuelve la respuesta en formato de contenido MCP."""
     
-    async def call_sidecar(method: str, path: str, json_data: dict = None) -> str:
-        url = f"{SIDECAR_URL}{path}"
-        async with httpx.AsyncClient(timeout=30.0) as client:
+    async def call_backend(method: str, path: str, json_data: dict = None) -> str:
+        # Usamos httpx.AsyncClient pero atado directamente a la aplicacion FastAPI 'app'
+        # Esto elimina la necesidad de un puerto de red local y funciona de maravilla.
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
             try:
                 if method.upper() == "GET":
-                    resp = await client.get(url, headers=headers)
+                    resp = await client.get(path)
                 elif method.upper() == "POST":
-                    resp = await client.post(url, headers=headers, json=json_data)
+                    resp = await client.post(path, json=json_data)
                 elif method.upper() == "DELETE":
-                    resp = await client.delete(url, headers=headers)
+                    resp = await client.delete(path)
                 else:
                     return json.dumps({"ok": False, "error": f"Metodo HTTP {method} no soportado"})
                 
@@ -163,30 +151,31 @@ async def handle_call_tool(
             except Exception as e:
                 return json.dumps({
                     "ok": False, 
-                    "error": f"No se pudo conectar con el Sidecar en {url}. Detalles: {str(e)}"
+                    "error": f"No se pudo invocar el backend interno en {path}. Detalles: {str(e)}"
                 }, indent=2)
 
     try:
         if name == "check_floci_health":
-            # Verificar sidecar en /health
-            url_health = f"{SIDECAR_URL}/health"
-            sidecar_ok = False
-            sidecar_details = {}
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            # Verificar backend en /health
+            backend_ok = False
+            backend_details = {}
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
                 try:
-                    resp = await client.get(url_health)
+                    resp = await client.get("/health")
                     if resp.status_code == 200:
-                        sidecar_ok = True
-                        sidecar_details = resp.json()
+                        backend_ok = True
+                        backend_details = resp.json()
                 except Exception as e:
-                    sidecar_details = {"error": str(e)}
+                    backend_details = {"error": str(e)}
 
-            # Verificar AWS endpoint (Localstack)
+            from floci_backend.config import config
+            # Verificar AWS endpoint (Localstack) - esto sí requiere HTTP a la red local
             aws_ok = False
             aws_details = {}
+            aws_url = config.aws_endpoint_url
             async with httpx.AsyncClient(timeout=5.0) as client:
                 try:
-                    resp = await client.get(f"{AWS_ENDPOINT_URL}/_localstack/health")
+                    resp = await client.get(f"{aws_url}/_localstack/health")
                     if resp.status_code == 200:
                         aws_ok = True
                         aws_details = resp.json()
@@ -194,53 +183,47 @@ async def handle_call_tool(
                     aws_details = {"error": str(e)}
 
             result = {
-                "sidecar": {
-                    "status": "Online" if sidecar_ok else "Offline",
-                    "url": SIDECAR_URL,
-                    "details": sidecar_details
+                "backend": {
+                    "status": "Online" if backend_ok else "Offline",
+                    "details": backend_details
                 },
                 "aws_emulator": {
                     "status": "Online" if aws_ok else "Offline",
-                    "url": AWS_ENDPOINT_URL,
+                    "url": aws_url,
                     "details": aws_details
                 },
-                "env_info": {
-                    "is_container": is_docker,
-                    "resolved_sidecar_url": SIDECAR_URL,
-                    "resolved_aws_url": AWS_ENDPOINT_URL
-                },
-                "status": "Perfecto" if (sidecar_ok and aws_ok) else "Parcialmente disponible"
+                "status": "Perfecto" if (backend_ok and aws_ok) else "Parcialmente disponible"
             }
             return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
         elif name == "list_aws_services":
-            response_text = await call_sidecar("GET", "/api/aws-services")
+            response_text = await call_backend("GET", "/api/aws-services")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "get_service_resources":
             if not arguments or "serviceKey" not in arguments:
                 raise ValueError("Se requiere el argumento 'serviceKey'")
             service_key = arguments["serviceKey"].lower()
-            response_text = await call_sidecar("GET", f"/api/aws-services/{service_key}/overview")
+            response_text = await call_backend("GET", f"/api/aws-services/{service_key}/overview")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "run_kms_diagnostic":
-            response_text = await call_sidecar("GET", "/api/diagnostics/kms")
+            response_text = await call_backend("GET", "/api/diagnostics/kms")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "list_marketplace_recipes":
-            response_text = await call_sidecar("GET", "/api/marketplace/recipes")
+            response_text = await call_backend("GET", "/api/marketplace/recipes")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "get_marketplace_installations":
-            response_text = await call_sidecar("GET", "/api/marketplace/installations")
+            response_text = await call_backend("GET", "/api/marketplace/installations")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "get_marketplace_logs":
             if not arguments or "recipeId" not in arguments:
                 raise ValueError("Se requiere el argumento 'recipeId'")
             recipe_id = arguments["recipeId"]
-            response_text = await call_sidecar("GET", f"/api/marketplace/recipes/{recipe_id}/logs")
+            response_text = await call_backend("GET", f"/api/marketplace/recipes/{recipe_id}/logs")
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "deploy_marketplace_app":
@@ -249,14 +232,14 @@ async def handle_call_tool(
             recipe_id = arguments["recipeId"]
             vars_data = arguments.get("vars", {})
             payload = {"recipeId": recipe_id, "vars": vars_data}
-            response_text = await call_sidecar("POST", "/api/marketplace/install", json_data=payload)
+            response_text = await call_backend("POST", "/api/marketplace/install", json_data=payload)
             return [types.TextContent(type="text", text=response_text)]
 
         elif name == "teardown_marketplace_app":
             if not arguments or "recipeId" not in arguments:
                 raise ValueError("Se requiere el argumento 'recipeId'")
             recipe_id = arguments["recipeId"]
-            response_text = await call_sidecar("DELETE", f"/api/marketplace/install/{recipe_id}")
+            response_text = await call_backend("DELETE", f"/api/marketplace/install/{recipe_id}")
             return [types.TextContent(type="text", text=response_text)]
 
         else:
