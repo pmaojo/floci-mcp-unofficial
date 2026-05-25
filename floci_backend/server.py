@@ -19,6 +19,7 @@ from floci_backend.api.diagnostics_routes import create_diagnostics_router
 from floci_backend.api.marketplace_routes import create_marketplace_router
 from floci_backend.api.athena_routes import create_athena_router
 from floci_backend.api.mcp_extensions_routes import create_mcp_extensions_router
+from floci_backend.api.studio_routes import router as studio_router
 
 from floci_backend.application.iac_generator import IacGenerator
 from floci_backend.application.data_seeder import DataSeeder
@@ -100,3 +101,4 @@ app.include_router(create_diagnostics_router(diagnostics_service), prefix="/api"
 app.include_router(create_marketplace_router(recipe_service), prefix="/api")
 app.include_router(create_athena_router(athena_service), prefix="/api")
 app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper), prefix="/api")
+app.include_router(studio_router, prefix="/api")
