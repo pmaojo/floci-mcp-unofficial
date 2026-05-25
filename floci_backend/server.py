@@ -18,9 +18,17 @@ from floci_backend.api.aws_resource_routes import create_aws_resource_router
 from floci_backend.api.diagnostics_routes import create_diagnostics_router
 from floci_backend.api.marketplace_routes import create_marketplace_router
 from floci_backend.api.athena_routes import create_athena_router
+from floci_backend.api.mcp_extensions_routes import create_mcp_extensions_router
+
+from floci_backend.application.iac_generator import IacGenerator
+from floci_backend.application.data_seeder import DataSeeder
+from floci_backend.application.topology_mapper import TopologyMapper
 
 # Initialize Services
 aws_cli = AwsCli()
+iac_generator = IacGenerator()
+data_seeder = DataSeeder()
+topology_mapper = TopologyMapper()
 recipe_service = RecipeService()
 compatibility_service = CompatibilityService(recipe_service=recipe_service)
 lambda_service = LambdaService(aws_cli=aws_cli)
@@ -91,3 +99,4 @@ app.include_router(create_aws_resource_router(aws_resource_service, compatibilit
 app.include_router(create_diagnostics_router(diagnostics_service), prefix="/api")
 app.include_router(create_marketplace_router(recipe_service), prefix="/api")
 app.include_router(create_athena_router(athena_service), prefix="/api")
+app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper), prefix="/api")

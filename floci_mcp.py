@@ -117,6 +117,80 @@ async def handle_list_tools() -> list[types.Tool]:
                 },
                 "required": ["recipeId"]
             }
+        ),
+        types.Tool(
+            name="export_to_terraform",
+            description="Genera codigo Terraform automaticamente a partir de los recursos actuales en el emulador local.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "format": {
+                        "type": "string",
+                        "description": "Formato de exportacion, ej. 'terraform' o 'cdk'. Por defecto 'terraform'"
+                    }
+                }
+            }
+        ),
+        types.Tool(
+            name="run_local_aws_cmd",
+            description="Ejecuta comandos estandar de aws-cli en el entorno local (apuntando al emulador de Floci).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "El comando de AWS CLI a ejecutar (ej. 's3 ls' o 'aws s3 mb s3://test')"
+                    }
+                },
+                "required": ["command"]
+            }
+        ),
+        types.Tool(
+            name="seed_mock_data",
+            description="Inyecta datos sinteticos en bases de datos locales o S3.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "description": "El destino de los datos (ej. 'postgres', 'dynamodb', 's3')"
+                    },
+                    "target_name": {
+                        "type": "string",
+                        "description": "El nombre de la tabla, base de datos o bucket destino"
+                    },
+                    "connection_string": {
+                        "type": "string",
+                        "description": "Cadena de conexion (requerida para postgres, ej. 'postgresql://user:pass@host:5432/db')"
+                    },
+                    "custom_schema": {
+                        "type": "object",
+                        "description": "Esquema JSON de ejemplo para generar los datos"
+                    }
+                },
+                "required": ["target", "target_name"]
+            }
+        ),
+        types.Tool(
+            name="get_network_topology",
+            description="Devuelve un mapa en formato Mermaid de la topologia de red Docker local de Floci y sus puertos.",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        types.Tool(
+            name="run_ui_tests",
+            description="Ejecuta tests de Playwright para el frontend y devuelve la ruta de las capturas de pantalla en caso de fallo.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "test_file": {
+                        "type": "string",
+                        "description": "Ruta o nombre del archivo de test especifico a ejecutar"
+                    }
+                }
+            }
         )
     ]
 
@@ -248,6 +322,71 @@ async def handle_call_tool(
             recipe_id = arguments["recipeId"]
             response_text = await call_backend("DELETE", f"/api/marketplace/install/{recipe_id}")
             return [types.TextContent(type="text", text=response_text)]
+
+        elif name == "export_to_terraform":
+            fmt = arguments.get("format", "terraform") if arguments else "terraform"
+            response_text = await call_backend("GET", f"/api/extensions/export-iac?format={fmt}")
+            return [types.TextContent(type="text", text=response_text)]
+
+        elif name == "run_local_aws_cmd":
+            if not arguments or "command" not in arguments:
+                raise ValueError("Se requiere el argumento 'command'")
+            payload = {"command": arguments["command"]}
+            response_text = await call_backend("POST", "/api/extensions/run-aws-cmd", json_data=payload)
+            return [types.TextContent(type="text", text=response_text)]
+
+        elif name == "seed_mock_data":
+            if not arguments or "target" not in arguments or "target_name" not in arguments:
+                raise ValueError("Se requieren 'target' y 'target_name'")
+            payload = {
+                "target": arguments["target"],
+                "target_name": arguments["target_name"],
+                "connection_string": arguments.get("connection_string"),
+                "custom_schema": arguments.get("custom_schema")
+            }
+            response_text = await call_backend("POST", "/api/extensions/seed-data", json_data=payload)
+            return [types.TextContent(type="text", text=response_text)]
+
+        elif name == "get_network_topology":
+            response_text = await call_backend("GET", "/api/extensions/network-topology")
+            return [types.TextContent(type="text", text=response_text)]
+
+        elif name == "run_ui_tests":
+            # Ejecutar npx playwright test directamente
+            import subprocess
+            import os
+            import glob
+            test_file = arguments.get("test_file", "") if arguments else ""
+            cmd = ["npx", "playwright", "test"]
+            if test_file:
+                cmd.append(test_file)
+
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, stderr = await process.communicate()
+
+                output = stdout.decode()
+                errors = stderr.decode()
+
+                screenshots_msg = ""
+                if process.returncode != 0:
+                    # Find specific screenshots
+                    test_results_dir = os.path.abspath("test-results")
+                    screenshot_files = glob.glob(os.path.join(test_results_dir, "**", "*.png"), recursive=True)
+                    if screenshot_files:
+                        screenshots_msg = "\nCapturas de pantalla de fallos encontradas en las siguientes rutas absolutas:\n"
+                        for sf in screenshot_files:
+                            screenshots_msg += f"- {sf}\n"
+                    else:
+                        screenshots_msg = "\nNota: Pruebas fallaron, pero no se encontraron capturas de pantalla en test-results/."
+
+                return [types.TextContent(type="text", text=f"Exit Code: {process.returncode}\n\nSTDOUT:\n{output}\nSTDERR:\n{errors}{screenshots_msg}")]
+            except Exception as e:
+                return [types.TextContent(type="text", text=f"Error al ejecutar los tests E2E: {str(e)}")]
 
         else:
             raise ValueError(f"Herramienta desconocida: {name}")
