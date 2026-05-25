@@ -10,7 +10,7 @@ async def run_mcp_handshake_test():
     print("==================================================")
     
     # Comando directo al interprete del entorno virtual para evitar buffering de uv run
-    cmd = ["mcp/.venv/bin/python3", "-u", "mcp/floci_mcp.py"]
+    cmd = [sys.executable, "-u", "floci_mcp.py"]
     
     # Entorno limpio con PYTHONUNBUFFERED activo
     env = {**os.environ, "PYTHONUNBUFFERED": "1"}

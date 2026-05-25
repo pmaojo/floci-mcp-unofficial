@@ -33,6 +33,15 @@ app = FastAPI(title="Floci Unified Engine")
 
 origins = config.allowed_origins
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # Ensure error payloads return {"error": ...} as expected by the React UI
+    # instead of the FastAPI default {"detail": ...}
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail},
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

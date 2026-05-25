@@ -12,6 +12,7 @@ RUN uv sync --no-install-project --no-dev
 
 # Copiar el código del servidor
 COPY floci_mcp.py ./
+COPY floci_backend/ ./floci_backend/
 RUN uv sync --no-dev
 
 # Capa de ejecucion limpia

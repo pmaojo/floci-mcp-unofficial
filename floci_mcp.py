@@ -130,14 +130,21 @@ async def handle_call_tool(
     async def call_backend(method: str, path: str, json_data: dict = None) -> str:
         # Usamos httpx.AsyncClient pero atado directamente a la aplicacion FastAPI 'app'
         # Esto elimina la necesidad de un puerto de red local y funciona de maravilla.
+
+        headers = {}
+        # Forward token if available from environment to satisfy token_middleware
+        token = os.environ.get("SIDECAR_TOKEN")
+        if token:
+            headers["x-floci-sidecar-token"] = token
+
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
             try:
                 if method.upper() == "GET":
-                    resp = await client.get(path)
+                    resp = await client.get(path, headers=headers)
                 elif method.upper() == "POST":
-                    resp = await client.post(path, json=json_data)
+                    resp = await client.post(path, headers=headers, json=json_data)
                 elif method.upper() == "DELETE":
-                    resp = await client.delete(path)
+                    resp = await client.delete(path, headers=headers)
                 else:
                     return json.dumps({"ok": False, "error": f"Metodo HTTP {method} no soportado"})
                 
