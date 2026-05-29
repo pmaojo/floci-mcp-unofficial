@@ -35,7 +35,7 @@ from tools import (
     stepfunctions,
 )
 
-mcp = FastMCP("floci-mcp", version="0.2.0")
+mcp = FastMCP("floci-mcp")
 
 for module in [
     meta,
