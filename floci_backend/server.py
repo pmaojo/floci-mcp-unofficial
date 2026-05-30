@@ -39,7 +39,7 @@ eks_service = EksService(aws_cli=aws_cli)
 aws_resource_service = AwsResourceService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 diagnostics_service = DiagnosticsService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 athena_service = AthenaService(aws_cli=aws_cli)
-tags_service = TagsService(aws_cli=aws_cli)
+tags_service = TagsService()
 
 app = FastAPI(title="Floci Unified Engine")
 
