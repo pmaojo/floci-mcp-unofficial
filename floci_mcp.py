@@ -14,8 +14,9 @@ Los tools están organizados por servicio AWS en mcp/tools/:
   stepfunctions.py — orquestación de flujos
   athena.py      — consultas SQL analíticas
   ses.py         — envío de emails
-  marketplace.py — recetas Docker locales
+  marketplace.py — recetas Docker locales (incl. dynamodb-admin)
   devtools.py    — IaC, seed data, proxy, JWT, tests
+  tags.py        — gestión de tags en todos los recursos AWS
 """
 from mcp.server.fastmcp import FastMCP
 from tools import (
@@ -33,6 +34,7 @@ from tools import (
     sns,
     sqs,
     stepfunctions,
+    tags,
 )
 
 mcp = FastMCP("floci-mcp")
@@ -52,6 +54,7 @@ for module in [
     ses,
     marketplace,
     devtools,
+    tags,
 ]:
     module.register(mcp)
 
