@@ -19,4 +19,10 @@ def create_diagnostics_router(diagnostics_service: DiagnosticsService) -> APIRou
         status_code = 200 if result.get('ok') else 500
         return JSONResponse(status_code=status_code, content=result)
 
+    @router.get('/diagnostics/performance')
+    async def get_performance_stats():
+        result = await diagnostics_service.get_performance_stats()
+        status_code = 200 if result.get('ok') else 500
+        return JSONResponse(status_code=status_code, content=result)
+
     return router
