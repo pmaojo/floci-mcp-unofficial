@@ -1,12 +1,12 @@
-"""Plugin de ejemplo del SDK de Floci.
+"""Example plugin for the Floci SDK.
 
-Expone ``register(mcp)`` para que el servidor MCP cargue sus tools en arranque.
-Copia este directorio como plantilla para tus propios adaptadores.
+Exposes ``register(mcp)`` so the MCP server loads its tools at startup. Copy this
+directory as a template for your own adapters.
 """
 
 
 def register(mcp):
     @mcp.tool()
     async def floci_hello(name: str = "world") -> dict:
-        """Tool de ejemplo de un plugin de comunidad. Devuelve un saludo."""
-        return {"message": f"Hello, {name}! — desde el plugin example_hello."}
+        """Example tool from a community plugin. Returns a greeting."""
+        return {"message": f"Hello, {name}! — from the example_hello plugin."}

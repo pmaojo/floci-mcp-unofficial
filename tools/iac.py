@@ -1,4 +1,4 @@
-"""IaC bidireccional: auto-descubrimiento y detección de drift (Área 4)."""
+"""Bidirectional IaC: auto-discovery and drift detection (Area 4)."""
 from urllib.parse import quote
 
 from tools._client import backend
@@ -9,21 +9,21 @@ def register(mcp):
     @mcp.tool()
     async def discover_iac_resources(path: str = ".") -> dict:
         """
-        Auto-descubre recursos declarados en IaC local bajo `path`.
+        Auto-discover resources declared in local IaC under `path`.
 
-        Lee terraform.tfstate (recursivo) y JSON exportado de Serverless/CDK
-        (floci-resources.json) y devuelve los recursos agrupados por categoría.
+        Reads terraform.tfstate (recursively) and JSON exported from Serverless/CDK
+        (floci-resources.json) and returns the resources grouped by category.
         """
         return await backend("GET", f"/api/iac/discover?path={quote(path)}")
 
     @mcp.tool()
     async def detect_iac_drift(path: str = ".") -> dict:
         """
-        Compara la IaC local con el estado real del emulador y reporta drift.
+        Compare local IaC against the real emulator state and report drift.
 
-        Devuelve:
-          - missing:   declarado en código pero ausente en el emulador.
-          - unmanaged: existe en el emulador pero no en el código (creado a mano).
-          - managed:   en sincronía en ambos lados.
+        Returns:
+          - missing:   declared in code but absent from the emulator.
+          - unmanaged: exists in the emulator but not in code (created manually).
+          - managed:   in sync on both sides.
         """
         return await backend("GET", f"/api/iac/drift?path={quote(path)}")

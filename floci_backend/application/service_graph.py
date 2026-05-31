@@ -1,10 +1,10 @@
-"""Mapa de servicios estilo X-Ray (Área 3 — Observabilidad).
+"""X-Ray-style service graph (Area 3 — Observability).
 
-Construye un grafo de nodos y aristas que refleja las relaciones REALES entre
-recursos del emulador (no solo un inventario): suscripciones SNS→SQS, event
-source mappings de Lambda, reglas de EventBridge→targets, redrive SQS→DLQ y
-notificaciones S3→Lambda. Sirve para renderizar la traza completa de un evento
-asíncrono en el cockpit.
+Builds a graph of nodes and edges that reflects the REAL relationships between
+emulator resources (not just an inventory): SNS→SQS subscriptions, Lambda event
+source mappings, EventBridge rule→targets, SQS→DLQ redrive and S3→Lambda
+notifications. Used to render the full trace of an asynchronous event in the
+cockpit.
 """
 import json
 from typing import Any, Dict, List
@@ -30,7 +30,7 @@ class ServiceGraph:
         self._nodes = {}
         self._edges = []
 
-        # --- Inventario base + relaciones ---
+        # --- Base inventory + relationships ---
         self._scan_sqs()
         self._scan_sns()
         self._scan_lambda()

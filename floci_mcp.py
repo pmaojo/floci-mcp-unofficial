@@ -1,27 +1,27 @@
 """
-Floci MCP Server — punto de entrada.
+Floci MCP Server — entry point.
 
-Los tools están organizados por servicio AWS en mcp/tools/:
-  meta.py        — health, arquitectura, inventario
-  lambda_.py     — funciones serverless
-  sqs.py         — colas de mensajes
-  sns.py         — notificaciones y pub/sub
+Tools are organized by AWS service under mcp/tools/:
+  meta.py        — health, architecture, inventory
+  lambda_.py     — serverless functions
+  sqs.py         — message queues
+  sns.py         — notifications and pub/sub
   s3.py          — object storage
-  dynamodb.py    — base de datos NoSQL
+  dynamodb.py    — NoSQL database
   secrets.py     — Secrets Manager
-  kms.py         — cifrado de claves
-  eventbridge.py — eventos y reglas
-  stepfunctions.py — orquestación de flujos
-  athena.py      — consultas SQL analíticas
-  ses.py         — envío de emails
-  marketplace.py — recetas Docker locales
+  kms.py         — key encryption
+  eventbridge.py — events and rules
+  stepfunctions.py — workflow orchestration
+  athena.py      — analytical SQL queries
+  ses.py         — email sending
+  marketplace.py — local Docker recipes
   devtools.py    — IaC, seed data, proxy, JWT, tests
-  observability.py — DLQ, flight recorder (time-travel), grafo de servicios
-  iac.py         — detección de drift y auto-descubrimiento de IaC
-  hybrid.py      — cloud proxying, seeding desde la nube, túneles inversos
-  extensibility.py — lifecycle webhooks, interceptores HTTP, plugins
+  observability.py — DLQ, flight recorder (time-travel), service graph
+  iac.py         — drift detection and IaC auto-discovery
+  hybrid.py      — cloud proxying, cloud seeding, reverse tunnels
+  extensibility.py — lifecycle webhooks, HTTP interceptors, plugins
 
-Los plugins de comunidad en mcp/plugins/<nombre>/tools.py se cargan al final.
+Community plugins in mcp/plugins/<name>/tools.py are loaded at the end.
 """
 import importlib.util
 import os
@@ -74,7 +74,7 @@ for module in [
 
 
 def _load_community_plugins(mcp_instance) -> None:
-    """Descubre y carga tools de plugins de comunidad en mcp/plugins/<nombre>/tools.py."""
+    """Discover and load community plugin tools from mcp/plugins/<name>/tools.py."""
     plugins_dir = os.environ.get("FLOCI_PLUGINS_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "plugins"
     )
@@ -91,7 +91,7 @@ def _load_community_plugins(mcp_instance) -> None:
             if hasattr(module, "register"):
                 module.register(mcp_instance)
         except Exception as exc:  # noqa: BLE001
-            print(f"[floci] No se pudo cargar el plugin '{entry}': {exc}")
+            print(f"[floci] Could not load plugin '{entry}': {exc}")
 
 
 _load_community_plugins(mcp)

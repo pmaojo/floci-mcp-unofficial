@@ -1,8 +1,8 @@
-"""Fábrica de clientes boto3 apuntando al emulador local de Floci.
+"""boto3 client factory pointing at Floci's local emulator.
 
-Centraliza la construcción de clientes para que los servicios de la capa de
-aplicación no repitan la configuración de endpoint/credenciales. Para el modo
-híbrido (Área 5) acepta overrides explícitos que apuntan a una cuenta AWS real.
+Centralizes client construction so application-layer services don't repeat the
+endpoint/credentials configuration. For hybrid mode (Area 5) it accepts explicit
+overrides that target a real AWS account.
 """
 import boto3
 from typing import Optional
@@ -17,11 +17,12 @@ def make_client(
     aws_access_key_id: Optional[str] = None,
     aws_secret_access_key: Optional[str] = None,
 ):
-    """Crea un cliente boto3.
+    """Create a boto3 client.
 
-    Sin argumentos apunta al emulador local. Pasando credenciales/endpoint
-    explícitos se puede apuntar a una cuenta AWS real (cloud proxying, seeding).
-    Pasar ``endpoint_url=""`` fuerza el endpoint real de AWS (sin override local).
+    With no arguments it points at the local emulator. Passing explicit
+    credentials/endpoint lets it target a real AWS account (cloud proxying,
+    seeding). Passing ``endpoint_url=""`` forces the real AWS endpoint (no local
+    override).
     """
     resolved_endpoint = endpoint_url if endpoint_url is not None else config.aws_endpoint_url
     if resolved_endpoint == "":

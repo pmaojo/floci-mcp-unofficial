@@ -1,8 +1,8 @@
-"""Gestión visual de Dead Letter Queues (Área 3 — Observabilidad).
+"""Visual Dead Letter Queue management (Area 3 — Observability).
 
-Descubre las DLQ activas (colas referenciadas por la RedrivePolicy de otras
-colas), permite inspeccionar mensajes fallidos sin consumirlos y reinyectarlos
-(redrive) en la cola de origen tras arreglar el código.
+Discovers active DLQs (queues referenced by another queue's RedrivePolicy), lets
+you inspect failed messages without consuming them, and redrive them back to the
+source queue once the code is fixed.
 """
 import json
 from typing import Any, Dict, List, Optional
@@ -46,10 +46,10 @@ class DlqService:
             return None
 
     def list_dead_letter_queues(self) -> Dict[str, Any]:
-        """Lista las colas usadas como DLQ y qué cola(s) de origen las alimentan."""
+        """List queues used as a DLQ and which source queue(s) feed them."""
         urls = self._sqs.list_queues().get("QueueUrls", [])
 
-        # Mapa DLQ ARN -> [colas de origen]
+        # Map DLQ ARN -> [source queues]
         sources_by_dlq: Dict[str, List[str]] = {}
         arn_to_url: Dict[str, str] = {}
 
@@ -91,7 +91,7 @@ class DlqService:
         return {"deadLetterQueues": dlqs, "count": len(dlqs)}
 
     def inspect_messages(self, dlq_url: str, max_messages: int = 10) -> Dict[str, Any]:
-        """Lee mensajes de la DLQ sin eliminarlos (visibility_timeout=0)."""
+        """Read messages from the DLQ without deleting them (visibility_timeout=0)."""
         resp = self._sqs.receive_message(
             QueueUrl=dlq_url,
             MaxNumberOfMessages=min(max_messages, 10),
@@ -113,10 +113,10 @@ class DlqService:
     def redrive(
         self, dlq_url: str, source_url: str, max_messages: int = 10
     ) -> Dict[str, Any]:
-        """Reinyecta mensajes desde la DLQ a la cola de origen (redrive manual).
+        """Redrive messages from the DLQ back to the source queue (manual redrive).
 
-        Compatible con LocalStack: recibe, reenvía a la cola de origen y elimina
-        de la DLQ solo tras un reenvío correcto.
+        LocalStack-compatible: receive, re-send to the source queue, and only
+        delete from the DLQ after a successful re-send.
         """
         moved = 0
         errors: List[str] = []

@@ -1,13 +1,13 @@
-"""SDK de plugins — descubrimiento de adaptadores de comunidad (Área 6).
+"""Plugin SDK — discovery of community adapters (Area 6).
 
-Un plugin de Floci es un directorio dentro de ``mcp/plugins/<nombre>/`` con:
+A Floci plugin is a directory inside ``mcp/plugins/<name>/`` with:
 
-    plugin.json   manifiesto: {name, version, description, author, tools: [...]}
-    tools.py      módulo Python que expone ``def register(mcp): ...``
+    plugin.json   manifest: {name, version, description, author, tools: [...]}
+    tools.py      Python module exposing ``def register(mcp): ...``
 
-El backend expone el catálogo de plugins descubiertos; el servidor MCP carga sus
-tools en arranque (ver mcp/floci_mcp.py). Esto permite a la comunidad añadir
-adaptadores para servicios poco comunes sin tocar el núcleo de Floci.
+The backend exposes the catalog of discovered plugins; the MCP server loads their
+tools at startup (see mcp/floci_mcp.py). This lets the community add adapters for
+less-common services without touching the Floci core.
 """
 import json
 import os

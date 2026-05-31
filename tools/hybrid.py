@@ -1,4 +1,4 @@
-"""Desarrollo híbrido: cloud proxying, seeding desde la nube y túneles (Área 5)."""
+"""Hybrid development: cloud proxying, cloud seeding and reverse tunnels (Area 5)."""
 from tools._client import backend
 
 
@@ -15,12 +15,12 @@ def register(mcp):
         aws_secret_access_key: str | None = None,
     ) -> dict:
         """
-        Extrae un subconjunto de una tabla DynamoDB REAL, lo anonimiza e inyecta
-        en la tabla local del emulador.
+        Extract a subset of a REAL DynamoDB table, anonymize it and inject it into
+        the local emulator table.
 
-        Requiere credenciales AWS reales (parámetros o el entorno del backend).
-        Si anonymize_fields es None se anonimizan automáticamente campos sensibles
-        (email, name, phone, address); pásalo para limitar a campos concretos.
+        Requires real AWS credentials (parameters or the backend environment).
+        If anonymize_fields is None, sensitive fields are anonymized automatically
+        (email, name, phone, address); pass it to limit to specific fields.
         """
         return await backend("POST", "/api/hybrid/seed-from-cloud", json_data={
             "source_table": source_table, "target_table": target_table,
@@ -41,10 +41,10 @@ def register(mcp):
         aws_secret_access_key: str | None = None,
     ) -> dict:
         """
-        Drena mensajes de una cola SQS REAL (ej. staging) y los reenvía a un recurso
-        local (Lambda/SQS/SNS) para un bucle de feedback inmediato.
+        Drain messages from a REAL SQS queue (e.g. staging) and forward them to a
+        local resource (Lambda/SQS/SNS) for an immediate feedback loop.
 
-        target_type: 'lambda', 'sqs' o 'sns'. Drenaje puntual de hasta max_messages.
+        target_type: 'lambda', 'sqs' or 'sns'. One-shot drain of up to max_messages.
         """
         return await backend("POST", "/api/hybrid/cloud-proxy/sqs", json_data={
             "source_queue_url": source_queue_url, "target_type": target_type,
@@ -56,19 +56,19 @@ def register(mcp):
     @mcp.tool()
     async def start_reverse_tunnel(port: int = 4566) -> dict:
         """
-        Expone un puerto local a internet con una URL temporal (estilo ngrok).
+        Expose a local port to the internet with a temporary URL (ngrok-style).
 
-        Útil para probar webhooks de terceros (Stripe, GitHub) contra un API Gateway
-        local. Requiere 'cloudflared' o 'ngrok' instalado en el host.
+        Useful to test third-party webhooks (Stripe, GitHub) against a local API
+        Gateway. Requires 'cloudflared' or 'ngrok' installed on the host.
         """
         return await backend("POST", "/api/hybrid/tunnels", json_data={"port": port})
 
     @mcp.tool()
     async def list_reverse_tunnels() -> dict:
-        """Lista los túneles inversos activos iniciados por Floci."""
+        """List the active reverse tunnels started by Floci."""
         return await backend("GET", "/api/hybrid/tunnels")
 
     @mcp.tool()
     async def stop_reverse_tunnel(pid: str) -> dict:
-        """Detiene un túnel inverso por su PID."""
+        """Stop a reverse tunnel by its PID."""
         return await backend("DELETE", f"/api/hybrid/tunnels/{pid}")

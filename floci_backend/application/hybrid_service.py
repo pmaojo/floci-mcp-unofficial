@@ -1,9 +1,9 @@
-"""Desarrollo híbrido: cloud proxying, seeding desde la nube y túneles (Área 5).
+"""Hybrid development: cloud proxying, cloud seeding and tunnels (Area 5).
 
-Estas capacidades conectan el entorno local con recursos AWS reales o con
-internet. Requieren credenciales reales (para proxy/seed) o un binario de túnel
-(`cloudflared`/`ngrok`) instalado en el host. Cuando faltan, los métodos degradan
-con un mensaje claro en vez de fallar de forma opaca.
+These capabilities connect the local environment with real AWS resources or with
+the internet. They require real credentials (for proxy/seed) or a tunnel binary
+(`cloudflared`/`ngrok`) installed on the host. When prerequisites are missing, the
+methods degrade with a clear message instead of failing opaquely.
 """
 import asyncio
 import json
@@ -49,12 +49,12 @@ class HybridService:
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Extrae un subconjunto de una tabla DynamoDB REAL, lo anonimiza e inyecta
-        en la tabla local del emulador."""
+        """Extract a subset of a REAL DynamoDB table, anonymize it and inject it
+        into the local emulator table."""
         target_table = target_table or source_table
         cloud = make_client(
             "dynamodb",
-            endpoint_url="",  # fuerza AWS real
+            endpoint_url="",  # force real AWS
             region_name=region,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
@@ -62,14 +62,14 @@ class HybridService:
         try:
             resp = cloud.scan(TableName=source_table, Limit=min(limit, 100))
         except Exception as e:  # noqa: BLE001
-            return {"status": "error", "message": f"No se pudo leer la tabla real: {e}"}
+            return {"status": "error", "message": f"Could not read the real table: {e}"}
 
         anonymize_fields = anonymize_fields or []
         records: List[Dict[str, Any]] = []
         for item in resp.get("Items", []):
             record: Dict[str, Any] = {}
             for k, type_val in item.items():
-                # type_val es {'S': '...'} / {'N': '...'} / {'BOOL': ...}
+                # type_val is {'S': '...'} / {'N': '...'} / {'BOOL': ...}
                 ((_t, v),) = type_val.items()
                 if _t == "N":
                     v = float(v) if "." in str(v) else int(v)
@@ -101,10 +101,10 @@ class HybridService:
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Drena mensajes de una cola SQS REAL (ej. en staging) y los reenvía a un
-        recurso local (Lambda/SQS/SNS). Drenaje puntual de hasta `max_messages`."""
+        """Drain messages from a REAL SQS queue (e.g. staging) and forward them to a
+        local resource (Lambda/SQS/SNS). One-shot drain of up to `max_messages`."""
         if target_type not in ("lambda", "sqs", "sns"):
-            return {"status": "error", "message": "target_type debe ser lambda, sqs o sns"}
+            return {"status": "error", "message": "target_type must be lambda, sqs or sns"}
 
         cloud_sqs = make_client(
             "sqs",
@@ -120,7 +120,7 @@ class HybridService:
                 WaitTimeSeconds=2,
             )
         except Exception as e:  # noqa: BLE001
-            return {"status": "error", "message": f"No se pudo leer la cola real: {e}"}
+            return {"status": "error", "message": f"Could not read the real queue: {e}"}
 
         messages = resp.get("Messages", [])
         forwarded = 0
@@ -153,12 +153,12 @@ class HybridService:
         return None
 
     async def start_tunnel(self, port: int = 4566) -> Dict[str, Any]:
-        """Expone un puerto local a internet vía cloudflared/ngrok si está instalado."""
+        """Expose a local port to the internet via cloudflared/ngrok if installed."""
         binary = self._detect_tunnel_binary()
         if not binary:
             return {
                 "status": "unavailable",
-                "message": "Instala 'cloudflared' o 'ngrok' en el host para abrir túneles inversos.",
+                "message": "Install 'cloudflared' or 'ngrok' on the host to open reverse tunnels.",
                 "hint": "brew install cloudflared  |  https://ngrok.com/download",
             }
 
@@ -175,7 +175,7 @@ class HybridService:
 
         public_url: Optional[str] = None
         try:
-            for _ in range(40):  # ~20s buscando la URL en el output
+            for _ in range(40):  # ~20s scanning the output for the URL
                 line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.5)
                 if not line:
                     if proc.returncode is not None:

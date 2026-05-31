@@ -1,12 +1,12 @@
-"""Detección de drift y auto-descubrimiento de IaC (Área 4).
+"""Drift detection and IaC auto-discovery (Area 4).
 
-Lee el estado de infraestructura como código local (terraform.tfstate o un
-listado de recursos de Serverless/CDK exportado a JSON) y lo compara con el
-estado real del emulador para detectar:
+Reads local Infrastructure-as-Code state (terraform.tfstate or a JSON list of
+resources exported from Serverless/CDK) and compares it against the real emulator
+state to detect:
 
-  - missing:   declarado en IaC pero ausente en el emulador.
-  - unmanaged: existe en el emulador pero NO está en el código (drift manual).
-  - managed:   presente en ambos lados (en sincronía).
+  - missing:   declared in IaC but absent from the emulator.
+  - unmanaged: exists in the emulator but NOT in the code (manual drift).
+  - managed:   present on both sides (in sync).
 """
 import glob
 import json
@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 from floci_backend.infrastructure.boto_factory import make_client
 
-# Mapea tipos de recurso Terraform -> (categoría floci, atributo con el nombre)
+# Maps Terraform resource types -> (floci category, attribute holding the name)
 TF_TYPE_MAP = {
     "aws_s3_bucket": ("s3", "bucket"),
     "aws_sqs_queue": ("sqs", "name"),
@@ -29,7 +29,7 @@ TF_TYPE_MAP = {
 class DriftService:
     # ---------------------------------------------------------------- discovery
     def discover(self, path: str = ".") -> Dict[str, Any]:
-        """Auto-descubre archivos de IaC en `path` y extrae los recursos declarados."""
+        """Auto-discover IaC files under `path` and extract declared resources."""
         desired, sources = self._read_desired(path)
         grouped: Dict[str, List[str]] = {}
         for category, name in sorted(desired):
@@ -79,7 +79,7 @@ class DriftService:
         return out
 
     def _parse_generic(self, data: Any) -> Set[Tuple[str, str]]:
-        """Soporta un JSON exportado de Serverless/CDK: [{type, name}, ...]."""
+        """Supports a JSON list exported from Serverless/CDK: [{type, name}, ...]."""
         out: Set[Tuple[str, str]] = set()
         items = data if isinstance(data, list) else data.get("resources", []) if isinstance(data, dict) else []
         for item in items:
@@ -122,7 +122,7 @@ class DriftService:
         desired, sources = self._read_desired(path)
         actual = self._read_actual()
 
-        # KMS no se compara por nombre (los key_id son UUIDs generados), se ignora
+        # KMS is not compared by name (key_ids are generated UUIDs), so it is ignored
         desired = {(c, n) for (c, n) in desired if c != "kms"}
 
         missing = sorted(desired - actual)

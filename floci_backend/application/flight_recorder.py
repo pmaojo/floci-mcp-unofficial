@@ -1,9 +1,9 @@
-"""Flight Recorder — time-travel debugging para eventos asíncronos (Área 3).
+"""Flight Recorder — time-travel debugging for asynchronous events (Area 3).
 
-Permite "interceptar" un evento en tránsito reteniéndolo en un buffer, inspeccionar
-y modificar su payload JSON en caliente, y reanudar su viaje (replay) hacia el
-destino real (SQS, SNS, EventBridge o Lambda). Los eventos retenidos viven en un
-buffer en memoria del proceso del backend.
+Lets you "intercept" an in-flight event by holding it in a buffer, inspect and
+modify its JSON payload on the fly, and resume its journey (replay) to the real
+target (SQS, SNS, EventBridge or Lambda). Held events live in an in-memory buffer
+in the backend process.
 """
 import json
 import time
@@ -23,7 +23,7 @@ class FlightRecorder:
     def _prune(self) -> None:
         if len(self._events) <= self._capacity:
             return
-        # Descarta los más antiguos ya reproducidos/descartados primero
+        # Drop the oldest already-replayed/discarded events first
         ordered = sorted(self._events.values(), key=lambda e: e["capturedAt"])
         for ev in ordered:
             if len(self._events) <= self._capacity:
@@ -40,7 +40,7 @@ class FlightRecorder:
         label: Optional[str] = None,
     ) -> Dict[str, Any]:
         if target_type not in VALID_TARGETS:
-            raise ValueError(f"target_type debe ser uno de {sorted(VALID_TARGETS)}")
+            raise ValueError(f"target_type must be one of {sorted(VALID_TARGETS)}")
         event = {
             "id": str(uuid.uuid4()),
             "status": "held",
@@ -69,7 +69,7 @@ class FlightRecorder:
     def update_payload(self, event_id: str, payload: Any) -> Dict[str, Any]:
         event = self.get(event_id)
         if event["status"] != "held":
-            raise ValueError("Solo se pueden editar eventos retenidos (held)")
+            raise ValueError("Only held events can be edited")
         event["payload"] = payload
         return event
 

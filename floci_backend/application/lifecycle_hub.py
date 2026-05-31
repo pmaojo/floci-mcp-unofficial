@@ -1,14 +1,14 @@
-"""Lifecycle webhooks + interceptores HTTP declarativos (Área 6 — Extensibilidad).
+"""Lifecycle webhooks + declarative HTTP interceptors (Area 6 — Extensibility).
 
-* Webhooks: el emulador dispara eventos de ciclo de vida (ej. ``floci.resource.created``)
-  y los reenvía por POST a URLs registradas, para integrarse con notificaciones u
-  otros agentes de IA del entorno.
-* Interceptores: reglas declarativas que modifican peticiones/respuestas que pasan
-  por el proxy de Floci (inyectar cabeceras, forzar status, añadir latencia). Son
-  declarativas a propósito (no ejecutan código arbitrario) para mantener el entorno
-  local seguro por defecto.
+* Webhooks: the emulator fires lifecycle events (e.g. ``floci.resource.created``)
+  and forwards them via POST to registered URLs, to integrate with notification
+  tools or other AI agents in the environment.
+* Interceptors: declarative rules that modify requests/responses flowing through
+  Floci's proxy (inject headers, force status, add latency). They are declarative
+  on purpose (no arbitrary code execution) to keep the local environment safe by
+  default.
 
-Persiste en ``<state_dir>/lifecycle.json``.
+Persisted in ``<state_dir>/lifecycle.json``.
 """
 import fnmatch
 import json
@@ -66,7 +66,7 @@ class LifecycleHub:
         return len(data["webhooks"]) < before
 
     async def emit(self, event: str, payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Dispara un evento de ciclo de vida hacia todos los webhooks que casen."""
+        """Fire a lifecycle event to all matching webhooks."""
         data = self._load()
         delivered: List[Dict[str, Any]] = []
         body = {"event": event, "payload": payload or {}, "timestamp": time.time()}
@@ -100,9 +100,9 @@ class LifecycleHub:
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         if phase not in ("request", "response"):
-            raise ValueError("phase debe ser 'request' o 'response'")
+            raise ValueError("phase must be 'request' or 'response'")
         if action not in ("set_header", "set_status", "delay_ms"):
-            raise ValueError("action debe ser 'set_header', 'set_status' o 'delay_ms'")
+            raise ValueError("action must be 'set_header', 'set_status' or 'delay_ms'")
         data = self._load()
         rule = {
             "id": str(uuid.uuid4()),

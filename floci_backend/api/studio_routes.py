@@ -31,11 +31,11 @@ class ProxyRequest(BaseModel):
     body: Optional[Any] = None
 
 def _apply_interceptors(hub, url: str, phase: str, headers: Dict[str, str]):
-    """Aplica interceptores declarativos registrados en el LifecycleHub.
+    """Apply declarative interceptors registered in the LifecycleHub.
 
-    Devuelve (status_override, delay_seconds). Muta `headers` in-place para
-    set_header. Es la capa de interceptación que Floci controla (el proxy);
-    no toca el tráfico interno SDK<->LocalStack.
+    Returns (status_override, delay_seconds). Mutates `headers` in-place for
+    set_header. This is the interception layer Floci controls (the proxy); it does
+    not touch the internal SDK<->LocalStack traffic.
     """
     status_override = None
     delay_seconds = 0.0

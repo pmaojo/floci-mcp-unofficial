@@ -47,7 +47,7 @@ aws_resource_service = AwsResourceService(aws_cli=aws_cli, compatibility_service
 diagnostics_service = DiagnosticsService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 athena_service = AthenaService(aws_cli=aws_cli)
 
-# Enterprise-parity services (Áreas 3/4/5/6)
+# Enterprise-parity services (Areas 3/4/5/6)
 flight_recorder = FlightRecorder()
 drift_service = DriftService()
 hybrid_service = HybridService(data_seeder=data_seeder)
@@ -123,5 +123,5 @@ app.include_router(create_iac_router(drift_service), prefix="/api")
 app.include_router(create_hybrid_router(hybrid_service), prefix="/api")
 app.include_router(create_extensibility_router(lifecycle_hub, plugin_registry), prefix="/api")
 
-# Hace el lifecycle hub accesible desde otros routers (ej. interceptores en el proxy)
+# Make the lifecycle hub accessible from other routers (e.g. proxy interceptors)
 app.state.lifecycle_hub = lifecycle_hub
