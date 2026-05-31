@@ -20,8 +20,7 @@ Tools are organized by AWS service under mcp/tools/:
   iac.py         — drift detection and IaC auto-discovery
   hybrid.py      — cloud proxying, cloud seeding, reverse tunnels
   extensibility.py — lifecycle webhooks, HTTP interceptors, plugins
-
-Community plugins in mcp/plugins/<name>/tools.py are loaded at the end.
+  tags.py        — gestión de tags en todos los recursos AWS
 """
 import importlib.util
 import os
@@ -46,6 +45,7 @@ from tools import (
     sns,
     sqs,
     stepfunctions,
+    tags,
 )
 
 mcp = FastMCP("floci-mcp")
@@ -69,6 +69,7 @@ for module in [
     iac,
     hybrid,
     extensibility,
+    tags,
 ]:
     module.register(mcp)
 

@@ -6,14 +6,17 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import asyncio
 import docker
+import logging
 from floci_backend.infrastructure.aws_cli import AwsCli
 import json
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 class JwtRequest(BaseModel):
     claims: Dict[str, Any]
-    secret: str = "local-secret-key-123"
+    secret: str
     algorithm: str = "HS256"
 
 @router.post("/studio/auth/generate-token")
@@ -22,7 +25,8 @@ async def generate_token(request: JwtRequest):
         token = jwt.encode(request.claims, request.secret, algorithm=request.algorithm)
         return {"token": token}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning("Token generation failed: %s", e)
+        raise HTTPException(status_code=400, detail="Invalid token generation request")
 
 class ProxyRequest(BaseModel):
     url: str
@@ -102,7 +106,8 @@ async def proxy_request(request: ProxyRequest, http_request: Request):
                 "intercepted": bool(resp_status_override or req_status_override or req_delay or resp_delay),
             }
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            logger.exception("Proxy request failed")
+            raise HTTPException(status_code=500, detail="Proxy request failed")
 
 @router.get("/studio/architecture")
 async def get_architecture():
@@ -152,7 +157,8 @@ async def get_architecture():
 
         return {"nodes": nodes, "edges": edges}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to fetch architecture")
+        raise HTTPException(status_code=500, detail="Failed to fetch architecture data")
 
 @router.websocket("/studio/lambda-logs/ws")
 async def websocket_lambda_logs(websocket: WebSocket):
@@ -205,5 +211,5 @@ async def websocket_lambda_logs(websocket: WebSocket):
     except Exception as e:
         try:
             await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
-        except:
+        except Exception:
             pass

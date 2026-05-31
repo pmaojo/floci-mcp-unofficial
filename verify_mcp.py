@@ -132,7 +132,7 @@ async def run_mcp_handshake_test():
         try:
             proc.terminate()
             await proc.wait()
-        except:
+        except Exception:
             pass
 
 if __name__ == "__main__":

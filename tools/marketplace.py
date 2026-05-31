@@ -10,7 +10,8 @@ def register(mcp):
         Lista todas las recetas del Marketplace con sus variables configurables.
 
         Recetas disponibles: postgres, redis, mongodb, rabbitmq, keycloak, mailpit,
-        minio, redpanda, observability, jaeger, meilisearch, pocketbase, nginx-proxy-manager, etc.
+        minio, redpanda, observability, jaeger, meilisearch, pocketbase, nginx-proxy-manager,
+        dynamodb-admin (GUI web para DynamoDB), n8n, temporal, nats, iotcore, transfer, etc.
         """
         return await backend("GET", "/api/marketplace/recipes")
 

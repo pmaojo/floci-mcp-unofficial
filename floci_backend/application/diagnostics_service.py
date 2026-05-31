@@ -294,6 +294,63 @@ class DiagnosticsService:
 
         return cleanup_result
 
+    async def get_performance_stats(self) -> Dict[str, Any]:
+        import asyncio
+        import docker
+
+        def _fetch_stats():
+            client = docker.from_env()
+            try:
+                containers = client.containers.list()
+                stats_list = []
+                for c in containers:
+                    try:
+                        stats = c.stats(stream=False)
+
+                        # Calculate CPU %
+                        cpu_delta = stats['cpu_stats']['cpu_usage']['total_usage'] - stats['precpu_stats']['cpu_usage']['total_usage']
+                        system_cpu_delta = stats['cpu_stats']['system_cpu_usage'] - stats.get('precpu_stats', {}).get('system_cpu_usage', 0)
+
+                        number_cpus = stats['cpu_stats'].get('online_cpus') or len(stats['cpu_stats']['cpu_usage'].get('percpu_usage') or [1]) or 1
+
+                        cpu_percent = 0.0
+                        if system_cpu_delta > 0.0 and cpu_delta > 0.0:
+                            cpu_percent = (cpu_delta / system_cpu_delta) * number_cpus * 100.0
+
+                        # Calculate Memory %
+                        mem_usage = stats['memory_stats'].get('usage', 0)
+                        # Exclude cache if possible
+                        if 'stats' in stats['memory_stats'] and 'cache' in stats['memory_stats']['stats']:
+                            mem_usage -= stats['memory_stats']['stats']['cache']
+                        mem_limit = stats['memory_stats'].get('limit', 0)
+
+                        stats_list.append({
+                            'id': c.short_id,
+                            'name': c.name,
+                            'status': c.status,
+                            'cpu_percent': round(cpu_percent, 2),
+                            'memory_usage_bytes': mem_usage,
+                            'memory_limit_bytes': mem_limit
+                        })
+                    except Exception:
+                        pass
+                return stats_list
+            finally:
+                client.close()
+
+        try:
+            stats_list = await asyncio.to_thread(_fetch_stats)
+            return {
+                'ok': True,
+                'containers': stats_list
+            }
+        except Exception as e:
+            return {
+                'ok': False,
+                'error': str(e),
+                'containers': []
+            }
+
     async def _timed(self, name: str, fn) -> Dict[str, Any]:
         started_at = int(time.time() * 1000)
         try:
