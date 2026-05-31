@@ -212,12 +212,18 @@ class IacGenerator:
 
         if recipe_id == 'redis':
             return [
-                f'resource "aws_elasticache_cluster" "{name}" {{',
-                '  cluster_id      = "floci-redis"',
-                '  engine          = "redis"',
-                '  node_type       = "cache.t3.micro"',
-                '  num_cache_nodes = 1',
-                f'  port            = {vars.get("REDIS_PORT", 6379)}',
+                f'resource "aws_elasticache_replication_group" "{name}" {{',
+                '  replication_group_id = "floci-redis"',
+                '  description          = "Floci Redis"',
+                '  node_type            = "cache.t3.micro"',
+                '  num_cache_clusters   = 1',
+                f'  port                 = {vars.get("REDIS_PORT", 6379)}',
+                '  transit_encryption_enabled = true',
+                '  auth_token           = var.redis_auth_token',
+                '}', '',
+                'variable "redis_auth_token" {',
+                '  description = "Redis AUTH token (--requirepass)"',
+                '  sensitive   = true',
                 '}', '',
             ]
 
@@ -249,7 +255,7 @@ class IacGenerator:
                 '  host_instance_type = "mq.t3.micro"',
                 '  deployment_mode    = "SINGLE_INSTANCE"',
                 '  user {',
-                f'    username = "{vars.get("RABBITMQ_USER", "admin")}"',
+                f'    username = "{vars.get("RABBITMQ_DEFAULT_USER", "guest")}"',
                 '    password = var.rabbitmq_password',
                 '  }',
                 '}', '',
