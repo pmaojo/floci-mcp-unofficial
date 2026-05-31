@@ -16,7 +16,7 @@ def create_diagnostics_router(diagnostics_service: DiagnosticsService) -> APIRou
     @router.get('/diagnostics/cost-forecast')
     async def run_cost_forecast():
         result = await diagnostics_service.run_cost_forecast()
-        status_code = 200 if result.get('ok') else 500
+        status_code = 200 if result.get('ok') else 502
         return JSONResponse(status_code=status_code, content=result)
 
     @router.get('/diagnostics/performance')

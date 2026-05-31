@@ -25,7 +25,10 @@ def create_athena_router(athena_service: AthenaService) -> APIRouter:
                 raise ValueError("query and database are required")
 
             result = await athena_service.start_query(query, database, work_group)
-            return {'ok': True, **result}
+            return {
+                'ok': True,
+                'queryExecutionId': result.get('queryExecutionId')
+            }
         except Exception as error:
             raise HTTPException(status_code=500, detail=str(error))
 
