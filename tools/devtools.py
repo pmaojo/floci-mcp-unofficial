@@ -18,6 +18,20 @@ def register(mcp):
         return await backend("GET", f"/api/extensions/export-iac?format={format}")
 
     @mcp.tool()
+    async def export_recipes_to_terraform() -> dict:
+        """
+        Genera código Terraform para las recipes del marketplace que están en estado RUNNING.
+
+        Cada recipe instalada se mapea a su servicio AWS equivalente (RDS, ElastiCache, MSK,
+        OpenSearch, Cognito, etc.). Las contraseñas se emiten como variables de Terraform
+        (sensitive = true) para que no queden en texto plano.
+
+        Usa esto después de validar tu stack localmente para obtener la infraestructura
+        de producción lista para aplicar con 'terraform apply'.
+        """
+        return await backend("GET", "/api/extensions/export-iac-recipes")
+
+    @mcp.tool()
     async def run_local_aws_cmd(command: str) -> dict:
         """
         Ejecuta un comando aws-cli directamente contra el emulador de Floci.

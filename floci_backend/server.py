@@ -123,7 +123,7 @@ app.include_router(create_aws_resource_router(aws_resource_service, compatibilit
 app.include_router(create_diagnostics_router(diagnostics_service), prefix="/api")
 app.include_router(create_marketplace_router(recipe_service), prefix="/api")
 app.include_router(create_athena_router(athena_service), prefix="/api")
-app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper), prefix="/api")
+app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper, recipe_service), prefix="/api")
 app.include_router(studio_router, prefix="/api")
 app.include_router(create_observability_router(flight_recorder), prefix="/api")
 app.include_router(create_iac_router(drift_service), prefix="/api")

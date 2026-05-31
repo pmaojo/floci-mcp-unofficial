@@ -5,13 +5,15 @@ from typing import Optional, Dict, Any
 from floci_backend.application.iac_generator import IacGenerator
 from floci_backend.application.data_seeder import DataSeeder
 from floci_backend.application.topology_mapper import TopologyMapper
+from floci_backend.application.recipe_service import RecipeService
 from floci_backend.infrastructure.aws_cli import AwsCli
 
 def create_mcp_extensions_router(
     aws_cli: AwsCli,
     iac_generator: IacGenerator,
     data_seeder: DataSeeder,
-    topology_mapper: TopologyMapper
+    topology_mapper: TopologyMapper,
+    recipe_service: RecipeService,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -69,6 +71,16 @@ def create_mcp_extensions_router(
         try:
             diagram = topology_mapper.get_network_topology()
             return {"mermaid": diagram}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @router.get("/extensions/export-iac-recipes")
+    async def export_iac_recipes():
+        try:
+            installations = await recipe_service.get_installations()
+            recipes = await recipe_service.list_recipes()
+            code = iac_generator.export_recipes_to_terraform(installations, recipes)
+            return {"format": "terraform", "code": code}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
