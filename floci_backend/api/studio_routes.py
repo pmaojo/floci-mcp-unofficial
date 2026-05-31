@@ -30,17 +30,48 @@ class ProxyRequest(BaseModel):
     headers: Optional[Dict[str, str]] = None
     body: Optional[Any] = None
 
+def _apply_interceptors(hub, url: str, phase: str, headers: Dict[str, str]):
+    """Aplica interceptores declarativos registrados en el LifecycleHub.
+
+    Devuelve (status_override, delay_seconds). Muta `headers` in-place para
+    set_header. Es la capa de interceptación que Floci controla (el proxy);
+    no toca el tráfico interno SDK<->LocalStack.
+    """
+    status_override = None
+    delay_seconds = 0.0
+    if hub is None:
+        return status_override, delay_seconds
+    for rule in hub.matching_interceptors(url, phase):
+        action = rule.get("action")
+        params = rule.get("params", {})
+        if action == "set_header":
+            for k, v in params.items():
+                headers[str(k)] = str(v)
+        elif action == "set_status":
+            status_override = params.get("status") or params.get("code")
+        elif action == "delay_ms":
+            delay_seconds += float(params.get("ms", 0)) / 1000.0
+    return status_override, delay_seconds
+
+
 @router.post("/studio/client/proxy")
-async def proxy_request(request: ProxyRequest):
+async def proxy_request(request: ProxyRequest, http_request: Request):
     import time
     start_time = time.time()
 
+    hub = getattr(http_request.app.state, "lifecycle_hub", None)
+
     async with httpx.AsyncClient() as client:
         try:
+            headers = dict(request.headers or {})
+            req_status_override, req_delay = _apply_interceptors(hub, request.url, "request", headers)
+            if req_delay:
+                await asyncio.sleep(req_delay)
+
             kwargs = {
                 "method": request.method,
                 "url": request.url,
-                "headers": request.headers or {},
+                "headers": headers,
             }
             if request.body is not None:
                 if isinstance(request.body, (dict, list)):
@@ -49,6 +80,11 @@ async def proxy_request(request: ProxyRequest):
                     kwargs["content"] = str(request.body)
 
             response = await client.request(**kwargs)
+
+            response_headers = dict(response.headers)
+            resp_status_override, resp_delay = _apply_interceptors(hub, request.url, "response", response_headers)
+            if resp_delay:
+                await asyncio.sleep(resp_delay)
             latency_ms = int((time.time() - start_time) * 1000)
 
             response_body = response.text
@@ -59,10 +95,11 @@ async def proxy_request(request: ProxyRequest):
                 pass
 
             return {
-                "status": response.status_code,
-                "headers": dict(response.headers),
+                "status": resp_status_override or req_status_override or response.status_code,
+                "headers": response_headers,
                 "body": response_body,
-                "latency_ms": latency_ms
+                "latency_ms": latency_ms,
+                "intercepted": bool(resp_status_override or req_status_override or req_delay or resp_delay),
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

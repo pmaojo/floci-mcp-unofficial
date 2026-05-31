@@ -20,10 +20,19 @@ from floci_backend.api.marketplace_routes import create_marketplace_router
 from floci_backend.api.athena_routes import create_athena_router
 from floci_backend.api.mcp_extensions_routes import create_mcp_extensions_router
 from floci_backend.api.studio_routes import router as studio_router
+from floci_backend.api.observability_routes import create_observability_router
+from floci_backend.api.iac_routes import create_iac_router
+from floci_backend.api.hybrid_routes import create_hybrid_router
+from floci_backend.api.extensibility_routes import create_extensibility_router
 
 from floci_backend.application.iac_generator import IacGenerator
 from floci_backend.application.data_seeder import DataSeeder
 from floci_backend.application.topology_mapper import TopologyMapper
+from floci_backend.application.flight_recorder import FlightRecorder
+from floci_backend.application.drift_service import DriftService
+from floci_backend.application.hybrid_service import HybridService
+from floci_backend.application.lifecycle_hub import LifecycleHub
+from floci_backend.application.plugin_registry import PluginRegistry
 
 # Initialize Services
 aws_cli = AwsCli()
@@ -37,6 +46,13 @@ eks_service = EksService(aws_cli=aws_cli)
 aws_resource_service = AwsResourceService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 diagnostics_service = DiagnosticsService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 athena_service = AthenaService(aws_cli=aws_cli)
+
+# Enterprise-parity services (Áreas 3/4/5/6)
+flight_recorder = FlightRecorder()
+drift_service = DriftService()
+hybrid_service = HybridService(data_seeder=data_seeder)
+lifecycle_hub = LifecycleHub()
+plugin_registry = PluginRegistry()
 
 app = FastAPI(title="Floci Unified Engine")
 
@@ -102,3 +118,10 @@ app.include_router(create_marketplace_router(recipe_service), prefix="/api")
 app.include_router(create_athena_router(athena_service), prefix="/api")
 app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper), prefix="/api")
 app.include_router(studio_router, prefix="/api")
+app.include_router(create_observability_router(flight_recorder), prefix="/api")
+app.include_router(create_iac_router(drift_service), prefix="/api")
+app.include_router(create_hybrid_router(hybrid_service), prefix="/api")
+app.include_router(create_extensibility_router(lifecycle_hub, plugin_registry), prefix="/api")
+
+# Hace el lifecycle hub accesible desde otros routers (ej. interceptores en el proxy)
+app.state.lifecycle_hub = lifecycle_hub
