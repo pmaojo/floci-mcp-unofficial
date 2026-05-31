@@ -16,6 +16,7 @@ def create_hybrid_router(hybrid_service: HybridService) -> APIRouter:
         region: Optional[str] = None
         aws_access_key_id: Optional[str] = None
         aws_secret_access_key: Optional[str] = None
+        aws_session_token: Optional[str] = None
 
     @router.post("/hybrid/seed-from-cloud")
     async def seed_from_cloud(req: CloudSeedRequest):
@@ -28,6 +29,7 @@ def create_hybrid_router(hybrid_service: HybridService) -> APIRouter:
                 region=req.region,
                 aws_access_key_id=req.aws_access_key_id,
                 aws_secret_access_key=req.aws_secret_access_key,
+                aws_session_token=req.aws_session_token,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -41,6 +43,7 @@ def create_hybrid_router(hybrid_service: HybridService) -> APIRouter:
         region: Optional[str] = None
         aws_access_key_id: Optional[str] = None
         aws_secret_access_key: Optional[str] = None
+        aws_session_token: Optional[str] = None
 
     @router.post("/hybrid/cloud-proxy/sqs")
     async def proxy_cloud_sqs(req: CloudProxyRequest):
@@ -54,6 +57,7 @@ def create_hybrid_router(hybrid_service: HybridService) -> APIRouter:
                 region=req.region,
                 aws_access_key_id=req.aws_access_key_id,
                 aws_secret_access_key=req.aws_secret_access_key,
+                aws_session_token=req.aws_session_token,
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

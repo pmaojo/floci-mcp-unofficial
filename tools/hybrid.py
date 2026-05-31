@@ -13,12 +13,15 @@ def register(mcp):
         region: str | None = None,
         aws_access_key_id: str | None = None,
         aws_secret_access_key: str | None = None,
+        aws_session_token: str | None = None,
     ) -> dict:
         """
         Extract a subset of a REAL DynamoDB table, anonymize it and inject it into
         the local emulator table.
 
-        Requires real AWS credentials (parameters or the backend environment).
+        Credentials are optional: if omitted, the backend uses boto3's default
+        provider chain (env vars, AWS profiles, SSO/STS, instance role). Pass
+        aws_session_token alongside the key/secret for temporary credentials.
         If anonymize_fields is None, sensitive fields are anonymized automatically
         (email, name, phone, address); pass it to limit to specific fields.
         """
@@ -27,6 +30,7 @@ def register(mcp):
             "limit": limit, "anonymize_fields": anonymize_fields,
             "region": region, "aws_access_key_id": aws_access_key_id,
             "aws_secret_access_key": aws_secret_access_key,
+            "aws_session_token": aws_session_token,
         })
 
     @mcp.tool()
@@ -39,11 +43,15 @@ def register(mcp):
         region: str | None = None,
         aws_access_key_id: str | None = None,
         aws_secret_access_key: str | None = None,
+        aws_session_token: str | None = None,
     ) -> dict:
         """
         Drain messages from a REAL SQS queue (e.g. staging) and forward them to a
         local resource (Lambda/SQS/SNS) for an immediate feedback loop.
 
+        Credentials are optional: if omitted, the backend uses boto3's default
+        provider chain (env vars, AWS profiles, SSO/STS, instance role). Pass
+        aws_session_token alongside the key/secret for temporary credentials.
         target_type: 'lambda', 'sqs' or 'sns'. One-shot drain of up to max_messages.
         """
         return await backend("POST", "/api/hybrid/cloud-proxy/sqs", json_data={
@@ -51,6 +59,7 @@ def register(mcp):
             "target": target, "max_messages": max_messages, "delete_after": delete_after,
             "region": region, "aws_access_key_id": aws_access_key_id,
             "aws_secret_access_key": aws_secret_access_key,
+            "aws_session_token": aws_session_token,
         })
 
     @mcp.tool()

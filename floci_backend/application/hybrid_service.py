@@ -48,6 +48,7 @@ class HybridService:
         region: Optional[str] = None,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Extract a subset of a REAL DynamoDB table, anonymize it and inject it
         into the local emulator table."""
@@ -58,6 +59,7 @@ class HybridService:
             region_name=region,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
         )
         try:
             resp = cloud.scan(TableName=source_table, Limit=min(limit, 100))
@@ -100,6 +102,7 @@ class HybridService:
         region: Optional[str] = None,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
+        aws_session_token: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Drain messages from a REAL SQS queue (e.g. staging) and forward them to a
         local resource (Lambda/SQS/SNS). One-shot drain of up to `max_messages`."""
@@ -112,6 +115,7 @@ class HybridService:
             region_name=region,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
         )
         try:
             resp = cloud_sqs.receive_message(
@@ -174,19 +178,24 @@ class HybridService:
         )
 
         public_url: Optional[str] = None
-        try:
-            for _ in range(40):  # ~20s scanning the output for the URL
-                line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.5)
-                if not line:
-                    if proc.returncode is not None:
-                        break
-                    continue
-                match = url_re.search(line.decode("utf-8", "replace"))
-                if match:
-                    public_url = match.group(0)
-                    break
-        except asyncio.TimeoutError:
-            pass
+        # Scan the tunnel output for ~20s. A single read may time out before the
+        # binary prints anything (slow startup); swallow that per-read timeout and
+        # keep reading until the overall deadline instead of giving up early.
+        deadline = asyncio.get_event_loop().time() + 20
+        while public_url is None and proc.returncode is None:
+            remaining = deadline - asyncio.get_event_loop().time()
+            if remaining <= 0:
+                break
+            try:
+                line = await asyncio.wait_for(proc.stdout.readline(), timeout=min(0.5, remaining))
+            except asyncio.TimeoutError:
+                continue  # transient gap in output; keep scanning until the deadline
+            if not line:
+                break  # EOF: the process closed its output stream
+            match = url_re.search(line.decode("utf-8", "replace"))
+            if match:
+                public_url = match.group(0)
+                break
 
         self._tunnels[str(proc.pid)] = {"pid": proc.pid, "port": port, "url": public_url, "binary": binary, "_proc": proc}
         return {
