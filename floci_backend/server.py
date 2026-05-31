@@ -24,6 +24,7 @@ from floci_backend.api.mcp_extensions_routes import create_mcp_extensions_router
 from floci_backend.api.studio_routes import router as studio_router
 from floci_backend.api.observability_routes import create_observability_router
 from floci_backend.api.iac_routes import create_iac_router
+from floci_backend.api.pipeline_routes import create_pipeline_router
 from floci_backend.api.hybrid_routes import create_hybrid_router
 from floci_backend.api.extensibility_routes import create_extensibility_router
 from floci_backend.api.tags_routes import create_tags_router
@@ -38,6 +39,7 @@ from floci_backend.application.drift_service import DriftService
 from floci_backend.application.hybrid_service import HybridService
 from floci_backend.application.lifecycle_hub import LifecycleHub
 from floci_backend.application.plugin_registry import PluginRegistry
+from floci_backend.application.pipeline_service import PipelineService
 
 # Initialize Services
 aws_cli = AwsCli()
@@ -45,6 +47,7 @@ iac_generator = IacGenerator()
 data_seeder = DataSeeder()
 topology_mapper = TopologyMapper()
 recipe_service = RecipeService()
+pipeline_service = PipelineService(recipes_dir=recipe_service.recipes_dir_path)
 compatibility_service = CompatibilityService(recipe_service=recipe_service)
 lambda_service = LambdaService(aws_cli=aws_cli)
 eks_service = EksService(aws_cli=aws_cli)
@@ -127,6 +130,7 @@ app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_see
 app.include_router(studio_router, prefix="/api")
 app.include_router(create_observability_router(flight_recorder), prefix="/api")
 app.include_router(create_iac_router(drift_service), prefix="/api")
+app.include_router(create_pipeline_router(pipeline_service, recipe_service), prefix="/api")
 app.include_router(create_hybrid_router(hybrid_service), prefix="/api")
 app.include_router(create_extensibility_router(lifecycle_hub, plugin_registry), prefix="/api")
 

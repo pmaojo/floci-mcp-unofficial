@@ -21,6 +21,7 @@ Tools are organized by AWS service under mcp/tools/:
   hybrid.py      — cloud proxying, cloud seeding, reverse tunnels
   extensibility.py — lifecycle webhooks, HTTP interceptors, plugins
   tags.py        — gestión de tags en todos los recursos AWS
+  pipeline.py    — test/demo/production pipeline, Copilot manifests
 """
 import importlib.util
 import os
@@ -39,6 +40,7 @@ from tools import (
     marketplace,
     meta,
     observability,
+    pipeline,
     s3,
     secrets,
     ses,
@@ -69,6 +71,7 @@ for module in [
     iac,
     hybrid,
     extensibility,
+    pipeline,
     tags,
 ]:
     module.register(mcp)
