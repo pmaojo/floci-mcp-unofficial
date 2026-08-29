@@ -1,0 +1,8 @@
+<<<<<<< SEARCH
+    'ses': {'serviceName': 'SES Sink', 'description': 'Compatibilidad local persistente para SES.', 'resources': [{'id': 'identities', 'label': 'Identities'}, {'id': 'send-statistics', 'label': 'Send statistics'}, {'id': 'v2-identities', 'label': 'SES v2 identities'}, {'id': 'v2-templates', 'label': 'SES v2 templates'}]},
+    'apigateway': {'serviceName': 'API Gateway', 'description': 'Compatibilidad local persistente para APIs.', 'resources': [{'id': 'rest-apis', 'label': 'REST APIs'}, {'id': 'v2-apis', 'label': 'HTTP/WebSocket APIs'}]},
+=======
+    'ses': {'serviceName': 'SES Sink', 'description': 'Compatibilidad local persistente para SES.', 'resources': [{'id': 'identities', 'label': 'Identities'}, {'id': 'send-statistics', 'label': 'Send statistics'}, {'id': 'v2-identities', 'label': 'SES v2 identities'}, {'id': 'v2-templates', 'label': 'SES v2 templates'}]},
+    'ec2': {'serviceName': 'EC2 Inventory', 'description': 'Compatibilidad local persistente para inventario EC2.', 'resources': [{'id': 'instances', 'label': 'Instances'}, {'id': 'vpcs', 'label': 'VPCs'}, {'id': 'subnets', 'label': 'Subnets'}, {'id': 'security-groups', 'label': 'Security groups'}, {'id': 'key-pairs', 'label': 'Key pairs'}]},
+    'apigateway': {'serviceName': 'API Gateway', 'description': 'Compatibilidad local persistente para APIs.', 'resources': [{'id': 'rest-apis', 'label': 'REST APIs'}, {'id': 'v2-apis', 'label': 'HTTP/WebSocket APIs'}]},
+>>>>>>> REPLACE
