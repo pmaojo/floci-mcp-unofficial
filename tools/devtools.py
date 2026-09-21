@@ -64,6 +64,18 @@ def register(mcp):
         })
 
     @mcp.tool()
+    async def get_resource_relations(resource_id: str, resource_type: str) -> dict:
+        """
+        Devuelve el grafo de relaciones dependientes de un recurso de AWS dado.
+        Útil para responder preguntas como "¿Qué lambdas consumen este SQS?" o "¿Hacia dónde apunta este S3?".
+
+        resource_id: Nombre del recurso (ej. 'my-lambda') o su ARN.
+        resource_type: Tipo del recurso (Lambda, SQS, SNS, S3, DynamoDB, EventBridge).
+        """
+        import urllib.parse
+        return await backend("GET", f"/api/studio/resource-explorer?resource_id={urllib.parse.quote(resource_id)}&resource_type={urllib.parse.quote(resource_type)}")
+
+    @mcp.tool()
     async def proxy_http_request(
         url: str,
         method: str = "GET",
