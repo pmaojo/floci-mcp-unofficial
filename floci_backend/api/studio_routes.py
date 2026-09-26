@@ -213,3 +213,28 @@ async def websocket_lambda_logs(websocket: WebSocket):
             await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
         except Exception:
             pass
+
+from pydantic import BaseModel
+from typing import Dict, Any, Optional
+from floci_backend.application.data_seeder import DataSeeder
+
+class SeedRequest(BaseModel):
+    target: str
+    target_name: str
+    connection_string: Optional[str] = None
+    custom_schema: Optional[Dict[str, Any]] = None
+
+@router.post("/studio/seed")
+async def seed_data(request: SeedRequest):
+    seeder = DataSeeder()
+    try:
+        result = await seeder.auto_seed(
+            target=request.target,
+            target_name=request.target_name,
+            connection_string=request.connection_string,
+            custom_schema=request.custom_schema
+        )
+        return result
+    except Exception as e:
+        logger.exception("Data seeder failed")
+        raise HTTPException(status_code=500, detail=str(e))
