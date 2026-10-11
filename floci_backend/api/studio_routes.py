@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
+from floci_backend.application.resource_explorer import ResourceExplorer
 import jwt
 import httpx
 from pydantic import BaseModel
@@ -108,6 +109,14 @@ async def proxy_request(request: ProxyRequest, http_request: Request):
         except Exception as e:
             logger.exception("Proxy request failed")
             raise HTTPException(status_code=500, detail="Proxy request failed")
+
+@router.get("/studio/resource-explorer")
+async def get_resource_explorer(resource_id: str, resource_type: str):
+    explorer = ResourceExplorer()
+    try:
+        return explorer.get_relations(resource_id, resource_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/studio/architecture")
 async def get_architecture():
