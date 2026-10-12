@@ -2,7 +2,9 @@
   "name": "Hello Floci",
   "version": "1.0.0",
   "description": "SDK example plugin: adds a greeting MCP tool and demonstrates the minimal structure of a community adapter.",
-  "author": "Floci Studio",
-  "homepage": "https://floci-studio.dev/enterprise/extensibility",
-  "tools": ["floci_hello"]
+  "author": "floci-mcp-unofficial",
+  "homepage": "https://github.com/pmaojo/floci-mcp-unofficial#plugins",
+  "tools": [
+    "floci_hello"
+  ]
 }

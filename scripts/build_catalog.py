@@ -16,6 +16,7 @@ sys.path.insert(0, ROOT)
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
+import skills_catalog  # noqa: E402
 import toolsets  # noqa: E402
 from toolsets import MODULES, is_write, toolset_of  # noqa: E402
 
@@ -100,14 +101,19 @@ def collect_recipes() -> list[dict]:
 async def main() -> None:
     tools = await collect_tools()
     recipes = collect_recipes()
+    skills = await skills_catalog.load_skills()
     catalog = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
-        "counts": {"tools": len(tools), "recipes": len(recipes)},
+        "counts": {"tools": len(tools), "recipes": len(recipes), "skills": len(skills)},
         "toolsets": {name: list(modules) for name, modules in toolsets.TOOLSETS.items()},
         "defaultToolsets": list(toolsets.DEFAULT_TOOLSETS),
         "tools": tools,
         "recipes": recipes,
+        "skills": [
+            {k: v for k, v in skill.items() if k not in ("candidates", "statedToolsets", "dir")}
+            for skill in skills
+        ],
     }
     out = os.path.join(ROOT, "docs")
     os.makedirs(out, exist_ok=True)
@@ -116,7 +122,7 @@ async def main() -> None:
         handle.write("\n")
     with open(os.path.join(out, "catalog.js"), "w") as handle:
         handle.write("window.FLOCI_CATALOG = " + json.dumps(catalog, ensure_ascii=False) + ";\n")
-    print(f"{len(tools)} tools, {len(recipes)} recipes")
+    print(f"{len(tools)} tools, {len(recipes)} recipes, {len(skills)} skills")
 
 
 asyncio.run(main())

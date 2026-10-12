@@ -1,9 +1,10 @@
 {
-  "generatedAt": "2026-10-12T19:05:55Z",
+  "generatedAt": "2026-10-12T19:16:48Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 138,
-    "recipes": 35
+    "recipes": 35,
+    "skills": 6
   },
   "toolsets": {
     "core": [
@@ -3831,6 +3832,132 @@
           "description": "Port on your host machine for the Weaviate gRPC API (used by v4 clients)."
         }
       ]
+    }
+  ],
+  "skills": [
+    {
+      "name": "floci-explore",
+      "description": "Survey everything running in the local Floci environment (health, AWS services with resources, network topology, estimated cost) and report it as one scannable table. Use when the user asks what is running, what exists, or whether the local cloud is healthy.",
+      "argumentHint": "[service key to focus on, e.g. s3]",
+      "tools": [
+        "check_floci_health",
+        "get_cost_forecast",
+        "get_network_topology",
+        "get_service_resources",
+        "list_aws_services",
+        "list_clouds",
+        "list_toolsets"
+      ],
+      "requires": [
+        "core"
+      ],
+      "enabledByDefault": true,
+      "path": "skills/floci-explore/SKILL.md"
+    },
+    {
+      "name": "floci-iac",
+      "description": "Export the resources in the local emulator as Terraform or CDK, and check a Terraform or CDK project for drift against what is actually running. Use when the user wants infrastructure code from a working local stack, or asks whether code and emulator agree.",
+      "argumentHint": "[terraform|cdk] | drift [path]",
+      "tools": [
+        "detect_iac_drift",
+        "discover_iac_resources",
+        "export_recipes_to_terraform",
+        "export_to_terraform",
+        "list_aws_services"
+      ],
+      "requires": [
+        "core",
+        "ops",
+        "hybrid"
+      ],
+      "enabledByDefault": false,
+      "path": "skills/floci-iac/SKILL.md"
+    },
+    {
+      "name": "floci-marketplace",
+      "description": "Browse the Docker recipe catalog and start, inspect or remove local stacks such as PostgreSQL, Redis, Kafka, Keycloak or Ollama. Use when the user wants a local database, broker or tool running next to the emulator.",
+      "argumentHint": "[status | deploy <id> [KEY=value ...] | teardown <id> | logs <id>]",
+      "tools": [
+        "deploy_marketplace_app",
+        "deploy_to_environment",
+        "get_marketplace_installations",
+        "get_marketplace_logs",
+        "list_marketplace_recipes",
+        "promote_recipe",
+        "teardown_marketplace_app"
+      ],
+      "requires": [
+        "marketplace"
+      ],
+      "enabledByDefault": false,
+      "path": "skills/floci-marketplace/SKILL.md"
+    },
+    {
+      "name": "floci-multicloud",
+      "description": "Compare the same kinds of resources (object storage, queues and topics, secrets) across the local AWS, Azure, GCP and OCI runtimes in one table. Use when the user wants a cross-cloud inventory, or asks where something exists.",
+      "argumentHint": "[storage | messaging | secrets]  (default: all)",
+      "tools": [
+        "azure_list_containers",
+        "azure_list_queues",
+        "azure_list_secrets",
+        "gcp_list_buckets",
+        "gcp_list_secrets",
+        "gcp_list_topics",
+        "get_secret_value",
+        "list_clouds",
+        "list_s3_buckets",
+        "list_s3_objects",
+        "list_secrets",
+        "list_sns_topics",
+        "list_sqs_queues",
+        "oci_list_buckets"
+      ],
+      "requires": [
+        "core",
+        "storage",
+        "messaging"
+      ],
+      "enabledByDefault": true,
+      "path": "skills/floci-multicloud/SKILL.md"
+    },
+    {
+      "name": "floci-seed",
+      "description": "Fill a local DynamoDB table, S3 bucket or PostgreSQL database with synthetic Faker data for development. Use when the user wants test data, fixtures, or an empty local resource populated.",
+      "argumentHint": "<dynamodb|s3|postgres> <name> [schema json]",
+      "tools": [
+        "create_dynamodb_table",
+        "create_s3_bucket",
+        "list_dynamodb_tables",
+        "list_s3_buckets",
+        "list_s3_objects",
+        "scan_dynamodb",
+        "seed_mock_data"
+      ],
+      "requires": [
+        "storage",
+        "hybrid"
+      ],
+      "enabledByDefault": false,
+      "path": "skills/floci-seed/SKILL.md"
+    },
+    {
+      "name": "floci-triage",
+      "description": "Diagnose failed messages in the local emulator. Finds dead-letter queues, inspects what is stuck and why, then redrives only after the user confirms. Use when messages are not arriving, a consumer keeps failing, or the user mentions a DLQ.",
+      "argumentHint": "[queue URL or name]",
+      "tools": [
+        "delete_sqs_queue",
+        "get_sqs_queue_attributes",
+        "inspect_dlq_messages",
+        "list_dead_letter_queues",
+        "purge_sqs_queue",
+        "redrive_dlq"
+      ],
+      "requires": [
+        "messaging",
+        "ops"
+      ],
+      "enabledByDefault": false,
+      "path": "skills/floci-triage/SKILL.md"
     }
   ]
 }

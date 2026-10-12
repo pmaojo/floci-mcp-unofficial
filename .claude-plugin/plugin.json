@@ -1,0 +1,61 @@
+{
+  "name": "floci",
+  "displayName": "Floci (unofficial)",
+  "version": "0.1.0",
+  "description": "MCP server and skills for the Floci local cloud emulator: inspect and provision your local AWS, Azure, GCP and OCI from an agent. Unofficial community project.",
+  "author": {
+    "name": "pmaojo",
+    "url": "https://github.com/pmaojo"
+  },
+  "homepage": "https://github.com/pmaojo/floci-mcp-unofficial",
+  "repository": "https://github.com/pmaojo/floci-mcp-unofficial",
+  "license": "MIT",
+  "keywords": [
+    "floci",
+    "aws",
+    "azure",
+    "gcp",
+    "oci",
+    "emulator",
+    "local-development",
+    "mcp"
+  ],
+  "userConfig": {
+    "toolsets": {
+      "type": "string",
+      "title": "Toolsets",
+      "description": "Comma separated toolsets to register: core, storage, messaging, compute, ops, marketplace, hybrid, or all. Fewer tools means fewer tokens per conversation.",
+      "default": "core,storage,messaging,compute"
+    },
+    "read_only": {
+      "type": "string",
+      "title": "Read-only mode",
+      "description": "Set to 1 to remove every tool that changes state. Leave 0 to keep them.",
+      "default": "0"
+    },
+    "aws_endpoint": {
+      "type": "string",
+      "title": "AWS endpoint",
+      "description": "Floci core endpoint.",
+      "default": "http://localhost:4566"
+    },
+    "azure_endpoint": {
+      "type": "string",
+      "title": "Azure endpoint",
+      "description": "Floci-AZ endpoint.",
+      "default": "http://localhost:4577"
+    },
+    "gcp_endpoint": {
+      "type": "string",
+      "title": "GCP endpoint",
+      "description": "Floci-GCP endpoint.",
+      "default": "http://localhost:4588"
+    },
+    "oci_endpoint": {
+      "type": "string",
+      "title": "OCI endpoint",
+      "description": "Floci-OCI endpoint.",
+      "default": "http://localhost:4599"
+    }
+  }
+}

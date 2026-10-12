@@ -16,11 +16,13 @@ import socket
 import subprocess
 import sys
 import time
+import re
 import uuid
 import zipfile
 import io
 
 os.environ["FLOCI_TOOLSETS"] = "all"
+import toolsets as toolsets_module  # noqa: E402
 spec = importlib.util.spec_from_file_location("floci_mcp", os.path.join(os.path.dirname(__file__), "floci_mcp.py"))
 server = importlib.util.module_from_spec(spec)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -159,6 +161,64 @@ async def protocol():
     ok("protocol", "server keeps answering after errors", "after errors" in json.dumps(replies.get(7, {})), replies.get(7))
 
 
+# ------------------------------------------------------------------- plugin
+@group
+async def plugin_group():
+    root = os.path.dirname(os.path.abspath(__file__))
+    manifest = json.load(open(os.path.join(root, ".claude-plugin", "plugin.json")))
+    market = json.load(open(os.path.join(root, ".claude-plugin", "marketplace.json")))
+    mcp_json = json.load(open(os.path.join(root, ".mcp.json")))
+    ok("plugin", "name is kebab-case and not reserved",
+       re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", manifest["name"]) is not None
+       and not manifest["name"].startswith(("claude-", "anthropic-")), manifest["name"])
+    ok("plugin", "the marketplace lists the plugin from the repository root",
+       any(p["name"] == manifest["name"] and p["source"] in (".", "./") for p in market["plugins"]), market["plugins"])
+    ok("plugin", "skills live in the default skills/ directory", os.path.isdir(os.path.join(root, "skills")))
+    server = mcp_json["mcpServers"]["floci"]
+    referenced = set(re.findall(r"\$\{user_config\.([A-Za-z0-9_]+)\}", json.dumps(server)))
+    ok("plugin", "every user_config reference is declared", referenced <= set(manifest["userConfig"]), referenced - set(manifest["userConfig"]))
+    ok("plugin", "the server entry point exists", os.path.isfile(os.path.join(root, "floci_mcp.py")))
+    ok("plugin", "the default toolsets in the manifest match the server",
+       manifest["userConfig"]["toolsets"]["default"] == ",".join(toolsets_module.DEFAULT_TOOLSETS),
+       manifest["userConfig"]["toolsets"]["default"])
+    import shutil
+    if shutil.which("claude"):
+        for target in (".claude-plugin/plugin.json", "."):
+            proc = subprocess.run(["claude", "plugin", "validate", target, "--strict"], capture_output=True, text=True, cwd=root, timeout=120)
+            ok("plugin", f"claude plugin validate {target}", proc.returncode == 0, (proc.stdout + proc.stderr)[-300:])
+    else:
+        skip("plugin", "claude plugin validate", "the claude CLI is not installed")
+
+
+# ------------------------------------------------------------------- skills
+TOOL_LIKE = re.compile(
+    r"^(list|get|create|delete|put|update|send|publish|subscribe|unsubscribe|purge|receive|invoke|run|start|stop|"
+    r"describe|generate|export|seed|deploy|teardown|promote|register|emit|inspect|redrive|tag|untag|find|check|"
+    r"verify|detect|discover|capture|edit|replay|kms|gcp|azure|oci|scan|query|execute|proxy)_[a-z0-9_]+$"
+)
+ENV_AND_PARAMS = {"FLOCI_TOOLSETS", "FLOCI_READ_ONLY"}
+
+
+@group
+async def skills_group():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import skills_catalog
+    skills = await skills_catalog.load_skills()
+    readme = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "README.md")).read()
+    ok("skills", f"{len(skills)} skills found", len(skills) >= 6)
+    for skill in skills:
+        name = skill["dir"]
+        ok("skills", f"{name}: frontmatter name matches its directory", skill["name"] == name, skill["name"])
+        ok("skills", f"{name}: has a description of 40 to 1024 characters", 40 <= len(skill["description"]) <= 1024, len(skill["description"]))
+        ok("skills", f"{name}: description says when to use it", "use when" in skill["description"].lower(), skill["description"][:120])
+        ok("skills", f"{name}: every tool it names exists", not [c for c in skill["candidates"] if TOOL_LIKE.match(c)],
+           [c for c in skill["candidates"] if TOOL_LIKE.match(c)])
+        ok("skills", f"{name}: calls at least one tool", len(skill["tools"]) >= 1)
+        ok("skills", f"{name}: states the toolsets it needs, and they are the right ones",
+           set(skill["statedToolsets"]) == set(skill["requires"]), {"stated": skill["statedToolsets"], "actual": skill["requires"]})
+        ok("skills", f"{name}: is listed in the README", f"`{name}`" in readme)
+
+
 # ----------------------------------------------------------------- toolsets
 @group
 async def toolsets_group():
@@ -211,6 +271,10 @@ async def toolsets_group():
        [n for n in (everything or {}).get("writers", []) if everything["ro"].get(n)])
     listing = await attempt("list_toolsets")
     ok("toolsets", "list_toolsets explains the configuration", "enabled" in listing and "how_to_enable" in listing, listing)
+    digest = listing.get("definitions_sha256", "")
+    ok("toolsets", "list_toolsets reports a definitions digest", bool(re.fullmatch(r"[0-9a-f]{64}", digest)), digest)
+    again = await attempt("list_toolsets")
+    ok("toolsets", "the digest is stable between calls", again.get("definitions_sha256") == digest)
 
 
 # --------------------------------------------------------------------- core
@@ -725,6 +789,38 @@ async def clouds():
         ok("oci", "objects of a missing bucket is an error", has_error(await attempt("oci_list_objects", bucket=f"absent-{X}")))
     else:
         skip("oci", "oci tools", "runtime not reachable")
+
+
+# ------------------------------------------------------------------- cwd
+@group
+async def working_directory():
+    """An MCP client starts the server from its own directory, not from this repository."""
+    import tempfile
+    root = os.path.dirname(os.path.abspath(__file__))
+    work = tempfile.mkdtemp(prefix="floci-cwd-")
+    state = tempfile.mkdtemp(prefix="floci-state-")
+    script = (
+        "import asyncio, importlib.util, json, sys\n"
+        "sys.path.insert(0, %r)\n"
+        "spec = importlib.util.spec_from_file_location('m', %r); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "async def go():\n"
+        "    out = {}\n"
+        "    r = await m.mcp.call_tool('list_marketplace_recipes', {})\n"
+        "    d = r[1] if isinstance(r, tuple) else json.loads(r[0].text)\n"
+        "    out['recipes'] = len(d.get('recipes', []))\n"
+        "    await m.mcp.call_tool('get_network_topology', {})\n"
+        "    await m.mcp.call_tool('list_lifecycle_webhooks', {})\n"
+        "    print('RESULT' + json.dumps(out))\n"
+        "asyncio.run(go())\n"
+    ) % (root, os.path.join(root, "floci_mcp.py"))
+    env = {**os.environ, "FLOCI_TOOLSETS": "all", "SIDECAR_STATE_DIR": state}
+    proc = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=env, timeout=120, cwd=work)
+    line = next((l for l in proc.stdout.splitlines() if l.startswith("RESULT")), None)
+    ok("cwd", "the server runs from another directory", line is not None, proc.stderr[-300:])
+    if line:
+        ok("cwd", "the recipe catalog is found from another directory", json.loads(line[6:])["recipes"] >= 30, line)
+    ok("cwd", "nothing is written into the working directory", os.listdir(work) == [], os.listdir(work))
+    ok("cwd", "state goes to SIDECAR_STATE_DIR", len(os.listdir(state)) >= 1, os.listdir(state))
 
 
 # ------------------------------------------------------------ resilience

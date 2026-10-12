@@ -8,6 +8,8 @@ registered.
     FLOCI_TOOLSETS=core,storage     # comma separated names, or "all"
     FLOCI_READ_ONLY=1               # drop every tool that changes state
 """
+import hashlib
+import json
 import os
 
 from mcp.server.fastmcp import FastMCP
@@ -118,13 +120,39 @@ def register_toolset_info(mcp: FastMCP, selection: tuple[str, ...], read_only: b
 
         Tools outside the enabled toolsets are not registered. Enable more with the
         FLOCI_TOOLSETS environment variable (comma separated, or "all") and restart the server.
+        definitions_sha256 is a digest of every registered tool definition: pin it to notice
+        when names, descriptions or schemas change between versions.
         """
+        tools = await mcp.list_tools()
         return {
             "enabled": list(selection),
             "read_only": read_only,
+            "tools": len(tools),
+            "definitions_sha256": definitions_digest(tools),
             "available": {
                 toolset: {"modules": list(modules), "enabled": toolset in selection}
                 for toolset, modules in TOOLSETS.items()
             },
             "how_to_enable": "Set FLOCI_TOOLSETS=core,storage,... (or all) and restart the server.",
         }
+
+
+async def tool_index() -> dict[str, dict]:
+    """Maps every built-in tool name to its module and toolset."""
+    index: dict[str, dict] = {}
+    for module_name, module in MODULES.items():
+        server = FastMCP(module_name)
+        module.register(server)
+        for tool in await server.list_tools():
+            index[tool.name] = {"module": module_name, "toolset": toolset_of(module_name)}
+    # Always registered, whatever the selection.
+    index["list_toolsets"] = {"module": "toolsets", "toolset": None}
+    return index
+
+
+def definitions_digest(tools) -> str:
+    """SHA-256 over the sorted name, description and schema of each tool."""
+    canonical = sorted(
+        (t.name, t.description or "", json.dumps(t.inputSchema, sort_keys=True)) for t in tools
+    )
+    return hashlib.sha256(json.dumps(canonical).encode()).hexdigest()

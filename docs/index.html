@@ -37,7 +37,8 @@
   }
   .strip > * { padding: 10px 16px; border-right: 2px solid var(--paper); }
   .strip .flag { background: var(--red); color: var(--ink); }
-  .strip a { margin-left: auto; border-right: 0; }
+  .strip a.nav { margin-left: 0; border-right: 2px solid var(--paper); }
+  .strip a:last-child { margin-left: auto; border-right: 0; }
 
   header.hero { padding: 40px 16px 24px; border-bottom: var(--line) solid var(--ink); }
   h1 {
@@ -132,10 +133,39 @@
   footer { padding: 24px 16px 48px; font-weight: 700; }
   footer p { margin: 6px 0; max-width: 90ch; }
 
+
+  .skills { background: var(--yellow); }
+  .skills-head { padding: 28px 16px 8px; max-width: 90ch; }
+  .skills-head h2 { margin: 12px 0 8px; font-size: clamp(36px, 7vw, 84px); line-height: .9; letter-spacing: -.04em; text-transform: uppercase; }
+  .skills-head p { margin: 0; font-size: 17px; font-weight: 700; }
+  .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); border-top: var(--line) solid var(--ink); margin-top: 20px; }
+  .skill {
+    background: var(--paper); border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink);
+    padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  }
+  .skill h3 { margin: 0; font-size: 22px; letter-spacing: -.02em; word-break: break-all; }
+  .skill p { margin: 0; }
+  .skill .usage { background: var(--ink); color: var(--yellow); padding: 8px 10px; font-size: 13px; overflow-x: auto; white-space: pre; }
+  .skill .needs { font-size: 13px; font-weight: 700; text-transform: uppercase; }
+  .skill details { border-top: 3px solid var(--ink); padding-top: 8px; }
+  .skill .tool-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .skill-install { padding: 20px 16px 28px; border-top: 0; }
+  .skill-install p { margin: 10px 0 0; font-weight: 700; }
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .docs-grid > div { padding: 20px 16px; border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink); min-width: 0; }
+  .docs-grid h2 { margin: 12px 0; font-size: 30px; letter-spacing: -.02em; text-transform: uppercase; line-height: 1; }
+  .docs-grid p { margin: 8px 0; }
+  .docs-grid ul { margin: 8px 0 0; padding-left: 20px; }
+  .docs-grid li { margin: 6px 0; }
+  .label.warn { background: var(--red); color: var(--ink); }
+  code { background: #e6e3d2; border: 2px solid var(--ink); padding: 0 4px; font-size: 13px; }
+  .skills code, .skill code { background: var(--paper); }
+
   @media (max-width: 760px) {
     .counters { grid-template-columns: 1fr 1fr; }
     .counter:nth-child(2) { border-right: 0; }
     .counter:nth-child(-n+2) { border-bottom: var(--line) solid var(--ink); }
+    .strip a.nav { display: none; }
     .install { grid-template-columns: 1fr; }
     .install > div:first-child { border-right: 0; border-bottom: var(--line) solid var(--ink); }
     .tab { font-size: 16px; padding: 12px 8px; }
@@ -150,6 +180,9 @@
   <span>floci-mcp-unofficial</span>
   <span class="flag">unofficial</span>
   <span id="generated">catalog: loading</span>
+  <a class="nav" href="#skills">skills</a>
+  <a class="nav" href="#market">catalog</a>
+  <a class="nav" href="#docs">docs</a>
   <a href="https://github.com/pmaojo/floci-mcp-unofficial">github &rarr;</a>
 </div>
 
@@ -165,9 +198,29 @@
 <div class="counters" aria-label="Catalog counters">
   <div class="counter"><b id="c-tools">&ndash;</b><span>tools</span></div>
   <div class="counter"><b id="c-recipes">&ndash;</b><span>recipes</span></div>
+  <div class="counter"><b id="c-skills">&ndash;</b><span>skills</span></div>
   <div class="counter"><b id="c-clouds">4</b><span>clouds</span></div>
-  <div class="counter"><b id="c-writes">&ndash;</b><span>tools that write</span></div>
 </div>
+
+<section class="skills" id="skills" aria-label="Skills">
+  <div class="skills-head">
+    <span class="label">skills</span>
+    <h2>Skills first.</h2>
+    <p>The tools are the hands. Skills are the playbook: short instructions an agent loads on demand that say
+      which tools to call, in what order, and when to stop and ask. Install them and the agent stops guessing.</p>
+  </div>
+  <div class="skill-grid" id="skill-grid"></div>
+  <div class="skill-install">
+    <span class="label">install as a Claude Code plugin</span>
+    <pre class="code">/plugin marketplace add pmaojo/floci-mcp-unofficial
+/plugin install floci@floci-mcp-unofficial</pre>
+    <span class="label">or just the skills</span>
+    <pre class="code">mkdir -p ~/.claude/skills
+ln -s "$PWD"/skills/* ~/.claude/skills/      # or cp -R skills/* ~/.claude/skills/</pre>
+    <p>A skill that needs a toolset which is not enabled by default says so. Ask for it with
+      <code>FLOCI_TOOLSETS</code> and restart the server.</p>
+  </div>
+</section>
 
 <section class="market" id="market" aria-label="Marketplace">
   <div class="tabs" role="tablist">
@@ -213,6 +266,64 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
     }
   }
 }</pre>
+  </div>
+</section>
+
+<section class="docs" id="docs" aria-label="Documentation">
+  <div class="docs-grid">
+    <div>
+      <span class="label">toolsets</span>
+      <h2>Not all 138 at once.</h2>
+      <p>A client sends every tool definition on every conversation, and models pick worse among many similar tools.
+        Only the enabled toolsets are registered.</p>
+      <table id="toolset-table"><thead><tr><th>toolset</th><th>tools</th><th>default</th></tr></thead><tbody></tbody></table>
+      <pre class="code">FLOCI_TOOLSETS=core,storage    # only these
+FLOCI_TOOLSETS=all             # everything
+FLOCI_READ_ONLY=1              # drop every tool that writes</pre>
+    </div>
+    <div>
+      <span class="label">clouds</span>
+      <h2>Four runtimes.</h2>
+      <table>
+        <thead><tr><th>cloud</th><th>port</th><th>covers</th></tr></thead>
+        <tbody>
+          <tr><td>AWS</td><td>4566</td><td>the full surface, through boto3</td></tr>
+          <tr><td>Azure</td><td>4577</td><td>blobs, queues, Key Vault names</td></tr>
+          <tr><td>GCP</td><td>4588</td><td>Cloud Storage, Pub/Sub, Secret Manager names</td></tr>
+          <tr><td>OCI</td><td>4599</td><td>Object Storage</td></tr>
+        </tbody>
+      </table>
+      <p>Start with <code>list_clouds</code>: it says which runtimes answer.</p>
+    </div>
+    <div>
+      <span class="label">configuration</span>
+      <h2>Environment.</h2>
+      <table>
+        <thead><tr><th>variable</th><th>default</th></tr></thead>
+        <tbody>
+          <tr><td>AWS_ENDPOINT_URL</td><td>http://localhost:4566</td></tr>
+          <tr><td>FLOCI_AZURE_ENDPOINT</td><td>http://localhost:4577</td></tr>
+          <tr><td>FLOCI_GCP_ENDPOINT</td><td>http://localhost:4588</td></tr>
+          <tr><td>FLOCI_OCI_ENDPOINT</td><td>http://localhost:4599</td></tr>
+          <tr><td>FLOCI_TOOLSETS</td><td>core,storage,messaging,compute</td></tr>
+          <tr><td>FLOCI_READ_ONLY</td><td>off</td></tr>
+          <tr><td>SIDECAR_STATE_DIR</td><td>~/.floci-mcp</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="safety">
+      <span class="label warn">safety</span>
+      <h2>It can change your machine.</h2>
+      <ul>
+        <li><b id="safety-writes">60</b> tools write. <code>FLOCI_READ_ONLY=1</code> removes them; annotations let a client confirm first.</li>
+        <li>Cloud secret tools return names, never values. <code>get_secret_value</code> (AWS) does return the value.</li>
+        <li><code>run_local_aws_cmd</code> is full aws CLI access: a command can pass its own <code>--endpoint-url</code>.</li>
+        <li><code>proxy_http_request</code> requests any URL from the host.</li>
+        <li>Tool descriptions steer the model. <code>list_toolsets</code> returns a SHA-256 of every registered definition: pin it and compare after updates.</li>
+        <li>Hybrid tools can use real AWS credentials. They live in <code>hybrid</code>, off by default.</li>
+        <li>The marketplace starts containers on your Docker. Teardown removes their volumes.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
@@ -368,6 +479,43 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
     return card;
   }
 
+
+  function skillCard(skill) {
+    var needs = skill.requires.map(function (t) { return t + (isDefault(t) ? "" : " (not default)"); }).join(", ");
+    var card = h("article", { class: "skill" },
+      h("h3", { text: skill.name }),
+      h("p", { text: skill.description }),
+      h("div", { class: "usage", text: "/" + skill.name + (skill.argumentHint ? " " + skill.argumentHint : "") }),
+      h("div", { class: "needs", text: "needs: " + needs }),
+      h("div", { class: "tags" },
+        h("span", { class: "tag " + (skill.enabledByDefault ? "read" : "write"),
+          text: skill.enabledByDefault ? "works with the default toolsets" : "needs extra toolsets" }),
+        h("span", { class: "tag", text: skill.tools.length + " tools" })));
+    card.appendChild(h("details", null, h("summary", { text: "tools it calls" }),
+      h("div", { class: "tool-list" }, skill.tools.map(function (t) {
+        return h("a", { class: "tag", href: "#view=tools&q=" + encodeURIComponent(t), text: t });
+      }))));
+    card.appendChild(h("div", { class: "actions" },
+      h("a", { class: "btn alt", href: catalog.repo + "/blob/main/" + skill.path, text: "read SKILL.md" })));
+    return card;
+  }
+
+  function renderSkills() {
+    var grid = document.getElementById("skill-grid");
+    grid.replaceChildren();
+    (catalog.skills || []).forEach(function (s) { grid.appendChild(skillCard(s)); });
+  }
+
+  function renderToolsetTable() {
+    var body = document.querySelector("#toolset-table tbody");
+    body.replaceChildren();
+    Object.keys(catalog.toolsets || {}).forEach(function (name) {
+      var count = catalog.tools.filter(function (t) { return t.toolset === name; }).length;
+      body.appendChild(h("tr", null, h("td", { text: name }), h("td", { text: String(count) }),
+        h("td", { text: isDefault(name) ? "yes" : "" })));
+    });
+  }
+
   function chipGroup(label, key, options) {
     var wrap = h("div", { class: "chips" }, h("span", { class: "group-name", text: label }));
     options.forEach(function (opt) {
@@ -455,7 +603,9 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
 
   document.getElementById("c-tools").textContent = catalog.counts.tools;
   document.getElementById("c-recipes").textContent = catalog.counts.recipes;
-  document.getElementById("c-writes").textContent = catalog.tools.filter(function (t) { return t.writes; }).length;
+  var writers = catalog.tools.filter(function (t) { return t.writes; }).length;
+  document.getElementById("c-skills").textContent = (catalog.skills || []).length;
+  document.getElementById("safety-writes").textContent = writers;
   document.getElementById("n-tools").textContent = catalog.counts.tools;
   document.getElementById("n-recipes").textContent = catalog.counts.recipes;
   document.getElementById("generated").textContent = "catalog: " + String(catalog.generatedAt).slice(0, 10);
@@ -473,6 +623,8 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
   window.addEventListener("hashchange", function () { readHash(); render(); });
 
   readHash();
+  renderSkills();
+  renderToolsetTable();
   render();
 })();
 </script>

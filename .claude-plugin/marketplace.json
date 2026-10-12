@@ -1,0 +1,17 @@
+{
+  "name": "floci-mcp-unofficial",
+  "owner": {
+    "name": "pmaojo",
+    "url": "https://github.com/pmaojo"
+  },
+  "description": "Unofficial community plugins for the Floci local cloud emulator.",
+  "plugins": [
+    {
+      "name": "floci",
+      "source": ".",
+      "description": "MCP server and six skills for the Floci emulator: AWS, Azure, GCP and OCI, with toolsets and a read-only mode.",
+      "category": "development",
+      "tags": ["floci", "aws", "azure", "gcp", "oci", "mcp", "emulator"]
+    }
+  ]
+}
