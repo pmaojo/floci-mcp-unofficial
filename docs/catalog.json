@@ -1,17 +1,61 @@
 {
-  "generatedAt": "2026-10-12T18:31:55Z",
+  "generatedAt": "2026-10-12T19:05:55Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 138,
     "recipes": 35
   },
+  "toolsets": {
+    "core": [
+      "meta",
+      "clouds"
+    ],
+    "storage": [
+      "s3",
+      "dynamodb",
+      "secrets",
+      "kms"
+    ],
+    "messaging": [
+      "sqs",
+      "sns",
+      "eventbridge",
+      "stepfunctions",
+      "ses"
+    ],
+    "compute": [
+      "lambda",
+      "athena"
+    ],
+    "ops": [
+      "tags",
+      "observability",
+      "iac"
+    ],
+    "marketplace": [
+      "marketplace",
+      "pipeline"
+    ],
+    "hybrid": [
+      "hybrid",
+      "devtools",
+      "extensibility"
+    ]
+  },
+  "defaultToolsets": [
+    "core",
+    "storage",
+    "messaging",
+    "compute"
+  ],
   "tools": [
     {
       "name": "check_floci_health",
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Verifica si el backend de Floci y el emulador AWS están respondiendo. Devuelve estado de cada componente.",
+      "toolset": "core",
+      "description": "Checks whether the Floci backend and the AWS emulator are answering. Returns the status of each component.",
       "params": []
     },
     {
@@ -19,7 +63,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Lista el catálogo completo de servicios AWS que Floci puede gestionar (S3, Lambda, SQS, SNS, etc.).",
+      "toolset": "core",
+      "description": "Lists the catalogue of AWS services Floci can manage (S3, Lambda, SQS, SNS, ...) and which ones have resources.",
       "params": []
     },
     {
@@ -27,7 +72,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Lee el inventario de recursos de un servicio AWS específico.",
+      "toolset": "core",
+      "description": "Reads the inventory of one AWS service.",
       "params": [
         {
           "name": "service_key",
@@ -41,7 +87,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Devuelve un diagrama con todos los recursos activos del entorno: buckets S3, colas SQS, tablas DynamoDB, funciones Lambda, APIs y claves KMS.",
+      "toolset": "core",
+      "description": "Returns a diagram of every active resource in the environment: S3 buckets, SQS queues, DynamoDB tables, Lambda functions, APIs and KMS keys.",
       "params": []
     },
     {
@@ -49,7 +96,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Estima el coste mensual del entorno actual basado en los recursos desplegados.",
+      "toolset": "core",
+      "description": "Estimates the monthly cost on real AWS of the resources deployed in the local environment.",
       "params": []
     },
     {
@@ -57,7 +105,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Devuelve el mapa de red Docker local de Floci con contenedores, redes y puertos expuestos.",
+      "toolset": "core",
+      "description": "Returns the local Docker network map of Floci: containers, networks and exposed ports.",
       "params": []
     },
     {
@@ -65,7 +114,8 @@
       "group": "meta",
       "cloud": "aws",
       "writes": false,
-      "description": "Devuelve el roadmap de las características planificadas para lograr la paridad total con Enterprise. Incluye áreas de mejora como resiliencia, gestión de estados, observabilidad, sincronización IaC, desarrollo híbrido y extensibilidad.",
+      "toolset": "core",
+      "description": "Returns the roadmap of planned capabilities to reach parity with enterprise emulators: resilience, state management, observability, IaC sync, hybrid development and extensibility.",
       "params": []
     },
     {
@@ -73,6 +123,7 @@
       "group": "clouds",
       "cloud": "aws",
       "writes": false,
+      "toolset": "core",
       "description": "Reports which Floci runtimes are reachable: aws, azure, gcp and oci.",
       "params": []
     },
@@ -81,6 +132,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Cloud Storage buckets in the configured GCP project (Floci-GCP).",
       "params": []
     },
@@ -89,6 +141,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Creates a Cloud Storage bucket in the configured GCP project (Floci-GCP).",
       "params": [
         {
@@ -103,6 +156,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Lists the objects of a Cloud Storage bucket, optionally under a prefix.",
       "params": [
         {
@@ -123,6 +177,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Pub/Sub topics in the configured GCP project.",
       "params": []
     },
@@ -131,6 +186,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Creates a Pub/Sub topic (Floci-GCP uses PUT, as the real API does).",
       "params": [
         {
@@ -145,6 +201,7 @@
       "group": "clouds",
       "cloud": "gcp",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Secret Manager secrets in the configured GCP project (names only, never values).",
       "params": []
     },
@@ -153,6 +210,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Blob Storage containers of the Floci-AZ storage account.",
       "params": []
     },
@@ -161,6 +219,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Creates a Blob Storage container.",
       "params": [
         {
@@ -175,6 +234,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Lists the blobs of a container, optionally under a prefix.",
       "params": [
         {
@@ -195,6 +255,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Queue Storage queues of the Floci-AZ storage account.",
       "params": []
     },
@@ -203,6 +264,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Creates a Queue Storage queue.",
       "params": [
         {
@@ -217,6 +279,7 @@
       "group": "clouds",
       "cloud": "azure",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Key Vault secret identifiers (names only, never values).",
       "params": []
     },
@@ -225,6 +288,7 @@
       "group": "clouds",
       "cloud": "oci",
       "writes": false,
+      "toolset": "core",
       "description": "Lists Object Storage buckets in the default compartment (Floci-OCI).",
       "params": []
     },
@@ -233,6 +297,7 @@
       "group": "clouds",
       "cloud": "oci",
       "writes": false,
+      "toolset": "core",
       "description": "Creates an Object Storage bucket in the default compartment.",
       "params": [
         {
@@ -247,6 +312,7 @@
       "group": "clouds",
       "cloud": "oci",
       "writes": false,
+      "toolset": "core",
       "description": "Lists the objects of an Object Storage bucket, optionally under a prefix.",
       "params": [
         {
@@ -263,11 +329,1162 @@
       ]
     },
     {
+      "name": "list_s3_buckets",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Lists all S3 buckets in the environment.",
+      "params": []
+    },
+    {
+      "name": "create_s3_bucket",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Creates an S3 bucket. The name must be unique: lowercase letters, digits and hyphens only.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "delete_s3_bucket",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Deletes an S3 bucket.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "force",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": "list_s3_objects",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Lists the objects of an S3 bucket.",
+      "params": [
+        {
+          "name": "bucket",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "prefix",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_keys",
+          "type": "integer",
+          "required": false,
+          "default": 100
+        }
+      ]
+    },
+    {
+      "name": "put_s3_object",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Uploads an object to S3 as plain text or serialized JSON.",
+      "params": [
+        {
+          "name": "bucket",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "content_type",
+          "type": "string",
+          "required": false,
+          "default": "text/plain"
+        }
+      ]
+    },
+    {
+      "name": "get_s3_object",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Downloads an S3 object and returns its content as text.",
+      "params": [
+        {
+          "name": "bucket",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "delete_s3_object",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Deletes one object from an S3 bucket.",
+      "params": [
+        {
+          "name": "bucket",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "generate_s3_presigned_url",
+      "group": "s3",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Generates a presigned URL for temporary access to an S3 object without credentials.",
+      "params": [
+        {
+          "name": "bucket",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "required": false,
+          "default": "get_object"
+        },
+        {
+          "name": "expires_in",
+          "type": "integer",
+          "required": false,
+          "default": 3600
+        }
+      ]
+    },
+    {
+      "name": "list_dynamodb_tables",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Lists all DynamoDB tables in the environment.",
+      "params": []
+    },
+    {
+      "name": "create_dynamodb_table",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Creates a DynamoDB table.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "partition_key",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "partition_key_type",
+          "type": "string",
+          "required": false,
+          "default": "S"
+        },
+        {
+          "name": "sort_key",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "sort_key_type",
+          "type": "string",
+          "required": false,
+          "default": "S"
+        },
+        {
+          "name": "billing_mode",
+          "type": "string",
+          "required": false,
+          "default": "PAY_PER_REQUEST"
+        }
+      ]
+    },
+    {
+      "name": "delete_dynamodb_table",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Permanently deletes a DynamoDB table and all of its data.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "put_dynamodb_item",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Inserts or replaces an item in a DynamoDB table.",
+      "params": [
+        {
+          "name": "table",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "item",
+          "type": "object",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "get_dynamodb_item",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Gets one DynamoDB item by its primary key.",
+      "params": [
+        {
+          "name": "table",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "object",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "query_dynamodb",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Queries DynamoDB items by partition key, optionally narrowed by the sort key.",
+      "params": [
+        {
+          "name": "table",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key_condition_expression",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "expression_attribute_values",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "filter_expression",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "limit",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "scan_index_forward",
+          "type": "boolean",
+          "required": false,
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "scan_dynamodb",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Scans every item of a DynamoDB table.",
+      "params": [
+        {
+          "name": "table",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "filter_expression",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "expression_attribute_values",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "limit",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "delete_dynamodb_item",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Deletes a DynamoDB item by its primary key.",
+      "params": [
+        {
+          "name": "table",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "key",
+          "type": "object",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "execute_partiql_dynamodb",
+      "group": "dynamodb",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Runs one PartiQL statement on DynamoDB (SQL-like: SELECT, INSERT, UPDATE, DELETE).",
+      "params": [
+        {
+          "name": "statement",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_secrets",
+      "group": "secrets",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Lists all AWS Secrets Manager secrets in the environment.",
+      "params": []
+    },
+    {
+      "name": "create_secret",
+      "group": "secrets",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Creates a Secrets Manager secret.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_secret_value",
+      "group": "secrets",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Gets the value of a Secrets Manager secret by name or ARN.",
+      "params": [
+        {
+          "name": "name_or_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "update_secret",
+      "group": "secrets",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Updates the value of an existing Secrets Manager secret.",
+      "params": [
+        {
+          "name": "name_or_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "delete_secret",
+      "group": "secrets",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Deletes a Secrets Manager secret.",
+      "params": [
+        {
+          "name": "name_or_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "force",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": "run_kms_diagnostic",
+      "group": "kms",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Runs an encrypt/decrypt round trip with KMS to verify that the service works. Creates a key.",
+      "params": []
+    },
+    {
+      "name": "list_kms_keys",
+      "group": "kms",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Lists all KMS keys in the environment with their IDs, ARNs and aliases.",
+      "params": []
+    },
+    {
+      "name": "create_kms_key",
+      "group": "kms",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "storage",
+      "description": "Creates a KMS encryption key.",
+      "params": [
+        {
+          "name": "description",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "alias",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "kms_encrypt",
+      "group": "kms",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Encrypts text with a KMS key. Returns the ciphertext in base64.",
+      "params": [
+        {
+          "name": "key_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "plaintext",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "kms_decrypt",
+      "group": "kms",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "storage",
+      "description": "Decrypts a KMS ciphertext (base64) and returns the original text.",
+      "params": [
+        {
+          "name": "ciphertext_blob",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_sqs_queues",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists all SQS queues in the environment with their URLs.",
+      "params": []
+    },
+    {
+      "name": "create_sqs_queue",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Creates a standard or FIFO SQS queue.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "fifo",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "visibility_timeout",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "message_retention_seconds",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "delay_seconds",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "delete_sqs_queue",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Permanently deletes an SQS queue and all of its messages.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "send_sqs_message",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Sends a message to an SQS queue.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "message_group_id",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "message_deduplication_id",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "delay_seconds",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "receive_sqs_messages",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Receives messages from an SQS queue.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "max_messages",
+          "type": "integer",
+          "required": false,
+          "default": 10
+        },
+        {
+          "name": "wait_seconds",
+          "type": "integer",
+          "required": false,
+          "default": 0
+        },
+        {
+          "name": "visibility_timeout",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "delete_sqs_message",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Deletes a message from a queue using its receipt_handle.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "receipt_handle",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "get_sqs_queue_attributes",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Gets every attribute of an SQS queue.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "purge_sqs_queue",
+      "group": "sqs",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Removes all messages from an SQS queue immediately. The queue itself stays.",
+      "params": [
+        {
+          "name": "queue_url",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_sns_topics",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists all SNS topics in the environment with their ARNs.",
+      "params": []
+    },
+    {
+      "name": "create_sns_topic",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Creates a standard or FIFO SNS topic.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "fifo",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "display_name",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "delete_sns_topic",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Deletes an SNS topic and all of its active subscriptions.",
+      "params": [
+        {
+          "name": "topic_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "publish_sns_message",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Publishes a message to an SNS topic, fanning it out to every subscriber.",
+      "params": [
+        {
+          "name": "topic_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "subject",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "message_attributes",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "list_sns_subscriptions",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists the subscriptions of an SNS topic with protocol, endpoint and status.",
+      "params": [
+        {
+          "name": "topic_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "subscribe_sns",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Subscribes an endpoint to an SNS topic.",
+      "params": [
+        {
+          "name": "topic_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "protocol",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "endpoint",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "unsubscribe_sns",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Removes an SNS subscription by its ARN.",
+      "params": [
+        {
+          "name": "subscription_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "get_sns_topic_attributes",
+      "group": "sns",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Gets the attributes of an SNS topic: name, FIFO type, delivery policy and more.",
+      "params": [
+        {
+          "name": "topic_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_eventbridge_buses",
+      "group": "eventbridge",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists all EventBridge event buses, including the 'default' bus.",
+      "params": []
+    },
+    {
+      "name": "put_eventbridge_events",
+      "group": "eventbridge",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Sends custom events to an EventBridge event bus.",
+      "params": [
+        {
+          "name": "entries",
+          "type": "array",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_eventbridge_rules",
+      "group": "eventbridge",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists all rules of an EventBridge event bus.",
+      "params": [
+        {
+          "name": "bus_name",
+          "type": "string",
+          "required": false,
+          "default": "default"
+        }
+      ]
+    },
+    {
+      "name": "create_eventbridge_rule",
+      "group": "eventbridge",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Creates an EventBridge rule with a schedule or an event pattern, and optional targets.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "schedule_expression",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "event_pattern",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "bus_name",
+          "type": "string",
+          "required": false,
+          "default": "default"
+        },
+        {
+          "name": "targets",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "delete_eventbridge_rule",
+      "group": "eventbridge",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Deletes an EventBridge rule.",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "bus_name",
+          "type": "string",
+          "required": false,
+          "default": "default"
+        }
+      ]
+    },
+    {
+      "name": "list_step_functions",
+      "group": "stepfunctions",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists all AWS Step Functions state machines in the environment.",
+      "params": []
+    },
+    {
+      "name": "start_sfn_execution",
+      "group": "stepfunctions",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Starts an execution of a Step Functions state machine.",
+      "params": [
+        {
+          "name": "state_machine_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "input",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "name",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "describe_sfn_execution",
+      "group": "stepfunctions",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Gets the full state of a Step Functions execution.",
+      "params": [
+        {
+          "name": "execution_arn",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_sfn_executions",
+      "group": "stepfunctions",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists the executions of a state machine.",
+      "params": [
+        {
+          "name": "state_machine_arn",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "status_filter",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_results",
+          "type": "integer",
+          "required": false,
+          "default": 20
+        }
+      ]
+    },
+    {
+      "name": "list_ses_identities",
+      "group": "ses",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Lists the verified SES identities (email addresses and domains).",
+      "params": []
+    },
+    {
+      "name": "verify_ses_email",
+      "group": "ses",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Starts the verification of an email address in SES.",
+      "params": [
+        {
+          "name": "email",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "send_ses_email",
+      "group": "ses",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "messaging",
+      "description": "Sends an email through SES.",
+      "params": [
+        {
+          "name": "from_address",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "to_addresses",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "subject",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "body_text",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "body_html",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "cc_addresses",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_ses_send_quota",
+      "group": "ses",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "messaging",
+      "description": "Gets the SES sending statistics: maximum daily quota, maximum send rate (emails per second) and emails sent in the last 24 hours.",
+      "params": []
+    },
+    {
       "name": "get_lambda_runtimes",
       "group": "lambda",
       "cloud": "aws",
       "writes": false,
-      "description": "Lista los runtimes disponibles en Floci (Node.js, Python, Go, Java) y los templates de código por defecto.",
+      "toolset": "compute",
+      "description": "Lists the Lambda runtimes available in Floci (Node.js, Python, Go, Java) and their default code templates.",
       "params": []
     },
     {
@@ -275,7 +1492,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": false,
-      "description": "Lista todas las funciones Lambda desplegadas en el entorno con su configuración.",
+      "toolset": "compute",
+      "description": "Lists all Lambda functions deployed in the environment with their configuration.",
       "params": []
     },
     {
@@ -283,7 +1501,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": true,
-      "description": "Crea una nueva función Lambda.",
+      "toolset": "compute",
+      "description": "Creates a Lambda function.",
       "params": [
         {
           "name": "function_name",
@@ -330,7 +1549,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": true,
-      "description": "Actualiza el código fuente de una función Lambda existente.",
+      "toolset": "compute",
+      "description": "Updates the source code of an existing Lambda function.",
       "params": [
         {
           "name": "function_name",
@@ -354,7 +1574,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": true,
-      "description": "Actualiza la configuración de una función Lambda: handler, timeout, memoria o descripción.",
+      "toolset": "compute",
+      "description": "Updates the configuration of a Lambda function: handler, timeout, memory or description.",
       "params": [
         {
           "name": "function_name",
@@ -392,7 +1613,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": true,
-      "description": "Invoca una función Lambda y devuelve su respuesta.",
+      "toolset": "compute",
+      "description": "Invokes a Lambda function and returns its response.",
       "params": [
         {
           "name": "function_name",
@@ -418,7 +1640,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": false,
-      "description": "Obtiene los logs de CloudWatch de una función Lambda.",
+      "toolset": "compute",
+      "description": "Gets the CloudWatch logs of a Lambda function.",
       "params": [
         {
           "name": "function_name",
@@ -432,7 +1655,8 @@
       "group": "lambda",
       "cloud": "aws",
       "writes": true,
-      "description": "Elimina una función Lambda del entorno.",
+      "toolset": "compute",
+      "description": "Deletes a Lambda function from the environment.",
       "params": [
         {
           "name": "function_name",
@@ -442,1042 +1666,21 @@
       ]
     },
     {
-      "name": "list_sqs_queues",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las colas SQS del entorno con sus URLs.",
-      "params": []
-    },
-    {
-      "name": "create_sqs_queue",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea una cola SQS estándar o FIFO.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "fifo",
-          "type": "boolean",
-          "required": false,
-          "default": false
-        },
-        {
-          "name": "visibility_timeout",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "message_retention_seconds",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "delay_seconds",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "delete_sqs_queue",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina permanentemente una cola SQS y todos sus mensajes.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "send_sqs_message",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Envía un mensaje a una cola SQS.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "body",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "message_group_id",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "message_deduplication_id",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "delay_seconds",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "receive_sqs_messages",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Recibe mensajes de una cola SQS.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "max_messages",
-          "type": "integer",
-          "required": false,
-          "default": 10
-        },
-        {
-          "name": "wait_seconds",
-          "type": "integer",
-          "required": false,
-          "default": 0
-        },
-        {
-          "name": "visibility_timeout",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "delete_sqs_message",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un mensaje de la cola usando su receipt_handle.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "receipt_handle",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "get_sqs_queue_attributes",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene todos los atributos de una cola SQS.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "purge_sqs_queue",
-      "group": "sqs",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Vacía todos los mensajes de una cola SQS al instante. La cola permanece activa.",
-      "params": [
-        {
-          "name": "queue_url",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_sns_topics",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los topics SNS del entorno con sus ARNs.",
-      "params": []
-    },
-    {
-      "name": "create_sns_topic",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea un topic SNS estándar o FIFO.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "fifo",
-          "type": "boolean",
-          "required": false,
-          "default": false
-        },
-        {
-          "name": "display_name",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "delete_sns_topic",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un topic SNS y todas sus suscripciones activas.",
-      "params": [
-        {
-          "name": "topic_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "publish_sns_message",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Publica un mensaje en un topic SNS distribuyéndolo a todos los suscriptores.",
-      "params": [
-        {
-          "name": "topic_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "message",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "subject",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "message_attributes",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "list_sns_subscriptions",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las suscripciones de un topic SNS con su protocolo, endpoint y estado.",
-      "params": [
-        {
-          "name": "topic_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "subscribe_sns",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Suscribe un endpoint a un topic SNS.",
-      "params": [
-        {
-          "name": "topic_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "protocol",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "endpoint",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "unsubscribe_sns",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina una suscripción de un topic SNS usando su ARN.",
-      "params": [
-        {
-          "name": "subscription_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "get_sns_topic_attributes",
-      "group": "sns",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene los atributos de un topic SNS: nombre, tipo FIFO, política de entrega, etc.",
-      "params": [
-        {
-          "name": "topic_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_s3_buckets",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los buckets S3 del entorno.",
-      "params": []
-    },
-    {
-      "name": "create_s3_bucket",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea un nuevo bucket S3. El nombre debe ser único, solo minúsculas, números y guiones.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "delete_s3_bucket",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un bucket S3.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "force",
-          "type": "boolean",
-          "required": false,
-          "default": false
-        }
-      ]
-    },
-    {
-      "name": "list_s3_objects",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista objetos de un bucket S3.",
-      "params": [
-        {
-          "name": "bucket",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "prefix",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "max_keys",
-          "type": "integer",
-          "required": false,
-          "default": 100
-        }
-      ]
-    },
-    {
-      "name": "put_s3_object",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Sube un objeto a S3 con contenido en texto plano o JSON serializado.",
-      "params": [
-        {
-          "name": "bucket",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "content",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "content_type",
-          "type": "string",
-          "required": false,
-          "default": "text/plain"
-        }
-      ]
-    },
-    {
-      "name": "get_s3_object",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Descarga y devuelve el contenido de un objeto S3 como texto.",
-      "params": [
-        {
-          "name": "bucket",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "delete_s3_object",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un objeto de un bucket S3.",
-      "params": [
-        {
-          "name": "bucket",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "generate_s3_presigned_url",
-      "group": "s3",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Genera una URL pre-firmada para acceso temporal a un objeto S3 sin autenticación.",
-      "params": [
-        {
-          "name": "bucket",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "operation",
-          "type": "string",
-          "required": false,
-          "default": "get_object"
-        },
-        {
-          "name": "expires_in",
-          "type": "integer",
-          "required": false,
-          "default": 3600
-        }
-      ]
-    },
-    {
-      "name": "list_dynamodb_tables",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las tablas DynamoDB del entorno.",
-      "params": []
-    },
-    {
-      "name": "create_dynamodb_table",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea una tabla DynamoDB.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "partition_key",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "partition_key_type",
-          "type": "string",
-          "required": false,
-          "default": "S"
-        },
-        {
-          "name": "sort_key",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "sort_key_type",
-          "type": "string",
-          "required": false,
-          "default": "S"
-        },
-        {
-          "name": "billing_mode",
-          "type": "string",
-          "required": false,
-          "default": "PAY_PER_REQUEST"
-        }
-      ]
-    },
-    {
-      "name": "delete_dynamodb_table",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina una tabla DynamoDB y todos sus datos de forma permanente.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "put_dynamodb_item",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Inserta o reemplaza un ítem en una tabla DynamoDB.",
-      "params": [
-        {
-          "name": "table",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "item",
-          "type": "object",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "get_dynamodb_item",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene un ítem de DynamoDB por su clave primaria.",
-      "params": [
-        {
-          "name": "table",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "object",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "query_dynamodb",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Consulta ítems en DynamoDB por clave de partición.",
-      "params": [
-        {
-          "name": "table",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key_condition_expression",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "expression_attribute_values",
-          "type": "object",
-          "required": true
-        },
-        {
-          "name": "filter_expression",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "limit",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "scan_index_forward",
-          "type": "boolean",
-          "required": false,
-          "default": true
-        }
-      ]
-    },
-    {
-      "name": "scan_dynamodb",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Escanea todos los ítems de una tabla DynamoDB.",
-      "params": [
-        {
-          "name": "table",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "filter_expression",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "expression_attribute_values",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "limit",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "delete_dynamodb_item",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un ítem de DynamoDB por su clave primaria.",
-      "params": [
-        {
-          "name": "table",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "key",
-          "type": "object",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "execute_partiql_dynamodb",
-      "group": "dynamodb",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Ejecuta una consulta PartiQL en DynamoDB. PartiQL es un lenguaje compatible con SQL.",
-      "params": [
-        {
-          "name": "statement",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_secrets",
-      "group": "secrets",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los secretos de AWS Secrets Manager del entorno.",
-      "params": []
-    },
-    {
-      "name": "create_secret",
-      "group": "secrets",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea un nuevo secreto en Secrets Manager.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "description",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "get_secret_value",
-      "group": "secrets",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene el valor de un secreto de Secrets Manager por nombre o ARN.",
-      "params": [
-        {
-          "name": "name_or_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "update_secret",
-      "group": "secrets",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Actualiza el valor de un secreto existente en Secrets Manager.",
-      "params": [
-        {
-          "name": "name_or_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "delete_secret",
-      "group": "secrets",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina un secreto de Secrets Manager.",
-      "params": [
-        {
-          "name": "name_or_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "force",
-          "type": "boolean",
-          "required": false,
-          "default": false
-        }
-      ]
-    },
-    {
-      "name": "run_kms_diagnostic",
-      "group": "kms",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Ejecuta un test de cifrado/descifrado round-trip con KMS para verificar que el servicio funciona.",
-      "params": []
-    },
-    {
-      "name": "list_kms_keys",
-      "group": "kms",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las claves KMS del entorno con sus IDs, ARNs y aliases.",
-      "params": []
-    },
-    {
-      "name": "create_kms_key",
-      "group": "kms",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea una nueva clave de cifrado KMS.",
-      "params": [
-        {
-          "name": "description",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "alias",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "kms_encrypt",
-      "group": "kms",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Cifra texto con una clave KMS. Devuelve el ciphertext en base64.",
-      "params": [
-        {
-          "name": "key_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "plaintext",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "kms_decrypt",
-      "group": "kms",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Descifra un ciphertext KMS (en base64) y devuelve el texto original.",
-      "params": [
-        {
-          "name": "ciphertext_blob",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_eventbridge_buses",
-      "group": "eventbridge",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los event buses de EventBridge, incluyendo el bus 'default'.",
-      "params": []
-    },
-    {
-      "name": "put_eventbridge_events",
-      "group": "eventbridge",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Envía eventos personalizados a un event bus de EventBridge.",
-      "params": [
-        {
-          "name": "entries",
-          "type": "array",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_eventbridge_rules",
-      "group": "eventbridge",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las reglas de un event bus de EventBridge.",
-      "params": [
-        {
-          "name": "bus_name",
-          "type": "string",
-          "required": false,
-          "default": "default"
-        }
-      ]
-    },
-    {
-      "name": "create_eventbridge_rule",
-      "group": "eventbridge",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Crea una regla de EventBridge con schedule o patrón de eventos, y targets opcionales.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "schedule_expression",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "event_pattern",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "bus_name",
-          "type": "string",
-          "required": false,
-          "default": "default"
-        },
-        {
-          "name": "targets",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "delete_eventbridge_rule",
-      "group": "eventbridge",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina una regla de EventBridge.",
-      "params": [
-        {
-          "name": "name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "bus_name",
-          "type": "string",
-          "required": false,
-          "default": "default"
-        }
-      ]
-    },
-    {
-      "name": "list_step_functions",
-      "group": "stepfunctions",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las state machines de AWS Step Functions del entorno.",
-      "params": []
-    },
-    {
-      "name": "start_sfn_execution",
-      "group": "stepfunctions",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Inicia una ejecución de una state machine de Step Functions.",
-      "params": [
-        {
-          "name": "state_machine_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "input",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "name",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "describe_sfn_execution",
-      "group": "stepfunctions",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene el estado completo de una ejecución de Step Functions.",
-      "params": [
-        {
-          "name": "execution_arn",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_sfn_executions",
-      "group": "stepfunctions",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista las ejecuciones de una state machine.",
-      "params": [
-        {
-          "name": "state_machine_arn",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "status_filter",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "max_results",
-          "type": "integer",
-          "required": false,
-          "default": 20
-        }
-      ]
-    },
-    {
       "name": "list_glue_databases",
       "group": "athena",
       "cloud": "aws",
       "writes": false,
-      "description": "Lista las bases de datos y tablas del catálogo de datos de AWS Glue (usado por Athena).",
+      "toolset": "compute",
+      "description": "Lists the databases and tables of the AWS Glue data catalogue (used by Athena).",
       "params": []
     },
     {
       "name": "run_athena_query",
       "group": "athena",
       "cloud": "aws",
-      "writes": false,
-      "description": "Ejecuta una consulta SQL en Athena y espera el resultado completo.",
+      "writes": true,
+      "toolset": "compute",
+      "description": "Runs a SQL query on Athena (the real Athena API of Floci, backed by floci-duck) and waits for the result.",
       "params": [
         {
           "name": "sql",
@@ -1500,7 +1703,13 @@
           "name": "timeout_seconds",
           "type": "integer",
           "required": false,
-          "default": 30
+          "default": 60
+        },
+        {
+          "name": "max_rows",
+          "type": "integer",
+          "required": false,
+          "default": 100
         }
       ]
     },
@@ -1509,298 +1718,118 @@
       "group": "athena",
       "cloud": "aws",
       "writes": false,
-      "description": "Obtiene el historial de consultas Athena ejecutadas en la sesión actual.",
-      "params": []
-    },
-    {
-      "name": "list_ses_identities",
-      "group": "ses",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las identidades (emails y dominios) verificadas en SES.",
-      "params": []
-    },
-    {
-      "name": "verify_ses_email",
-      "group": "ses",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Inicia la verificación de una dirección de email en SES.",
+      "toolset": "compute",
+      "description": "Lists the latest Athena queries of the emulator with their status and SQL.",
       "params": [
         {
-          "name": "email",
+          "name": "max_results",
+          "type": "integer",
+          "required": false,
+          "default": 20
+        }
+      ]
+    },
+    {
+      "name": "get_all_tag_keys",
+      "group": "tags",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "ops",
+      "description": "Lists every tag key currently in use across all resources.",
+      "params": []
+    },
+    {
+      "name": "get_tag_values",
+      "group": "tags",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "ops",
+      "description": "Lists every value used for a given tag key.",
+      "params": [
+        {
+          "name": "key",
           "type": "string",
           "required": true
         }
       ]
     },
     {
-      "name": "send_ses_email",
-      "group": "ses",
+      "name": "find_resources_by_tag",
+      "group": "tags",
       "cloud": "aws",
-      "writes": true,
-      "description": "Envía un email a través de SES.",
+      "writes": false,
+      "toolset": "ops",
+      "description": "Finds resources by tag across all AWS services.",
       "params": [
         {
-          "name": "from_address",
+          "name": "tag_key",
           "type": "string",
           "required": true
         },
         {
-          "name": "to_addresses",
+          "name": "tag_value",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "resource_types",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "tag_resources",
+      "group": "tags",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "ops",
+      "description": "Applies tags to one or more resources identified by ARN.",
+      "params": [
+        {
+          "name": "resource_arns",
           "type": "array",
           "required": true
         },
         {
-          "name": "subject",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "body_text",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "body_html",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "cc_addresses",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "get_ses_send_quota",
-      "group": "ses",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene las estadísticas de envío de SES: cuota máxima diaria, tasa máxima de envío (emails/segundo) y emails enviados en las últimas 24h.",
-      "params": []
-    },
-    {
-      "name": "list_marketplace_recipes",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las recetas del Marketplace con sus variables configurables.",
-      "params": []
-    },
-    {
-      "name": "get_marketplace_installations",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene el estado de todas las instalaciones del Marketplace.",
-      "params": []
-    },
-    {
-      "name": "get_marketplace_logs",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene los logs de Docker Compose de una receta del Marketplace.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "deploy_marketplace_app",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Instala y arranca una receta del Marketplace en Docker local.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "vars",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "teardown_marketplace_app",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Detiene y elimina los contenedores y volúmenes de una receta del Marketplace.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "export_to_terraform",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Genera código de infraestructura a partir de los recursos actuales del emulador.",
-      "params": [
-        {
-          "name": "format",
-          "type": "string",
-          "required": false,
-          "default": "terraform"
-        }
-      ]
-    },
-    {
-      "name": "export_recipes_to_terraform",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Genera código Terraform para las recipes del marketplace que están en estado RUNNING.",
-      "params": []
-    },
-    {
-      "name": "run_local_aws_cmd",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Ejecuta un comando aws-cli directamente contra el emulador de Floci.",
-      "params": [
-        {
-          "name": "command",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "seed_mock_data",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Inyecta datos sintéticos (Faker) en DynamoDB, S3 o PostgreSQL.",
-      "params": [
-        {
-          "name": "target",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "target_name",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "connection_string",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "custom_schema",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "get_resource_relations",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Devuelve el grafo de relaciones dependientes de un recurso de AWS dado. Útil para responder preguntas como \"¿Qué lambdas consumen este SQS?\" o \"¿Hacia dónde apunta este S3?\".",
-      "params": [
-        {
-          "name": "resource_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "resource_type",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "proxy_http_request",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Envía una petición HTTP desde el backend de Floci, evitando restricciones CORS.",
-      "params": [
-        {
-          "name": "url",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "method",
-          "type": "string",
-          "required": false,
-          "default": "GET"
-        },
-        {
-          "name": "headers",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "body",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "generate_jwt_token",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Genera un JWT firmado para autenticación en tests locales.",
-      "params": [
-        {
-          "name": "claims",
+          "name": "tags",
           "type": "object",
           "required": true
-        },
-        {
-          "name": "secret",
-          "type": "string",
-          "required": false,
-          "default": "local-secret-key-123"
-        },
-        {
-          "name": "algorithm",
-          "type": "string",
-          "required": false,
-          "default": "HS256"
         }
       ]
     },
     {
-      "name": "run_ui_tests",
-      "group": "devtools",
+      "name": "untag_resources",
+      "group": "tags",
       "cloud": "aws",
-      "writes": false,
-      "description": "Ejecuta los tests de Playwright del frontend.",
+      "writes": true,
+      "toolset": "ops",
+      "description": "Removes specific tags from one or more resources.",
       "params": [
         {
-          "name": "test_file",
+          "name": "resource_arns",
+          "type": "array",
+          "required": true
+        },
+        {
+          "name": "tag_keys",
+          "type": "array",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_all_tagged_resources",
+      "group": "tags",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "ops",
+      "description": "Lists every resource that has at least one tag.",
+      "params": [
+        {
+          "name": "resource_types",
           "type": "any",
           "required": false,
           "default": null
@@ -1812,6 +1841,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "List the active Dead Letter Queues in the emulator.",
       "params": []
     },
@@ -1820,6 +1850,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "Inspect messages in a DLQ without consuming them (visibility_timeout=0).",
       "params": [
         {
@@ -1840,6 +1871,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": true,
+      "toolset": "ops",
       "description": "Redrive messages from a DLQ back to their source queue.",
       "params": [
         {
@@ -1865,6 +1897,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "Return the X-Ray-style service graph (nodes + edges) with the real relationships: SNS→SQS, Lambda event source mappings, EventBridge rule→targets, SQS→DLQ redrive and S3→Lambda notifications.",
       "params": []
     },
@@ -1873,6 +1906,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": true,
+      "toolset": "ops",
       "description": "Hold an event in the flight recorder for inspection/editing and replay.",
       "params": [
         {
@@ -1909,6 +1943,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "List the flight recorder events (held, replayed or discarded).",
       "params": []
     },
@@ -1917,6 +1952,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": true,
+      "toolset": "ops",
       "description": "Modify a held event's JSON payload on the fly before resuming it.",
       "params": [
         {
@@ -1936,6 +1972,7 @@
       "group": "observability",
       "cloud": "aws",
       "writes": true,
+      "toolset": "ops",
       "description": "Resume a held event's journey, dispatching it to its real target.",
       "params": [
         {
@@ -1950,6 +1987,7 @@
       "group": "iac",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "Auto-discover resources declared in local IaC under `path`.",
       "params": [
         {
@@ -1965,6 +2003,7 @@
       "group": "iac",
       "cloud": "aws",
       "writes": false,
+      "toolset": "ops",
       "description": "Compare local IaC against the real emulator state and report drift.",
       "params": [
         {
@@ -1976,10 +2015,195 @@
       ]
     },
     {
+      "name": "list_marketplace_recipes",
+      "group": "marketplace",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Lists every Marketplace recipe with its configurable variables.",
+      "params": []
+    },
+    {
+      "name": "get_marketplace_installations",
+      "group": "marketplace",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Gets the state of every Marketplace installation.",
+      "params": []
+    },
+    {
+      "name": "get_marketplace_logs",
+      "group": "marketplace",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Gets the Docker Compose logs of a Marketplace recipe.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "deploy_marketplace_app",
+      "group": "marketplace",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "marketplace",
+      "description": "Installs and starts a Marketplace recipe on local Docker.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "vars",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "teardown_marketplace_app",
+      "group": "marketplace",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "marketplace",
+      "description": "Stops and removes the containers and volumes of a Marketplace recipe.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "list_pipeline_environments",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Lists the pipeline environments (test, demo, production) with the state of each recipe deployed in each one.",
+      "params": []
+    },
+    {
+      "name": "deploy_to_environment",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "marketplace",
+      "description": "Deploys a marketplace recipe to a pipeline environment (test or demo).",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "env",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "vars",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "teardown_environment_recipe",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "marketplace",
+      "description": "Stops and removes a recipe deployed in a pipeline environment (test or demo).",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "env",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "promote_recipe",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "marketplace",
+      "description": "Promotes a recipe from one pipeline environment to the next.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "from_env",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "to_env",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "generate_copilot_manifests",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Generates AWS Copilot manifests to deploy a recipe on ECS/Fargate.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "get_pipeline_logs",
+      "group": "pipeline",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "marketplace",
+      "description": "Gets the Docker Compose logs of a recipe in a pipeline environment.",
+      "params": [
+        {
+          "name": "recipe_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "env",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
       "name": "seed_from_cloud_dynamodb",
       "group": "hybrid",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Extract a subset of a REAL DynamoDB table, anonymize it and inject it into the local emulator table.",
       "params": [
         {
@@ -2036,6 +2260,7 @@
       "group": "hybrid",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Drain messages from a REAL SQS queue (e.g. staging) and forward them to a local resource (Lambda/SQS/SNS) for an immediate feedback loop.",
       "params": [
         {
@@ -2096,6 +2321,7 @@
       "group": "hybrid",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Expose a local port to the internet with a temporary URL (ngrok-style).",
       "params": [
         {
@@ -2111,6 +2337,7 @@
       "group": "hybrid",
       "cloud": "aws",
       "writes": false,
+      "toolset": "hybrid",
       "description": "List the active reverse tunnels started by Floci.",
       "params": []
     },
@@ -2119,6 +2346,7 @@
       "group": "hybrid",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Stop a reverse tunnel by its PID.",
       "params": [
         {
@@ -2129,10 +2357,179 @@
       ]
     },
     {
+      "name": "export_to_terraform",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "hybrid",
+      "description": "Generates infrastructure code from the resources currently in the emulator.",
+      "params": [
+        {
+          "name": "format",
+          "type": "string",
+          "required": false,
+          "default": "terraform"
+        }
+      ]
+    },
+    {
+      "name": "export_recipes_to_terraform",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "hybrid",
+      "description": "Generates Terraform for the marketplace recipes that are RUNNING.",
+      "params": []
+    },
+    {
+      "name": "run_local_aws_cmd",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "hybrid",
+      "description": "Runs an aws-cli command directly against the Floci emulator.",
+      "params": [
+        {
+          "name": "command",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "seed_mock_data",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "hybrid",
+      "description": "Injects synthetic data (Faker) into DynamoDB, S3 or PostgreSQL.",
+      "params": [
+        {
+          "name": "target",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "target_name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "connection_string",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "custom_schema",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_resource_relations",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "hybrid",
+      "description": "Returns the dependency graph of an AWS resource.",
+      "params": [
+        {
+          "name": "resource_id",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "resource_type",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "proxy_http_request",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "hybrid",
+      "description": "Sends an HTTP request from the Floci backend, avoiding CORS restrictions.",
+      "params": [
+        {
+          "name": "url",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "method",
+          "type": "string",
+          "required": false,
+          "default": "GET"
+        },
+        {
+          "name": "headers",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "body",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "generate_jwt_token",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "hybrid",
+      "description": "Generates a signed JWT for authentication in local tests.",
+      "params": [
+        {
+          "name": "claims",
+          "type": "object",
+          "required": true
+        },
+        {
+          "name": "secret",
+          "type": "string",
+          "required": false,
+          "default": "local-secret-key-123"
+        },
+        {
+          "name": "algorithm",
+          "type": "string",
+          "required": false,
+          "default": "HS256"
+        }
+      ]
+    },
+    {
+      "name": "run_ui_tests",
+      "group": "devtools",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "hybrid",
+      "description": "Runs the Playwright tests of the Floci Studio frontend.",
+      "params": [
+        {
+          "name": "test_file",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
       "name": "list_lifecycle_webhooks",
       "group": "extensibility",
       "cloud": "aws",
       "writes": false,
+      "toolset": "hybrid",
       "description": "List the registered lifecycle webhooks.",
       "params": []
     },
@@ -2141,6 +2538,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Register a webhook that receives lifecycle events from the emulator.",
       "params": [
         {
@@ -2166,6 +2564,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Delete a lifecycle webhook by its id.",
       "params": [
         {
@@ -2180,6 +2579,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Manually fire a lifecycle event to all matching webhooks.",
       "params": [
         {
@@ -2200,6 +2600,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": false,
+      "toolset": "hybrid",
       "description": "List the HTTP interception rules for Floci's proxy.",
       "params": []
     },
@@ -2208,6 +2609,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Register a declarative rule that modifies traffic through Floci's proxy.",
       "params": [
         {
@@ -2240,6 +2642,7 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": true,
+      "toolset": "hybrid",
       "description": "Delete an HTTP interception rule by its id.",
       "params": [
         {
@@ -2254,218 +2657,9 @@
       "group": "extensibility",
       "cloud": "aws",
       "writes": false,
-      "description": "List the community plugins discovered in mcp/plugins/.",
+      "toolset": "hybrid",
+      "description": "Lists the community plugins found in the plugins directory.",
       "params": []
-    },
-    {
-      "name": "list_pipeline_environments",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista los entornos del pipeline (test, demo, production) con el estado de cada recipe desplegada en cada uno.",
-      "params": []
-    },
-    {
-      "name": "deploy_to_environment",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Despliega una recipe del marketplace en el entorno especificado (test o demo).",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "env",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "vars",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "teardown_environment_recipe",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Para y elimina una recipe desplegada en un entorno específico (test o demo).",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "env",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "promote_recipe",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Promueve una recipe de un entorno al siguiente.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "from_env",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "to_env",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "generate_copilot_manifests",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Genera los manifests de AWS Copilot para desplegar una recipe en ECS/Fargate.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "get_pipeline_logs",
-      "group": "pipeline",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Obtiene los logs de Docker Compose de una recipe en un entorno del pipeline.",
-      "params": [
-        {
-          "name": "recipe_id",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "env",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "get_all_tag_keys",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todas las claves de tag actualmente en uso en todos los recursos.",
-      "params": []
-    },
-    {
-      "name": "get_tag_values",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los valores usados para una clave de tag dada.",
-      "params": [
-        {
-          "name": "key",
-          "type": "string",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "find_resources_by_tag",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Busca recursos por tag en todos los servicios AWS.",
-      "params": [
-        {
-          "name": "tag_key",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "tag_value",
-          "type": "any",
-          "required": false,
-          "default": null
-        },
-        {
-          "name": "resource_types",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
-      "name": "tag_resources",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Aplica tags a uno o más recursos identificados por ARN.",
-      "params": [
-        {
-          "name": "resource_arns",
-          "type": "array",
-          "required": true
-        },
-        {
-          "name": "tags",
-          "type": "object",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "untag_resources",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": true,
-      "description": "Elimina tags específicos de uno o más recursos.",
-      "params": [
-        {
-          "name": "resource_arns",
-          "type": "array",
-          "required": true
-        },
-        {
-          "name": "tag_keys",
-          "type": "array",
-          "required": true
-        }
-      ]
-    },
-    {
-      "name": "list_all_tagged_resources",
-      "group": "tags",
-      "cloud": "aws",
-      "writes": false,
-      "description": "Lista todos los recursos que tienen al menos un tag aplicado.",
-      "params": [
-        {
-          "name": "resource_types",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
     }
   ],
   "recipes": [

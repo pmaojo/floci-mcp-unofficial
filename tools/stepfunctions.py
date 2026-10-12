@@ -7,7 +7,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_step_functions() -> dict:
-        """Lista todas las state machines de AWS Step Functions del entorno."""
+        """Lists all AWS Step Functions state machines in the environment."""
         r = make_client("stepfunctions").list_state_machines()
         return clean({"state_machines": r.get("stateMachines", [])})
 
@@ -18,10 +18,10 @@ def register(mcp):
         name: str | None = None,
     ) -> dict:
         """
-        Inicia una ejecución de una state machine de Step Functions.
+        Starts an execution of a Step Functions state machine.
 
-        input es el payload JSON que recibirá el primer estado.
-        name es un identificador único para la ejecución (opcional, se genera automáticamente).
+        input is the JSON payload the first state receives.
+        name is a unique execution identifier (optional, generated if omitted).
         """
         params: dict = {
             "stateMachineArn": state_machine_arn,
@@ -35,10 +35,10 @@ def register(mcp):
     @mcp.tool()
     async def describe_sfn_execution(execution_arn: str) -> dict:
         """
-        Obtiene el estado completo de una ejecución de Step Functions.
+        Gets the full state of a Step Functions execution.
 
-        Devuelve: status (RUNNING/SUCCEEDED/FAILED/TIMED_OUT/ABORTED),
-        input, output y tiempos de inicio y fin.
+        Returns status (RUNNING, SUCCEEDED, FAILED, TIMED_OUT, ABORTED), input, output and
+        start and stop times.
         """
         r = make_client("stepfunctions").describe_execution(executionArn=execution_arn)
         return clean({
@@ -57,9 +57,9 @@ def register(mcp):
         max_results: int = 20,
     ) -> dict:
         """
-        Lista las ejecuciones de una state machine.
+        Lists the executions of a state machine.
 
-        status_filter: 'RUNNING', 'SUCCEEDED', 'FAILED', 'TIMED_OUT' o 'ABORTED'.
+        status_filter: 'RUNNING', 'SUCCEEDED', 'FAILED', 'TIMED_OUT' or 'ABORTED'.
         """
         params: dict = {"stateMachineArn": state_machine_arn, "maxResults": max_results}
         if status_filter:

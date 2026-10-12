@@ -6,7 +6,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_sqs_queues() -> dict:
-        """Lista todas las colas SQS del entorno con sus URLs."""
+        """Lists all SQS queues in the environment with their URLs."""
         r = make_client("sqs").list_queues()
         return {"queues": r.get("QueueUrls", [])}
 
@@ -19,10 +19,9 @@ def register(mcp):
         delay_seconds: int | None = None,
     ) -> dict:
         """
-        Crea una cola SQS estándar o FIFO.
+        Creates a standard or FIFO SQS queue.
 
-        Las colas FIFO (fifo=true) tienen entrega ordenada y exactamente una vez.
-        El sufijo .fifo se añade automáticamente si falta.
+        FIFO queues (fifo=true) deliver in order, exactly once. The .fifo suffix is added if missing.
         """
         if fifo and not name.endswith(".fifo"):
             name = name + ".fifo"
@@ -41,7 +40,7 @@ def register(mcp):
 
     @mcp.tool()
     async def delete_sqs_queue(queue_url: str) -> dict:
-        """Elimina permanentemente una cola SQS y todos sus mensajes."""
+        """Permanently deletes an SQS queue and all of its messages."""
         make_client("sqs").delete_queue(QueueUrl=queue_url)
         return {"deleted": queue_url}
 
@@ -54,10 +53,9 @@ def register(mcp):
         delay_seconds: int | None = None,
     ) -> dict:
         """
-        Envía un mensaje a una cola SQS.
+        Sends a message to an SQS queue.
 
-        Para colas FIFO, message_group_id es obligatorio.
-        delay_seconds solo aplica a colas estándar.
+        For FIFO queues message_group_id is required. delay_seconds only applies to standard queues.
         """
         params: dict = {"QueueUrl": queue_url, "MessageBody": body}
         if message_group_id:
@@ -77,11 +75,11 @@ def register(mcp):
         visibility_timeout: int | None = None,
     ) -> dict:
         """
-        Recibe mensajes de una cola SQS.
+        Receives messages from an SQS queue.
 
-        Los mensajes quedan invisibles hasta que se eliminen con delete_sqs_message.
-        wait_seconds > 0 activa long polling (recomendado para colas poco activas).
-        Devuelve hasta max_messages mensajes (máximo 10).
+        Messages stay invisible until deleted with delete_sqs_message.
+        wait_seconds > 0 enables long polling (recommended for quiet queues).
+        Returns up to max_messages messages (maximum 10).
         """
         params: dict = {
             "QueueUrl": queue_url,
@@ -99,10 +97,10 @@ def register(mcp):
     @mcp.tool()
     async def delete_sqs_message(queue_url: str, receipt_handle: str) -> dict:
         """
-        Elimina un mensaje de la cola usando su receipt_handle.
+        Deletes a message from a queue using its receipt_handle.
 
-        El receipt_handle se obtiene al llamar a receive_sqs_messages.
-        Un mensaje no eliminado vuelve a ser visible tras el visibility_timeout.
+        The receipt_handle comes from receive_sqs_messages. A message that is not deleted
+        becomes visible again after the visibility_timeout.
         """
         make_client("sqs").delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
         return {"deleted": True}
@@ -110,16 +108,16 @@ def register(mcp):
     @mcp.tool()
     async def get_sqs_queue_attributes(queue_url: str) -> dict:
         """
-        Obtiene todos los atributos de una cola SQS.
+        Gets every attribute of an SQS queue.
 
-        Incluye: número de mensajes disponibles e invisibles, timeouts,
-        configuración de DLQ, tipo de cola (FIFO/estándar), etc.
+        Includes the number of available and in-flight messages, timeouts, the dead-letter
+        queue configuration and the queue type (FIFO or standard).
         """
         r = make_client("sqs").get_queue_attributes(QueueUrl=queue_url, AttributeNames=["All"])
         return r.get("Attributes", {})
 
     @mcp.tool()
     async def purge_sqs_queue(queue_url: str) -> dict:
-        """Vacía todos los mensajes de una cola SQS al instante. La cola permanece activa."""
+        """Removes all messages from an SQS queue immediately. The queue itself stays."""
         make_client("sqs").purge_queue(QueueUrl=queue_url)
         return {"purged": queue_url}

@@ -7,19 +7,18 @@ def register(mcp):
 
     @mcp.tool()
     async def list_eventbridge_buses() -> dict:
-        """Lista todos los event buses de EventBridge, incluyendo el bus 'default'."""
+        """Lists all EventBridge event buses, including the 'default' bus."""
         r = make_client("events").list_event_buses()
         return {"buses": clean([{"name": b["Name"], "arn": b["Arn"]} for b in r.get("EventBuses", [])])}
 
     @mcp.tool()
     async def put_eventbridge_events(entries: list) -> dict:
         """
-        Envía eventos personalizados a un event bus de EventBridge.
+        Sends custom events to an EventBridge event bus.
 
-        Útil para testear reglas y triggers sin necesidad de fuentes reales.
-        Formato de cada entrada:
+        Useful to test rules and triggers without real event sources. Each entry:
         {
-          'Source': 'mi.aplicacion',
+          'Source': 'my.application',
           'DetailType': 'OrderCreated',
           'Detail': '{"orderId": "123", "total": 99.90}',
           'EventBusName': 'default'
@@ -30,7 +29,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_eventbridge_rules(bus_name: str = "default") -> dict:
-        """Lista todas las reglas de un event bus de EventBridge."""
+        """Lists all rules of an EventBridge event bus."""
         r = make_client("events").list_rules(EventBusName=bus_name)
         return clean({"rules": r.get("Rules", [])})
 
@@ -43,14 +42,12 @@ def register(mcp):
         targets: list | None = None,
     ) -> dict:
         """
-        Crea una regla de EventBridge con schedule o patrón de eventos, y targets opcionales.
+        Creates an EventBridge rule with a schedule or an event pattern, and optional targets.
 
-        schedule_expression y event_pattern son mutuamente exclusivos. Usa uno de los dos.
-
-        Ejemplos de schedule_expression: 'rate(5 minutes)', 'cron(0 12 * * ? *)'.
-        Ejemplo de event_pattern: '{"source": ["mi.app"], "detail-type": ["OrderCreated"]}'.
-
-        Formato de targets: [{'Id': 't1', 'Arn': 'arn:aws:lambda:...:function:mi-fn'}].
+        schedule_expression and event_pattern are mutually exclusive: use one of them.
+        schedule_expression examples: 'rate(5 minutes)', 'cron(0 12 * * ? *)'.
+        event_pattern example: '{"source": ["my.app"], "detail-type": ["OrderCreated"]}'.
+        targets: [{'Id': 't1', 'Arn': 'arn:aws:lambda:...:function:my-fn'}].
         """
         c = make_client("events")
         params: dict = {"Name": name, "EventBusName": bus_name, "State": "ENABLED"}
@@ -68,9 +65,9 @@ def register(mcp):
     @mcp.tool()
     async def delete_eventbridge_rule(name: str, bus_name: str = "default") -> dict:
         """
-        Elimina una regla de EventBridge.
+        Deletes an EventBridge rule.
 
-        Elimina automáticamente todos sus targets antes de borrar la regla.
+        Its targets are removed first, automatically.
         """
         c = make_client("events")
         try:

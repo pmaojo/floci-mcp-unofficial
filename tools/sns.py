@@ -6,7 +6,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_sns_topics() -> dict:
-        """Lista todos los topics SNS del entorno con sus ARNs."""
+        """Lists all SNS topics in the environment with their ARNs."""
         r = make_client("sns").list_topics()
         return {"topics": r.get("Topics", [])}
 
@@ -17,11 +17,10 @@ def register(mcp):
         display_name: str | None = None,
     ) -> dict:
         """
-        Crea un topic SNS estándar o FIFO.
+        Creates a standard or FIFO SNS topic.
 
-        Los topics FIFO garantizan orden y deduplicación de mensajes.
-        El sufijo .fifo se añade automáticamente si falta.
-        display_name aparece como remitente en emails enviados desde este topic.
+        FIFO topics guarantee ordering and deduplication. The .fifo suffix is added if missing.
+        display_name appears as the sender of emails sent from this topic.
         """
         if fifo and not name.endswith(".fifo"):
             name = name + ".fifo"
@@ -36,7 +35,7 @@ def register(mcp):
 
     @mcp.tool()
     async def delete_sns_topic(topic_arn: str) -> dict:
-        """Elimina un topic SNS y todas sus suscripciones activas."""
+        """Deletes an SNS topic and all of its active subscriptions."""
         make_client("sns").delete_topic(TopicArn=topic_arn)
         return {"deleted": topic_arn}
 
@@ -48,10 +47,10 @@ def register(mcp):
         message_attributes: dict | None = None,
     ) -> dict:
         """
-        Publica un mensaje en un topic SNS distribuyéndolo a todos los suscriptores.
+        Publishes a message to an SNS topic, fanning it out to every subscriber.
 
-        subject es visible en emails. message_attributes permite filtrado por suscripción.
-        Formato de message_attributes: {'clave': {'DataType': 'String', 'StringValue': 'valor'}}.
+        subject is visible in emails. message_attributes enables per-subscription filtering:
+        {'key': {'DataType': 'String', 'StringValue': 'value'}}.
         """
         params: dict = {"TopicArn": topic_arn, "Message": message}
         if subject:
@@ -63,29 +62,29 @@ def register(mcp):
 
     @mcp.tool()
     async def list_sns_subscriptions(topic_arn: str) -> dict:
-        """Lista todas las suscripciones de un topic SNS con su protocolo, endpoint y estado."""
+        """Lists the subscriptions of an SNS topic with protocol, endpoint and status."""
         r = make_client("sns").list_subscriptions_by_topic(TopicArn=topic_arn)
         return {"subscriptions": r.get("Subscriptions", [])}
 
     @mcp.tool()
     async def subscribe_sns(topic_arn: str, protocol: str, endpoint: str) -> dict:
         """
-        Suscribe un endpoint a un topic SNS.
+        Subscribes an endpoint to an SNS topic.
 
-        Protocolos soportados: 'email', 'email-json', 'sqs', 'lambda', 'http', 'https', 'sms'.
-        Para SQS usa el ARN de la cola. Para Lambda usa el ARN de la función.
+        Protocols: 'email', 'email-json', 'sqs', 'lambda', 'http', 'https', 'sms'.
+        For SQS use the queue ARN. For Lambda use the function ARN.
         """
         r = make_client("sns").subscribe(TopicArn=topic_arn, Protocol=protocol, Endpoint=endpoint)
         return {"subscription_arn": r.get("SubscriptionArn")}
 
     @mcp.tool()
     async def unsubscribe_sns(subscription_arn: str) -> dict:
-        """Elimina una suscripción de un topic SNS usando su ARN."""
+        """Removes an SNS subscription by its ARN."""
         make_client("sns").unsubscribe(SubscriptionArn=subscription_arn)
         return {"unsubscribed": subscription_arn}
 
     @mcp.tool()
     async def get_sns_topic_attributes(topic_arn: str) -> dict:
-        """Obtiene los atributos de un topic SNS: nombre, tipo FIFO, política de entrega, etc."""
+        """Gets the attributes of an SNS topic: name, FIFO type, delivery policy and more."""
         r = make_client("sns").get_topic_attributes(TopicArn=topic_arn)
         return r.get("Attributes", {})

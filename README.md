@@ -19,6 +19,42 @@ Azure, GCP and OCI are called through each provider's own REST contract, the sam
 
 Run the emulators with the `multicloud` profile of the [Floci UI compose file](https://github.com/floci-io/floci-ui/blob/main/docker-compose.yml), or on their own.
 
+## Toolsets and read-only mode
+
+A client sends every tool definition to the model on every conversation. All 138 tools
+cost about 16K tokens, and models pick worse when many similar tools are visible. So tools
+are grouped and only some are registered.
+
+| Toolset | Modules |
+|---|---|
+| `core` (default) | meta, clouds |
+| `storage` (default) | s3, dynamodb, secrets, kms |
+| `messaging` (default) | sqs, sns, eventbridge, stepfunctions, ses |
+| `compute` (default) | lambda, athena |
+| `ops` | tags, observability, iac |
+| `marketplace` | marketplace, pipeline |
+| `hybrid` | hybrid, devtools, extensibility |
+
+```bash
+FLOCI_TOOLSETS=core,storage    # only these (comma separated)
+FLOCI_TOOLSETS=all             # everything
+FLOCI_READ_ONLY=1              # remove every tool that changes state
+```
+
+Every tool carries MCP annotations (`readOnlyHint`, `destructiveHint`, `openWorldHint`) so a
+client can ask before a write. `list_toolsets` tells an agent what is enabled.
+
+### Measuring it
+
+```bash
+uv run python eval/run.py static       # tokens per configuration
+uv run python eval/run.py retrieval    # does BM25 find the expected tool? (offline)
+ANTHROPIC_API_KEY=... uv run python eval/run.py model   # real tool selection by a model
+```
+
+`eval/tasks.json` holds 40 realistic tasks. The model mode sends only the definitions and the
+task, reads the first tool call and executes nothing.
+
 ## Recipes as a kickstarter
 
 `recipes/` holds a catalog of local Docker recipes (PostgreSQL, Redis, MinIO, Keycloak, RabbitMQ, Kafka, Temporal and others, each with a `recipe.json` and a Compose file). The marketplace tools let an agent bootstrap a stack from them:
@@ -78,6 +114,8 @@ docker run -i --rm floci-mcp-unofficial
 | `FLOCI_OCI_ENDPOINT` | `http://localhost:4599` |
 | `FLOCI_OCI_TENANCY_ID` | Floci-OCI's built-in tenancy |
 | `FLOCI_PLUGINS_DIR` | `plugins/` next to the server |
+| `FLOCI_TOOLSETS` | `core,storage,messaging,compute` (`all` for everything) |
+| `FLOCI_READ_ONLY` | off |
 
 The variable names match [Floci UI](https://github.com/floci-io/floci-ui), so one `.env` serves both.
 

@@ -6,17 +6,16 @@ def register(mcp):
 
     @mcp.tool()
     async def list_ses_identities() -> dict:
-        """Lista todas las identidades (emails y dominios) verificadas en SES."""
+        """Lists the verified SES identities (email addresses and domains)."""
         r = make_client("ses").list_identities()
         return {"identities": r.get("Identities", [])}
 
     @mcp.tool()
     async def verify_ses_email(email: str) -> dict:
         """
-        Inicia la verificación de una dirección de email en SES.
+        Starts the verification of an email address in SES.
 
-        En entornos locales (Floci) la verificación es instantánea.
-        En AWS real, se envía un email de confirmación a la dirección indicada.
+        On the local emulator verification is instant. On real AWS a confirmation email is sent.
         """
         make_client("ses").verify_email_identity(EmailAddress=email)
         return {"email": email, "verification_initiated": True}
@@ -31,10 +30,9 @@ def register(mcp):
         cc_addresses: list | None = None,
     ) -> dict:
         """
-        Envía un email a través de SES.
+        Sends an email through SES.
 
-        from_address debe estar verificado en SES.
-        body_html complementa a body_text para clientes de email con soporte HTML.
+        from_address must be verified in SES. body_html complements body_text for HTML-capable clients.
         """
         body: dict = {"Text": {"Data": body_text, "Charset": "UTF-8"}}
         if body_html:
@@ -52,8 +50,8 @@ def register(mcp):
     @mcp.tool()
     async def get_ses_send_quota() -> dict:
         """
-        Obtiene las estadísticas de envío de SES: cuota máxima diaria,
-        tasa máxima de envío (emails/segundo) y emails enviados en las últimas 24h.
+        Gets the SES sending statistics: maximum daily quota, maximum send rate
+        (emails per second) and emails sent in the last 24 hours.
         """
         r = make_client("ses").get_send_quota()
         return {

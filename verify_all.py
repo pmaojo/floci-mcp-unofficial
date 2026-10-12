@@ -20,6 +20,7 @@ import uuid
 import zipfile
 import io
 
+os.environ["FLOCI_TOOLSETS"] = "all"
 spec = importlib.util.spec_from_file_location("floci_mcp", os.path.join(os.path.dirname(__file__), "floci_mcp.py"))
 server = importlib.util.module_from_spec(spec)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +33,7 @@ GROUPS: list = []
 
 SKIPPED = {
     "run_ui_tests": "runs the Floci Studio Playwright suite; meaningless outside Studio",
+    "list_toolsets": "covered by the toolsets group, which runs it in a subprocess",
     "start_reverse_tunnel": "spawns an external tunnel binary; only its error path is checked",
     "stop_reverse_tunnel": "needs a live tunnel pid",
 }
@@ -94,12 +96,24 @@ def lambda_zip(source: str) -> str:
     return base64.b64encode(buffer.getvalue()).decode()
 
 
+SPANISH_WORDS = {"el", "la", "los", "las", "una", "del", "para", "con", "por", "sus", "lista", "crea", "elimina",
+                 "obtiene", "envía", "ejecuta", "devuelve", "recibe", "entorno", "todas", "todos"}
+
+
+def _spanish(text: str) -> bool:
+    import re
+    words = re.findall(r"[A-Za-zÁÉÍÓÚáéíóúñÑ]+", text)
+    return bool(re.search(r"[áéíóúñ¿¡]", text)) or sum(1 for w in words if w.lower() in SPANISH_WORDS) >= 2
+
+
 # ---------------------------------------------------------------- catalogue
 @group
 async def catalogue():
     tools = await server.mcp.list_tools()
     names = [t.name for t in tools]
     ok("catalogue", f"{len(names)} tools registered", len(names) >= 139)
+    ok("catalogue", "descriptions are in English (no accents, no Spanish stop words)",
+       not [t.name for t in tools if _spanish(t.description or "")], [t.name for t in tools if _spanish(t.description or "")][:10])
     ok("catalogue", "tool names are unique", len(names) == len(set(names)))
     ok("catalogue", "every tool has a description", all((t.description or "").strip() for t in tools),
        [t.name for t in tools if not (t.description or "").strip()])
@@ -143,6 +157,60 @@ async def protocol():
        replies.get(5, {}).get("result", {}).get("isError") or "error" in replies.get(5, {}), replies.get(5))
     ok("protocol", "unknown method is a JSON-RPC error", "error" in replies.get(6, {}), replies.get(6))
     ok("protocol", "server keeps answering after errors", "after errors" in json.dumps(replies.get(7, {})), replies.get(7))
+
+
+# ----------------------------------------------------------------- toolsets
+@group
+async def toolsets_group():
+    root = os.path.dirname(os.path.abspath(__file__))
+    script = (
+        "import asyncio, importlib.util, json, sys\n"
+        "sys.path.insert(0, %r)\n"
+        "spec = importlib.util.spec_from_file_location('m', %r); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "import toolsets\n"
+        "tools = asyncio.run(m.mcp.list_tools())\n"
+        "print('RESULT' + json.dumps({'names': [t.name for t in tools],\n"
+        "  'ro': {t.name: bool(t.annotations and t.annotations.readOnlyHint) for t in tools},\n"
+        "  'writers': [t.name for t in tools if toolsets.is_write(t.name)],\n"
+        "  'selection': list(m.SELECTION), 'read_only': m.READ_ONLY}))\n"
+    ) % (root, os.path.join(root, "floci_mcp.py"))
+
+    def run(**env):
+        full = {k: v for k, v in os.environ.items() if k not in ("FLOCI_TOOLSETS", "FLOCI_READ_ONLY")}
+        full.update(env)
+        proc = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=full, timeout=120, cwd=root)
+        line = next((l for l in proc.stdout.splitlines() if l.startswith("RESULT")), None)
+        return (json.loads(line[6:]) if line else None), proc
+
+    default, _ = run()
+    ok("toolsets", "the default selection is core, storage, messaging and compute",
+       bool(default) and default["selection"] == ["core", "storage", "messaging", "compute"], default and default["selection"])
+    everything, _ = run(FLOCI_TOOLSETS="all")
+    ok("toolsets", "'all' registers more tools than the default",
+       bool(default and everything) and len(everything["names"]) > len(default["names"]),
+       (len(default["names"]), len(everything["names"])) if default and everything else None)
+    core, _ = run(FLOCI_TOOLSETS="core")
+    ok("toolsets", "core is small and holds the discovery tools",
+       bool(core) and len(core["names"]) < 30 and {"check_floci_health", "list_clouds", "list_toolsets"} <= set(core["names"]),
+       core and len(core["names"]))
+    ok("toolsets", "a disabled toolset is really absent", bool(core) and "create_sqs_queue" not in core["names"])
+    two, _ = run(FLOCI_TOOLSETS="core,messaging")
+    ok("toolsets", "toolsets combine", bool(two) and "create_sqs_queue" in two["names"] and "create_s3_bucket" not in two["names"])
+    ok("toolsets", "names are case and space tolerant", bool(run(FLOCI_TOOLSETS=" CORE , Storage ")[0]))
+    bad, proc = run(FLOCI_TOOLSETS="nope")
+    ok("toolsets", "an unknown toolset fails fast and names the valid ones",
+       bad is None and "unknown toolset nope" in proc.stderr and "Available:" in proc.stderr, proc.stderr[-200:])
+    ro, _ = run(FLOCI_TOOLSETS="all", FLOCI_READ_ONLY="1")
+    ok("toolsets", "read-only mode leaves no writer", bool(ro) and ro["writers"] == [], ro and ro["writers"])
+    ok("toolsets", "read-only mode keeps the readers",
+       bool(ro) and {"list_s3_buckets", "get_secret_value", "scan_dynamodb", "list_clouds"} <= set(ro["names"]))
+    ok("toolsets", "read-only mode is reported", bool(ro) and ro["read_only"] is True)
+    ok("toolsets", "every tool carries a readOnlyHint", bool(everything) and len(everything["ro"]) == len(everything["names"]))
+    ok("toolsets", "writers are not hinted as read-only",
+       bool(everything) and not any(everything["ro"].get(n) for n in everything["writers"]),
+       [n for n in (everything or {}).get("writers", []) if everything["ro"].get(n)])
+    listing = await attempt("list_toolsets")
+    ok("toolsets", "list_toolsets explains the configuration", "enabled" in listing and "how_to_enable" in listing, listing)
 
 
 # --------------------------------------------------------------------- core

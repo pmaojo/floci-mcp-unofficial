@@ -10,34 +10,34 @@ def register(mcp):
     @mcp.tool()
     async def export_to_terraform(format: str = "terraform") -> dict:
         """
-        Genera código de infraestructura a partir de los recursos actuales del emulador.
+        Generates infrastructure code from the resources currently in the emulator.
 
-        format: 'terraform' (por defecto) o 'cdk'.
-        Cubre S3, SQS, DynamoDB, Lambda y KMS.
+        format: 'terraform' (default) or 'cdk'.
+        Covers S3, SQS, DynamoDB, Lambda and KMS.
         """
         return await backend("GET", f"/api/extensions/export-iac?format={format}")
 
     @mcp.tool()
     async def export_recipes_to_terraform() -> dict:
         """
-        Genera código Terraform para las recipes del marketplace que están en estado RUNNING.
+        Generates Terraform for the marketplace recipes that are RUNNING.
 
-        Cada recipe instalada se mapea a su servicio AWS equivalente (RDS, ElastiCache, MSK,
-        OpenSearch, Cognito, etc.). Las contraseñas se emiten como variables de Terraform
-        (sensitive = true) para que no queden en texto plano.
+        Each installed recipe maps to its managed AWS equivalent (RDS, ElastiCache, MSK,
+        OpenSearch, Cognito, ...). Passwords are emitted as Terraform variables
+        (sensitive = true) so they never appear in plain text.
 
-        Usa esto después de validar tu stack localmente para obtener la infraestructura
-        de producción lista para aplicar con 'terraform apply'.
+        Use it after validating your stack locally to get production infrastructure ready
+        for 'terraform apply'.
         """
         return await backend("GET", "/api/extensions/export-iac-recipes")
 
     @mcp.tool()
     async def run_local_aws_cmd(command: str) -> dict:
         """
-        Ejecuta un comando aws-cli directamente contra el emulador de Floci.
+        Runs an aws-cli command directly against the Floci emulator.
 
-        Escape hatch para operaciones no cubiertas por otras herramientas.
-        Escribe el comando sin el prefijo 'aws', ej: 's3 ls' o 'sqs list-queues'.
+        Escape hatch for operations the other tools do not cover.
+        Write the command without the 'aws' prefix, e.g. 's3 ls' or 'sqs list-queues'.
         """
         return await backend("POST", "/api/extensions/run-aws-cmd", json_data={"command": command})
 
@@ -49,12 +49,12 @@ def register(mcp):
         custom_schema: dict | None = None,
     ) -> dict:
         """
-        Inyecta datos sintéticos (Faker) en DynamoDB, S3 o PostgreSQL.
+        Injects synthetic data (Faker) into DynamoDB, S3 or PostgreSQL.
 
-        target: 'dynamodb', 's3' o 'postgres'.
-        target_name: nombre de la tabla, bucket o base de datos.
-        connection_string: solo para target='postgres' (ej. 'postgresql://user:pass@localhost:5432/db').
-        custom_schema: esquema JSON de ejemplo para guiar la generación de datos.
+        target: 'dynamodb', 's3' or 'postgres'.
+        target_name: table, bucket or database name.
+        connection_string: only for target='postgres' (e.g. 'postgresql://user:pass@localhost:5432/db').
+        custom_schema: example JSON schema that guides the data generation.
         """
         return await backend("POST", "/api/extensions/seed-data", json_data={
             "target": target,
@@ -66,11 +66,13 @@ def register(mcp):
     @mcp.tool()
     async def get_resource_relations(resource_id: str, resource_type: str) -> dict:
         """
-        Devuelve el grafo de relaciones dependientes de un recurso de AWS dado.
-        Útil para responder preguntas como "¿Qué lambdas consumen este SQS?" o "¿Hacia dónde apunta este S3?".
+        Returns the dependency graph of an AWS resource.
 
-        resource_id: Nombre del recurso (ej. 'my-lambda') o su ARN.
-        resource_type: Tipo del recurso (Lambda, SQS, SNS, S3, DynamoDB, EventBridge).
+        Useful for questions such as "which lambdas consume this SQS queue?" or
+        "where does this S3 bucket point to?".
+
+        resource_id: resource name (e.g. 'my-lambda') or its ARN.
+        resource_type: Lambda, SQS, SNS, S3, DynamoDB or EventBridge.
         """
         import urllib.parse
         return await backend("GET", f"/api/studio/resource-explorer?resource_id={urllib.parse.quote(resource_id)}&resource_type={urllib.parse.quote(resource_type)}")
@@ -83,9 +85,9 @@ def register(mcp):
         body: dict | None = None,
     ) -> dict:
         """
-        Envía una petición HTTP desde el backend de Floci, evitando restricciones CORS.
+        Sends an HTTP request from the Floci backend, avoiding CORS restrictions.
 
-        Útil para testear APIs locales, webhooks y endpoints internos.
+        Useful to test local APIs, webhooks and internal endpoints.
         """
         return await backend("POST", "/api/studio/client/proxy", json_data={
             "url": url,
@@ -101,10 +103,10 @@ def register(mcp):
         algorithm: str = "HS256",
     ) -> dict:
         """
-        Genera un JWT firmado para autenticación en tests locales.
+        Generates a signed JWT for authentication in local tests.
 
-        claims: payload del token (sub, email, roles, exp, etc.).
-        Ejemplo: generate_jwt_token({'sub': 'user-1', 'email': 'dev@floci.io', 'roles': ['admin']})
+        claims: token payload (sub, email, roles, exp, ...).
+        Example: generate_jwt_token({'sub': 'user-1', 'email': 'dev@floci.io', 'roles': ['admin']})
         """
         return await backend("POST", "/api/studio/auth/generate-token", json_data={
             "claims": claims,
@@ -115,10 +117,10 @@ def register(mcp):
     @mcp.tool()
     async def run_ui_tests(test_file: str | None = None) -> dict:
         """
-        Ejecuta los tests de Playwright del frontend.
+        Runs the Playwright tests of the Floci Studio frontend.
 
-        Si se especifica test_file, ejecuta solo ese test.
-        Devuelve stdout, stderr y rutas a capturas de pantalla en caso de fallo.
+        If test_file is given only that test runs.
+        Returns stdout, stderr and screenshot paths on failure.
         """
         cmd = ["npx", "playwright", "test"]
         if test_file:

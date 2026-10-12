@@ -6,13 +6,13 @@ def register(mcp):
 
     @mcp.tool()
     async def list_s3_buckets() -> dict:
-        """Lista todos los buckets S3 del entorno."""
+        """Lists all S3 buckets in the environment."""
         r = make_client("s3").list_buckets()
         return {"buckets": clean([{"name": b["Name"], "created": b["CreationDate"]} for b in r.get("Buckets", [])])}
 
     @mcp.tool()
     async def create_s3_bucket(name: str) -> dict:
-        """Crea un nuevo bucket S3. El nombre debe ser único, solo minúsculas, números y guiones."""
+        """Creates an S3 bucket. The name must be unique: lowercase letters, digits and hyphens only."""
         c = make_client("s3")
         if config.aws_region == "us-east-1":
             c.create_bucket(Bucket=name)
@@ -23,10 +23,9 @@ def register(mcp):
     @mcp.tool()
     async def delete_s3_bucket(name: str, force: bool = False) -> dict:
         """
-        Elimina un bucket S3.
+        Deletes an S3 bucket.
 
-        Si force=true, vacía todos los objetos del bucket antes de eliminarlo.
-        Sin force=true, falla si el bucket tiene contenido.
+        With force=true the bucket is emptied first. Without it, deleting a bucket that has objects fails.
         """
         c = make_client("s3")
         if force:
@@ -45,9 +44,9 @@ def register(mcp):
         max_keys: int = 100,
     ) -> dict:
         """
-        Lista objetos de un bucket S3.
+        Lists the objects of an S3 bucket.
 
-        Usa prefix para filtrar por ruta (ej. 'logs/', 'data/2024/').
+        Use prefix to filter by path, e.g. 'logs/' or 'data/2024/'.
         """
         params: dict = {"Bucket": bucket, "MaxKeys": max_keys}
         if prefix:
@@ -64,9 +63,9 @@ def register(mcp):
         content_type: str = "text/plain",
     ) -> dict:
         """
-        Sube un objeto a S3 con contenido en texto plano o JSON serializado.
+        Uploads an object to S3 as plain text or serialized JSON.
 
-        key es la ruta completa del objeto, ej. 'data/config.json'.
+        key is the full object path, e.g. 'data/config.json'.
         """
         make_client("s3").put_object(
             Bucket=bucket,
@@ -78,14 +77,14 @@ def register(mcp):
 
     @mcp.tool()
     async def get_s3_object(bucket: str, key: str) -> dict:
-        """Descarga y devuelve el contenido de un objeto S3 como texto."""
+        """Downloads an S3 object and returns its content as text."""
         r = make_client("s3").get_object(Bucket=bucket, Key=key)
         content = r["Body"].read().decode("utf-8", errors="replace")
         return {"bucket": bucket, "key": key, "content_type": r.get("ContentType"), "content": content}
 
     @mcp.tool()
     async def delete_s3_object(bucket: str, key: str) -> dict:
-        """Elimina un objeto de un bucket S3."""
+        """Deletes one object from an S3 bucket."""
         make_client("s3").delete_object(Bucket=bucket, Key=key)
         return {"deleted": f"s3://{bucket}/{key}"}
 
@@ -97,10 +96,10 @@ def register(mcp):
         expires_in: int = 3600,
     ) -> dict:
         """
-        Genera una URL pre-firmada para acceso temporal a un objeto S3 sin autenticación.
+        Generates a presigned URL for temporary access to an S3 object without credentials.
 
-        operation: 'get_object' (descarga) o 'put_object' (subida).
-        expires_in: segundos de validez (máximo 604800 = 7 días).
+        operation: 'get_object' (download) or 'put_object' (upload).
+        expires_in: validity in seconds (maximum 604800, 7 days).
         """
         url = make_client("s3").generate_presigned_url(
             ClientMethod=operation,

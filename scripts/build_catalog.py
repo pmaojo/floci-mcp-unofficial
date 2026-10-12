@@ -16,25 +16,8 @@ sys.path.insert(0, ROOT)
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
-from tools import (  # noqa: E402
-    athena, clouds, devtools, dynamodb, eventbridge, extensibility, hybrid, iac, kms, lambda_,
-    marketplace, meta, observability, pipeline, s3, secrets, ses, sns, sqs, stepfunctions, tags,
-)
-
-MODULES = {
-    "meta": meta, "clouds": clouds, "lambda": lambda_, "sqs": sqs, "sns": sns, "s3": s3,
-    "dynamodb": dynamodb, "secrets": secrets, "kms": kms, "eventbridge": eventbridge,
-    "stepfunctions": stepfunctions, "athena": athena, "ses": ses, "marketplace": marketplace,
-    "devtools": devtools, "observability": observability, "iac": iac, "hybrid": hybrid,
-    "extensibility": extensibility, "pipeline": pipeline, "tags": tags,
-}
-WRITE_PREFIXES = (
-    "create_", "delete_", "put_", "update_", "send_", "publish_", "subscribe_", "unsubscribe_", "purge_",
-    "redrive_", "tag_", "untag_", "deploy_", "teardown_", "promote_", "register_", "emit_", "seed_",
-    "start_", "stop_", "invoke_", "verify_", "kms_encrypt", "replay_", "capture_", "edit_", "proxy_",
-    "run_local_aws_cmd", "execute_partiql",
-)
-
+import toolsets  # noqa: E402
+from toolsets import MODULES, is_write, toolset_of  # noqa: E402
 
 def cloud_of(name: str) -> str:
     for prefix in ("gcp_", "azure_", "oci_"):
@@ -76,7 +59,8 @@ async def collect_tools() -> list[dict]:
                 "name": tool.name,
                 "group": group,
                 "cloud": cloud_of(tool.name),
-                "writes": tool.name.startswith(WRITE_PREFIXES),
+                "writes": is_write(tool.name),
+                "toolset": toolset_of(group),
                 "description": first_paragraph(tool.description),
                 "params": params,
             })
@@ -120,6 +104,8 @@ async def main() -> None:
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
         "counts": {"tools": len(tools), "recipes": len(recipes)},
+        "toolsets": {name: list(modules) for name, modules in toolsets.TOOLSETS.items()},
+        "defaultToolsets": list(toolsets.DEFAULT_TOOLSETS),
         "tools": tools,
         "recipes": recipes,
     }

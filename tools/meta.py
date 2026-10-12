@@ -9,7 +9,7 @@ def register(mcp):
 
     @mcp.tool()
     async def check_floci_health() -> dict:
-        """Verifica si el backend de Floci y el emulador AWS están respondiendo. Devuelve estado de cada componente."""
+        """Checks whether the Floci backend and the AWS emulator are answering. Returns the status of each component."""
         backend_ok, backend_details = False, {}
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://testserver"
@@ -38,42 +38,41 @@ def register(mcp):
 
     @mcp.tool()
     async def list_aws_services() -> dict:
-        """Lista el catálogo completo de servicios AWS que Floci puede gestionar (S3, Lambda, SQS, SNS, etc.)."""
+        """Lists the catalogue of AWS services Floci can manage (S3, Lambda, SQS, SNS, ...) and which ones have resources."""
         return await backend("GET", "/api/aws-services")
 
     @mcp.tool()
     async def get_service_resources(service_key: str) -> dict:
         """
-        Lee el inventario de recursos de un servicio AWS específico.
+        Reads the inventory of one AWS service.
 
-        Ejemplos de service_key: 's3', 'lambda', 'sqs', 'sns', 'dynamodb', 'iam', 'rds'.
+        service_key examples: 's3', 'lambda', 'sqs', 'sns', 'dynamodb', 'iam', 'rds'.
         """
         return await backend("GET", f"/api/aws-services/{service_key.lower()}/overview")
 
     @mcp.tool()
     async def get_architecture_diagram() -> dict:
         """
-        Devuelve un diagrama con todos los recursos activos del entorno:
-        buckets S3, colas SQS, tablas DynamoDB, funciones Lambda, APIs y claves KMS.
+        Returns a diagram of every active resource in the environment: S3 buckets, SQS queues,
+        DynamoDB tables, Lambda functions, APIs and KMS keys.
         """
         return await backend("GET", "/api/studio/architecture")
 
     @mcp.tool()
     async def get_cost_forecast() -> dict:
-        """Estima el coste mensual del entorno actual basado en los recursos desplegados."""
+        """Estimates the monthly cost on real AWS of the resources deployed in the local environment."""
         return await backend("GET", "/api/diagnostics/cost-forecast")
 
     @mcp.tool()
     async def get_network_topology() -> dict:
-        """Devuelve el mapa de red Docker local de Floci con contenedores, redes y puertos expuestos."""
+        """Returns the local Docker network map of Floci: containers, networks and exposed ports."""
         return await backend("GET", "/api/extensions/network-topology")
 
     @mcp.tool()
     async def get_enterprise_roadmap() -> dict:
         """
-        Devuelve el roadmap de las características planificadas para lograr la paridad total con Enterprise.
-        Incluye áreas de mejora como resiliencia, gestión de estados, observabilidad, sincronización IaC,
-        desarrollo híbrido y extensibilidad.
+        Returns the roadmap of planned capabilities to reach parity with enterprise emulators:
+        resilience, state management, observability, IaC sync, hybrid development and extensibility.
         """
         return {
             "roadmap": [

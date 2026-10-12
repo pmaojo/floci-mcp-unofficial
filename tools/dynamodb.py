@@ -6,7 +6,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_dynamodb_tables() -> dict:
-        """Lista todas las tablas DynamoDB del entorno."""
+        """Lists all DynamoDB tables in the environment."""
         r = make_client("dynamodb").list_tables()
         return {"tables": r.get("TableNames", [])}
 
@@ -20,10 +20,10 @@ def register(mcp):
         billing_mode: str = "PAY_PER_REQUEST",
     ) -> dict:
         """
-        Crea una tabla DynamoDB.
+        Creates a DynamoDB table.
 
-        partition_key_type / sort_key_type: 'S' (String), 'N' (Number), 'B' (Binary).
-        billing_mode: 'PAY_PER_REQUEST' (serverless) o 'PROVISIONED'.
+        partition_key_type / sort_key_type: 'S' (string), 'N' (number) or 'B' (binary).
+        billing_mode: 'PAY_PER_REQUEST' (on demand) or 'PROVISIONED'.
         """
         attr_defs = [{"AttributeName": partition_key, "AttributeType": partition_key_type}]
         key_schema = [{"AttributeName": partition_key, "KeyType": "HASH"}]
@@ -43,17 +43,17 @@ def register(mcp):
 
     @mcp.tool()
     async def delete_dynamodb_table(name: str) -> dict:
-        """Elimina una tabla DynamoDB y todos sus datos de forma permanente."""
+        """Permanently deletes a DynamoDB table and all of its data."""
         make_client("dynamodb").delete_table(TableName=name)
         return {"deleted": name}
 
     @mcp.tool()
     async def put_dynamodb_item(table: str, item: dict) -> dict:
         """
-        Inserta o reemplaza un ítem en una tabla DynamoDB.
+        Inserts or replaces an item in a DynamoDB table.
 
-        El ítem debe usar el formato de tipos DynamoDB:
-        {'pk': {'S': 'valor'}, 'contador': {'N': '42'}, 'activo': {'BOOL': True}}.
+        The item must use DynamoDB typed values:
+        {'pk': {'S': 'value'}, 'counter': {'N': '42'}, 'active': {'BOOL': True}}.
         """
         make_client("dynamodb").put_item(TableName=table, Item=item)
         return {"table": table, "inserted": True}
@@ -61,9 +61,9 @@ def register(mcp):
     @mcp.tool()
     async def get_dynamodb_item(table: str, key: dict) -> dict:
         """
-        Obtiene un ítem de DynamoDB por su clave primaria.
+        Gets one DynamoDB item by its primary key.
 
-        key en formato DynamoDB: {'pk': {'S': 'valor'}} o {'pk': {'S': 'v'}, 'sk': {'N': '1'}}.
+        key uses DynamoDB typed values: {'pk': {'S': 'value'}} or {'pk': {'S': 'v'}, 'sk': {'N': '1'}}.
         """
         r = make_client("dynamodb").get_item(TableName=table, Key=key)
         return clean({"item": r.get("Item")})
@@ -78,12 +78,12 @@ def register(mcp):
         scan_index_forward: bool = True,
     ) -> dict:
         """
-        Consulta ítems en DynamoDB por clave de partición.
+        Queries DynamoDB items by partition key, optionally narrowed by the sort key.
 
-        Ejemplo:
+        Example:
           key_condition_expression = 'user_id = :uid'
           expression_attribute_values = {':uid': {'S': 'user-123'}}
-        scan_index_forward=false ordena descendentemente por sort key.
+        scan_index_forward=false returns the items in descending sort key order.
         """
         params: dict = {
             "TableName": table,
@@ -106,10 +106,10 @@ def register(mcp):
         limit: int | None = None,
     ) -> dict:
         """
-        Escanea todos los ítems de una tabla DynamoDB.
+        Scans every item of a DynamoDB table.
 
-        Para tablas grandes, preferir query_dynamodb. filter_expression se aplica
-        tras el scan (no reduce el coste de lectura).
+        For large tables prefer query_dynamodb. filter_expression is applied after the scan,
+        so it does not reduce the read cost.
         """
         params: dict = {"TableName": table}
         if filter_expression:
@@ -124,9 +124,9 @@ def register(mcp):
     @mcp.tool()
     async def delete_dynamodb_item(table: str, key: dict) -> dict:
         """
-        Elimina un ítem de DynamoDB por su clave primaria.
+        Deletes a DynamoDB item by its primary key.
 
-        key en formato DynamoDB: {'pk': {'S': 'valor'}}.
+        key uses DynamoDB typed values: {'pk': {'S': 'value'}}.
         """
         make_client("dynamodb").delete_item(TableName=table, Key=key)
         return {"deleted": True}
@@ -134,10 +134,10 @@ def register(mcp):
     @mcp.tool()
     async def execute_partiql_dynamodb(statement: str) -> dict:
         """
-        Ejecuta una consulta PartiQL en DynamoDB.
-        PartiQL es un lenguaje compatible con SQL.
+        Runs one PartiQL statement on DynamoDB (SQL-like: SELECT, INSERT, UPDATE, DELETE).
 
-        Ejemplo: SELECT * FROM "mi_tabla" WHERE "pk" = '123'
+        One statement per call. Quote table names with double quotes.
+        Example: SELECT * FROM "my_table" WHERE "pk" = '123'
         """
         r = make_client("dynamodb").execute_statement(Statement=statement)
         return clean({"items": r.get("Items", [])})

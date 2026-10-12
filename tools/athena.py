@@ -9,7 +9,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_glue_databases() -> dict:
-        """Lista las bases de datos y tablas del catálogo de datos de AWS Glue (usado por Athena)."""
+        """Lists the databases and tables of the AWS Glue data catalogue (used by Athena)."""
         return await backend("GET", "/api/athena/catalog")
 
     @mcp.tool()
@@ -21,10 +21,10 @@ def register(mcp):
         max_rows: int = 100,
     ) -> dict:
         """
-        Ejecuta una consulta SQL en Athena (API real de Floci, con floci-duck) y espera el resultado.
+        Runs a SQL query on Athena (the real Athena API of Floci, backed by floci-duck) and waits for the result.
 
-        La primera consulta puede tardar unos segundos mientras arranca el contenedor de DuckDB.
-        Devuelve columnas y filas (hasta max_rows), o el estado y motivo si falla o expira.
+        The first query can take a few seconds while the DuckDB container starts.
+        Returns columns and rows (up to max_rows), or the status and reason if it fails or times out.
         """
         athena = make_client("athena")
 
@@ -88,7 +88,7 @@ def register(mcp):
 
     @mcp.tool()
     async def get_athena_query_history(max_results: int = 20) -> dict:
-        """Lista las últimas consultas Athena del emulador con su estado y SQL."""
+        """Lists the latest Athena queries of the emulator with their status and SQL."""
         athena = make_client("athena")
 
         def fetch():

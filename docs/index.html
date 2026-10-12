@@ -192,7 +192,8 @@
     <pre class="code">git clone https://github.com/pmaojo/floci-mcp-unofficial
 cd floci-mcp-unofficial
 uv sync &amp;&amp; uv run python floci_mcp.py</pre>
-    <p>Needs Python 3.10+, <a href="https://docs.astral.sh/uv/">uv</a> and a running Floci. Docker for recipes.</p>
+    <p>Needs Python 3.10+, <a href="https://docs.astral.sh/uv/">uv</a> and a running Floci. Docker for recipes.
+      By default it registers the <b>default toolsets</b> only; set <code>FLOCI_TOOLSETS=all</code> for everything, or <code>FLOCI_READ_ONLY=1</code> to drop every tool that writes.</p>
   </div>
   <div>
     <span class="label">client config</span>
@@ -253,14 +254,14 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
     return;
   }
 
-  var state = { view: "tools", q: "", cloud: "all", mode: "all", group: "all" };
+  var state = { view: "tools", q: "", cloud: "all", mode: "all", group: "all", toolset: "all" };
 
   function readHash() {
     var raw = location.hash.replace(/^#/, "");
-    state.view = "tools"; state.q = ""; state.cloud = "all"; state.mode = "all"; state.group = "all";
+    state.view = "tools"; state.q = ""; state.cloud = "all"; state.mode = "all"; state.group = "all"; state.toolset = "all";
     if (!raw) return;
     var params = new URLSearchParams(raw);
-    ["view", "q", "cloud", "mode", "group"].forEach(function (k) {
+    ["view", "q", "cloud", "mode", "group", "toolset"].forEach(function (k) {
       if (params.has(k)) state[k] = params.get(k);
     });
     if (state.view !== "tools" && state.view !== "recipes") state.view = "tools";
@@ -268,7 +269,7 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
   function writeHash() {
     var params = new URLSearchParams();
     Object.keys(state).forEach(function (k) {
-      var defaults = { view: "tools", q: "", cloud: "all", mode: "all", group: "all" };
+      var defaults = { view: "tools", q: "", cloud: "all", mode: "all", group: "all", toolset: "all" };
       if (state[k] !== defaults[k]) params.set(k, state[k]);
     });
     var next = params.toString();
@@ -297,11 +298,16 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
     return el;
   }
 
+  function isDefault(toolset) {
+    return (catalog.defaultToolsets || []).indexOf(toolset) !== -1;
+  }
+
   function toolCard(tool) {
     var tags = h("div", { class: "tags" },
       h("span", { class: "tag " + tool.cloud, text: tool.cloud }),
       h("span", { class: "tag " + (tool.writes ? "write" : "read"), text: tool.writes ? "write" : "read" }),
-      h("span", { class: "tag", text: tool.group }));
+      h("span", { class: "tag", text: tool.group }),
+      h("span", { class: "tag " + (isDefault(tool.toolset) ? "read" : ""), text: "toolset: " + tool.toolset + (isDefault(tool.toolset) ? " (default)" : "") }));
     var card = h("article", { class: "card" },
       h("h3", { text: tool.name }),
       tags,
@@ -383,6 +389,17 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
         .concat(["aws", "azure", "gcp", "oci"].map(function (c) { return { value: c, label: c }; }))));
       filtersEl.appendChild(chipGroup("mode", "mode", [
         { value: "all", label: "all" }, { value: "read", label: "read" }, { value: "write", label: "write" }]));
+      var sets = Object.keys(catalog.toolsets || {});
+      var setSelect = h("select", {
+        "aria-label": "Toolset", class: "chip",
+        onchange: function (e) { state.toolset = e.target.value; render(); },
+      }, h("option", { value: "all", text: "toolset: all" }));
+      sets.forEach(function (name) {
+        var opt = h("option", { value: name, text: name + (isDefault(name) ? " (default)" : "") });
+        if (state.toolset === name) opt.selected = true;
+        setSelect.appendChild(opt);
+      });
+      filtersEl.appendChild(setSelect);
       var groups = uniq(catalog.tools.map(function (t) { return t.group; })).sort();
       var select = h("select", {
         "aria-label": "Group", class: "chip",
@@ -414,6 +431,7 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
         if (state.mode === "read" && t.writes) return false;
         if (state.mode === "write" && !t.writes) return false;
         if (state.group !== "all" && t.group !== state.group) return false;
+        if (state.toolset !== "all" && t.toolset !== state.toolset) return false;
         return matches([t.name, t.group, t.description, t.params.map(function (p) { return p.name; }).join(" ")].join(" "), needle);
       });
     } else {

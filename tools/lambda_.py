@@ -6,12 +6,12 @@ def register(mcp):
 
     @mcp.tool()
     async def get_lambda_runtimes() -> dict:
-        """Lista los runtimes disponibles en Floci (Node.js, Python, Go, Java) y los templates de código por defecto."""
+        """Lists the Lambda runtimes available in Floci (Node.js, Python, Go, Java) and their default code templates."""
         return await backend("GET", "/api/lambda/capabilities")
 
     @mcp.tool()
     async def list_lambda_functions() -> dict:
-        """Lista todas las funciones Lambda desplegadas en el entorno con su configuración."""
+        """Lists all Lambda functions deployed in the environment with their configuration."""
         return await backend("GET", "/api/lambda/functions")
 
     @mcp.tool()
@@ -25,14 +25,14 @@ def register(mcp):
         memory_size: int = 128,
     ) -> dict:
         """
-        Crea una nueva función Lambda.
+        Creates a Lambda function.
 
         runtime: 'nodejs18.x', 'python3.9', 'go1.x', 'java11', 'provided.al2'.
-        handler: punto de entrada, ej. 'index.handler' (Node) o 'main.handler' (Python).
-        code admite tres modos:
-          - {'mode': 'template'} — usa el template por defecto del runtime
-          - {'mode': 'inline', 'fileName': 'index.js', 'source': '...'} — código directo
-          - {'mode': 'zipBase64', 'zipBase64': '...'} — ZIP en base64
+        handler: entry point, e.g. 'index.handler' (Node) or 'main.handler' (Python).
+        code takes one of three modes:
+          - {'mode': 'template'}: the default template of the runtime
+          - {'mode': 'inline', 'fileName': 'index.js', 'source': '...'}: source code
+          - {'mode': 'zipBase64', 'zipBase64': '...'}: a base64 ZIP
         """
         return await backend("POST", "/api/lambda/functions", json_data={
             "functionName": function_name,
@@ -47,9 +47,9 @@ def register(mcp):
     @mcp.tool()
     async def update_lambda_code(function_name: str, runtime: str, code: dict) -> dict:
         """
-        Actualiza el código fuente de una función Lambda existente.
+        Updates the source code of an existing Lambda function.
 
-        Mismos formatos de code que create_lambda_function.
+        code uses the same formats as create_lambda_function.
         """
         return await backend("PUT", f"/api/lambda/functions/{function_name}/code", json_data={
             "runtime": runtime,
@@ -64,7 +64,7 @@ def register(mcp):
         memory_size: int | None = None,
         description: str | None = None,
     ) -> dict:
-        """Actualiza la configuración de una función Lambda: handler, timeout, memoria o descripción."""
+        """Updates the configuration of a Lambda function: handler, timeout, memory or description."""
         payload = {k: v for k, v in {
             "handler": handler,
             "timeout": timeout,
@@ -80,10 +80,10 @@ def register(mcp):
         async_invocation: bool = False,
     ) -> dict:
         """
-        Invoca una función Lambda y devuelve su respuesta.
+        Invokes a Lambda function and returns its response.
 
-        async_invocation=true usa invocación Event (fire-and-forget, sin esperar respuesta).
-        Por defecto usa RequestResponse (síncrono, devuelve el resultado).
+        async_invocation=true uses the Event invocation type (fire and forget, no response).
+        The default is RequestResponse (synchronous, returns the result).
         """
         return await backend("POST", f"/api/lambda/functions/{function_name}/invoke", json_data={
             "payload": payload or {},
@@ -92,10 +92,10 @@ def register(mcp):
 
     @mcp.tool()
     async def get_lambda_logs(function_name: str) -> dict:
-        """Obtiene los logs de CloudWatch de una función Lambda."""
+        """Gets the CloudWatch logs of a Lambda function."""
         return await backend("GET", f"/api/lambda/functions/{function_name}/logs")
 
     @mcp.tool()
     async def delete_lambda(function_name: str) -> dict:
-        """Elimina una función Lambda del entorno."""
+        """Deletes a Lambda function from the environment."""
         return await backend("DELETE", f"/api/lambda/functions/{function_name}")

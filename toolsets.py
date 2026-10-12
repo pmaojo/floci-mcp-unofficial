@@ -114,7 +114,7 @@ def register_toolset_info(mcp: FastMCP, selection: tuple[str, ...], read_only: b
     @mcp.tool()
     async def list_toolsets() -> dict:
         """
-        Lists the toolsets of this server: which are enabled and how many tools each one holds.
+        Lists the toolsets of this server and which ones are enabled.
 
         Tools outside the enabled toolsets are not registered. Enable more with the
         FLOCI_TOOLSETS environment variable (comma separated, or "all") and restart the server.

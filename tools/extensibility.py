@@ -72,8 +72,8 @@ def register(mcp):
     @mcp.tool()
     async def list_floci_plugins() -> dict:
         """
-        List the community plugins discovered in mcp/plugins/.
+        Lists the community plugins found in the plugins directory.
 
-        Each plugin contributes additional MCP tools loaded at server startup.
+        Each plugin contributes extra MCP tools loaded at server startup.
         """
         return await backend("GET", "/api/extensibility/plugins")

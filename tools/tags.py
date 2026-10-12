@@ -7,18 +7,18 @@ def register(mcp):
     @mcp.tool()
     async def get_all_tag_keys() -> dict:
         """
-        Lista todas las claves de tag actualmente en uso en todos los recursos.
+        Lists every tag key currently in use across all resources.
 
-        Útil para descubrir qué tags existen antes de filtrar o aplicar nuevos.
+        Useful to discover which tags exist before filtering or applying new ones.
         """
         return await backend("GET", "/api/tags/keys")
 
     @mcp.tool()
     async def get_tag_values(key: str) -> dict:
         """
-        Lista todos los valores usados para una clave de tag dada.
+        Lists every value used for a given tag key.
 
-        Ejemplo: get_tag_values('Environment') → ['dev', 'staging', 'prod']
+        Example: get_tag_values('Environment') -> ['dev', 'staging', 'prod']
         """
         return await backend("GET", f"/api/tags/values/{key}")
 
@@ -29,14 +29,14 @@ def register(mcp):
         resource_types: list[str] | None = None,
     ) -> dict:
         """
-        Busca recursos por tag en todos los servicios AWS.
+        Finds resources by tag across all AWS services.
 
-        tag_key: clave del tag a buscar (ej. 'Environment', 'Project').
-        tag_value: valor exacto a filtrar. Si es None, devuelve todos los recursos con esa clave.
-        resource_types: lista de tipos de recurso AWS a incluir (ej. ['s3', 'lambda', 'dynamodb']).
-                        Si es None, busca en todos los tipos.
+        tag_key: tag key to search (e.g. 'Environment', 'Project').
+        tag_value: exact value to match. If None, returns every resource that has the key.
+        resource_types: AWS resource types to include (e.g. ['s3', 'lambda', 'dynamodb']).
+                        If None, all types are searched.
 
-        Ejemplo: find_resources_by_tag('Environment', 'prod', ['s3', 'lambda'])
+        Example: find_resources_by_tag('Environment', 'prod', ['s3', 'lambda'])
         """
         tag_filter = {"Key": tag_key}
         if tag_value is not None:
@@ -52,12 +52,12 @@ def register(mcp):
     @mcp.tool()
     async def tag_resources(resource_arns: list[str], tags: dict) -> dict:
         """
-        Aplica tags a uno o más recursos identificados por ARN.
+        Applies tags to one or more resources identified by ARN.
 
-        resource_arns: lista de ARNs de los recursos a etiquetar.
-        tags: diccionario de {clave: valor} a aplicar.
+        resource_arns: list of resource ARNs to tag.
+        tags: dictionary of {key: value} to apply.
 
-        Ejemplo: tag_resources(
+        Example: tag_resources(
             ['arn:aws:s3:::my-bucket', 'arn:aws:lambda:us-east-1:000000000000:function:my-fn'],
             {'Environment': 'prod', 'Team': 'backend'}
         )
@@ -70,15 +70,12 @@ def register(mcp):
     @mcp.tool()
     async def untag_resources(resource_arns: list[str], tag_keys: list[str]) -> dict:
         """
-        Elimina tags específicos de uno o más recursos.
+        Removes specific tags from one or more resources.
 
-        resource_arns: lista de ARNs de los recursos.
-        tag_keys: lista de claves de tag a eliminar.
+        resource_arns: list of resource ARNs.
+        tag_keys: list of tag keys to remove.
 
-        Ejemplo: untag_resources(
-            ['arn:aws:s3:::my-bucket'],
-            ['OldEnvironment', 'Deprecated']
-        )
+        Example: untag_resources(['arn:aws:s3:::my-bucket'], ['OldEnvironment', 'Deprecated'])
         """
         return await backend("POST", "/api/tags/resources/untag", json_data={
             "resourceArns": resource_arns,
@@ -88,13 +85,13 @@ def register(mcp):
     @mcp.tool()
     async def list_all_tagged_resources(resource_types: list[str] | None = None) -> dict:
         """
-        Lista todos los recursos que tienen al menos un tag aplicado.
+        Lists every resource that has at least one tag.
 
-        resource_types: limita la búsqueda a tipos de recurso específicos.
-                        Ej: ['s3', 'lambda:function', 'dynamodb:table', 'sqs:queueurl', 'secretsmanager:secret']
-                        Si es None, devuelve todos los tipos.
+        resource_types: limits the search to specific resource types.
+                        Ex: ['s3', 'lambda:function', 'dynamodb:table', 'sqs:queueurl', 'secretsmanager:secret']
+                        If None, all types are returned.
 
-        Devuelve ARN, tipo de recurso y todos los tags de cada recurso.
+        Returns the ARN, the resource type and all the tags of each resource.
         """
         return await backend("POST", "/api/tags/resources/search", json_data={
             "tagFilters": [],

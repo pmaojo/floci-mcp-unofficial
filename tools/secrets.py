@@ -6,7 +6,7 @@ def register(mcp):
 
     @mcp.tool()
     async def list_secrets() -> dict:
-        """Lista todos los secretos de AWS Secrets Manager del entorno."""
+        """Lists all AWS Secrets Manager secrets in the environment."""
         r = make_client("secretsmanager").list_secrets()
         return {
             "secrets": [
@@ -18,9 +18,9 @@ def register(mcp):
     @mcp.tool()
     async def create_secret(name: str, value: str, description: str | None = None) -> dict:
         """
-        Crea un nuevo secreto en Secrets Manager.
+        Creates a Secrets Manager secret.
 
-        value puede ser un string o un JSON serializado (ej. '{"user":"admin","pass":"xyz"}').
+        value can be a string or serialized JSON, e.g. '{"user":"admin","pass":"xyz"}'.
         """
         params: dict = {"Name": name, "SecretString": value}
         if description:
@@ -30,22 +30,22 @@ def register(mcp):
 
     @mcp.tool()
     async def get_secret_value(name_or_arn: str) -> dict:
-        """Obtiene el valor de un secreto de Secrets Manager por nombre o ARN."""
+        """Gets the value of a Secrets Manager secret by name or ARN."""
         r = make_client("secretsmanager").get_secret_value(SecretId=name_or_arn)
         return {"name": r["Name"], "arn": r["ARN"], "value": r.get("SecretString")}
 
     @mcp.tool()
     async def update_secret(name_or_arn: str, value: str) -> dict:
-        """Actualiza el valor de un secreto existente en Secrets Manager."""
+        """Updates the value of an existing Secrets Manager secret."""
         r = make_client("secretsmanager").update_secret(SecretId=name_or_arn, SecretString=value)
         return {"arn": r["ARN"], "updated": True}
 
     @mcp.tool()
     async def delete_secret(name_or_arn: str, force: bool = False) -> dict:
         """
-        Elimina un secreto de Secrets Manager.
+        Deletes a Secrets Manager secret.
 
-        Con force=true, elimina inmediatamente sin período de recuperación de 30 días.
+        With force=true it is deleted immediately, without the 30-day recovery window.
         """
         params: dict = {"SecretId": name_or_arn}
         if force:
