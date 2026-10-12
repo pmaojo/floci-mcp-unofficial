@@ -7,7 +7,7 @@ source queue once the code is fixed.
 import json
 from typing import Any, Dict, List, Optional
 
-from floci_backend.infrastructure.boto_factory import make_client
+from floci_backend.application.ports import QueueTransport
 
 
 def _to_jsonable(obj: Any) -> Any:
@@ -28,35 +28,30 @@ def _to_jsonable(obj: Any) -> Any:
 
 
 class DlqService:
-    def __init__(self):
-        self._sqs = make_client("sqs")
+    def __init__(self, queues: QueueTransport):
+        self._queues = queues
 
     def _queue_arn(self, queue_url: str) -> Optional[str]:
-        attrs = self._sqs.get_queue_attributes(
-            QueueUrl=queue_url, AttributeNames=["QueueArn"]
-        ).get("Attributes", {})
-        return attrs.get("QueueArn")
+        return self._queues.queue_attributes(queue_url, ["QueueArn"]).get("QueueArn")
 
     def _url_from_arn(self, arn: str) -> Optional[str]:
         # arn:aws:sqs:region:account:name -> resolve url by name
         name = arn.split(":")[-1]
         try:
-            return self._sqs.get_queue_url(QueueName=name).get("QueueUrl")
+            return self._queues.queue_url(name)
         except Exception:
             return None
 
     def list_dead_letter_queues(self) -> Dict[str, Any]:
         """List queues used as a DLQ and which source queue(s) feed them."""
-        urls = self._sqs.list_queues().get("QueueUrls", [])
+        urls = self._queues.list_queue_urls()
 
         # Map DLQ ARN -> [source queues]
         sources_by_dlq: Dict[str, List[str]] = {}
         arn_to_url: Dict[str, str] = {}
 
         for url in urls:
-            attrs = self._sqs.get_queue_attributes(
-                QueueUrl=url, AttributeNames=["QueueArn", "RedrivePolicy"]
-            ).get("Attributes", {})
+            attrs = self._queues.queue_attributes(url, ["QueueArn", "RedrivePolicy"])
             arn = attrs.get("QueueArn")
             if arn:
                 arn_to_url[arn] = url
@@ -75,10 +70,7 @@ class DlqService:
             dlq_url = arn_to_url.get(dlq_arn) or self._url_from_arn(dlq_arn)
             count = 0
             if dlq_url:
-                c = self._sqs.get_queue_attributes(
-                    QueueUrl=dlq_url,
-                    AttributeNames=["ApproximateNumberOfMessages"],
-                ).get("Attributes", {})
+                c = self._queues.queue_attributes(dlq_url, ["ApproximateNumberOfMessages"])
                 count = int(c.get("ApproximateNumberOfMessages", 0))
             dlqs.append({
                 "dlqArn": dlq_arn,
@@ -92,15 +84,14 @@ class DlqService:
 
     def inspect_messages(self, dlq_url: str, max_messages: int = 10) -> Dict[str, Any]:
         """Read messages from the DLQ without deleting them (visibility_timeout=0)."""
-        resp = self._sqs.receive_message(
-            QueueUrl=dlq_url,
-            MaxNumberOfMessages=min(max_messages, 10),
-            VisibilityTimeout=0,
-            WaitTimeSeconds=1,
-            AttributeNames=["All"],
-            MessageAttributeNames=["All"],
+        received = self._queues.receive(
+            dlq_url,
+            max_messages=min(max_messages, 10),
+            visibility_timeout=0,
+            wait_seconds=1,
+            all_attributes=True,
         )
-        messages = _to_jsonable(resp.get("Messages", []))
+        messages = _to_jsonable(received)
         for m in messages:
             attrs = m.get("Attributes", {})
             m["failureReason"] = {
@@ -122,25 +113,18 @@ class DlqService:
         errors: List[str] = []
         remaining = max_messages
         while remaining > 0:
-            batch = self._sqs.receive_message(
-                QueueUrl=dlq_url,
-                MaxNumberOfMessages=min(remaining, 10),
-                VisibilityTimeout=30,
-                WaitTimeSeconds=1,
-                MessageAttributeNames=["All"],
-            ).get("Messages", [])
+            batch = self._queues.receive(
+                dlq_url,
+                max_messages=min(remaining, 10),
+                visibility_timeout=30,
+                wait_seconds=1,
+            )
             if not batch:
                 break
             for msg in batch:
                 try:
-                    self._sqs.send_message(
-                        QueueUrl=source_url,
-                        MessageBody=msg["Body"],
-                        MessageAttributes=msg.get("MessageAttributes", {}),
-                    )
-                    self._sqs.delete_message(
-                        QueueUrl=dlq_url, ReceiptHandle=msg["ReceiptHandle"]
-                    )
+                    self._queues.send(source_url, msg["Body"], msg.get("MessageAttributes", {}))
+                    self._queues.delete(dlq_url, msg["ReceiptHandle"])
                     moved += 1
                 except Exception as e:  # noqa: BLE001
                     errors.append(str(e))

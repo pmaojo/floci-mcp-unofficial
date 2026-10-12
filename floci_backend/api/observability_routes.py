@@ -7,21 +7,21 @@ from floci_backend.application.flight_recorder import FlightRecorder
 from floci_backend.application.service_graph import ServiceGraph
 
 
-def create_observability_router(flight_recorder: FlightRecorder) -> APIRouter:
+def create_observability_router(flight_recorder: FlightRecorder, dlq_service: DlqService) -> APIRouter:
     router = APIRouter()
 
     # ------------------------------------------------------------------- DLQ
     @router.get("/observability/dlq")
     async def list_dlqs():
         try:
-            return DlqService().list_dead_letter_queues()
+            return dlq_service.list_dead_letter_queues()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     @router.get("/observability/dlq/messages")
     async def inspect_dlq(dlq_url: str, max_messages: int = 10):
         try:
-            return DlqService().inspect_messages(dlq_url, max_messages)
+            return dlq_service.inspect_messages(dlq_url, max_messages)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -33,7 +33,7 @@ def create_observability_router(flight_recorder: FlightRecorder) -> APIRouter:
     @router.post("/observability/dlq/redrive")
     async def redrive(req: RedriveRequest):
         try:
-            return DlqService().redrive(req.dlq_url, req.source_url, req.max_messages)
+            return dlq_service.redrive(req.dlq_url, req.source_url, req.max_messages)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

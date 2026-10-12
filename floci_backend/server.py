@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from floci_backend.config import config, SIDECAR_HEADER_NAME
 
 from floci_backend.infrastructure.aws_cli import AwsCli
+from floci_backend.infrastructure.sqs_transport import BotoQueueTransport
 from floci_backend.application.lambda_service import LambdaService
 from floci_backend.application.eks_service import EksService
 from floci_backend.application.aws_resource_service import AwsResourceService
@@ -12,6 +13,7 @@ from floci_backend.application.recipe_service import RecipeService
 from floci_backend.application.diagnostics_service import DiagnosticsService
 from floci_backend.application.athena_service import AthenaService
 from floci_backend.application.tags_service import TagsService
+from floci_backend.application.dlq_service import DlqService
 from floci_backend.application.realtime_service import RealtimeService
 
 from floci_backend.api.lambda_routes import create_lambda_router
@@ -59,6 +61,7 @@ realtime_service = RealtimeService(aws_cli=aws_cli)
 
 # Enterprise-parity services (Areas 3/4/5/6)
 flight_recorder = FlightRecorder()
+dlq_service = DlqService(BotoQueueTransport())
 drift_service = DriftService()
 hybrid_service = HybridService(data_seeder=data_seeder)
 lifecycle_hub = LifecycleHub()
@@ -128,7 +131,7 @@ app.include_router(create_marketplace_router(recipe_service), prefix="/api")
 app.include_router(create_athena_router(athena_service), prefix="/api")
 app.include_router(create_mcp_extensions_router(aws_cli, iac_generator, data_seeder, topology_mapper, recipe_service), prefix="/api")
 app.include_router(studio_router, prefix="/api")
-app.include_router(create_observability_router(flight_recorder), prefix="/api")
+app.include_router(create_observability_router(flight_recorder, dlq_service), prefix="/api")
 app.include_router(create_iac_router(drift_service), prefix="/api")
 app.include_router(create_pipeline_router(pipeline_service, recipe_service), prefix="/api")
 app.include_router(create_hybrid_router(hybrid_service), prefix="/api")
