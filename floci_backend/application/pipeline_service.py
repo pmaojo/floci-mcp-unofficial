@@ -9,6 +9,7 @@ services), ready to apply with `copilot deploy` or `terraform apply`.
 """
 
 import asyncio
+from floci_backend.application.recipe_service import describe_docker_failure
 import json
 import os
 import re
@@ -265,7 +266,7 @@ type: Environment
                 self.log_map[log_key].append(f'[SYSTEM] {inst["error"]}')
         except Exception as e:
             inst['status'] = 'FAILED'
-            inst['error'] = str(e)
+            inst['error'] = describe_docker_failure(e)
             self.log_map[log_key].append(f'[SYSTEM] Exception: {e}')
 
         state = await self._load_state()
@@ -291,7 +292,7 @@ type: Environment
                 inst['error'] = f'docker compose down exited with code {process.returncode}'
         except Exception as e:
             inst['status'] = 'FAILED'
-            inst['error'] = str(e)
+            inst['error'] = describe_docker_failure(e)
 
         state = await self._load_state()
         env_state = state.get(env, {})

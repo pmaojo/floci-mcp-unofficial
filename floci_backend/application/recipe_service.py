@@ -6,6 +6,14 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 from floci_backend.config import config
 
+
+def describe_docker_failure(error: Exception) -> str:
+    """Turns a missing docker binary into an instruction instead of an errno."""
+    if isinstance(error, FileNotFoundError):
+        return "'docker' was not found on PATH. Install Docker with Compose, or run the Docker image with the socket mounted."
+    return str(error)
+
+
 class RecipeService:
     def __init__(self):
         self.state_file_path = os.path.join(config.state_dir, 'marketplace-installations.json')
@@ -125,7 +133,7 @@ class RecipeService:
         except Exception as e:
             self.log_map[recipe_id].append(f'[SYSTEM] Exception during installation: {str(e)}')
             inst['status'] = 'FAILED'
-            inst['error'] = str(e)
+            inst['error'] = describe_docker_failure(e)
             await self._save_installation_state(recipe_id, inst)
 
 
@@ -191,5 +199,5 @@ class RecipeService:
         except Exception as e:
             self.log_map[recipe_id].append(f'[SYSTEM] Exception during teardown: {str(e)}')
             inst['status'] = 'FAILED'
-            inst['error'] = str(e)
+            inst['error'] = describe_docker_failure(e)
             await self._save_installation_state(recipe_id, inst)

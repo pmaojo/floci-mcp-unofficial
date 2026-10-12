@@ -20,6 +20,31 @@ import skills_catalog  # noqa: E402
 import toolsets  # noqa: E402
 from toolsets import MODULES, is_write, toolset_of  # noqa: E402
 
+def readme_table(heading: str) -> list[dict]:
+    """Rows of the first markdown table under `## heading` in README.md."""
+    with open(os.path.join(ROOT, "README.md")) as handle:
+        lines = handle.read().splitlines()
+    try:
+        start = lines.index(f"## {heading}")
+    except ValueError:
+        return []
+    rows: list[list[str]] = []
+    for line in lines[start + 1:]:
+        if line.startswith("## "):
+            break
+        if line.startswith("|"):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if all(set(c) <= set("-: ") for c in cells):
+                continue
+            rows.append(cells)
+        elif rows:
+            break
+    if not rows:
+        return []
+    header, body = rows[0], rows[1:]
+    return [dict(zip([h.lower() for h in header], row)) for row in body]
+
+
 def cloud_of(name: str) -> str:
     for prefix in ("gcp_", "azure_", "oci_"):
         if name.startswith(prefix):
@@ -107,6 +132,8 @@ async def main() -> None:
         "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
         "counts": {"tools": len(tools), "recipes": len(recipes), "skills": len(skills)},
         "toolsets": {name: list(modules) for name, modules in toolsets.TOOLSETS.items()},
+        "cookbook": readme_table("Cookbook"),
+        "troubleshooting": readme_table("Troubleshooting"),
         "defaultToolsets": list(toolsets.DEFAULT_TOOLSETS),
         "tools": tools,
         "recipes": recipes,

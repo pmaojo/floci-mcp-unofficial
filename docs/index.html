@@ -117,12 +117,12 @@
   details { border-top: 3px solid var(--ink); padding-top: 8px; }
   summary { cursor: pointer; font-weight: 700; text-transform: uppercase; }
   table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
-  th, td { border: 2px solid var(--ink); padding: 4px 6px; text-align: left; vertical-align: top; word-break: break-word; }
+  th, td { border: 2px solid var(--ink); padding: 4px 6px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
   th { background: var(--ink); color: var(--paper); text-transform: uppercase; }
   .empty { padding: 60px 16px; font-size: 28px; font-weight: 700; text-transform: uppercase; }
 
-  .install { display: grid; grid-template-columns: 1fr 1fr; }
-  .install > div { padding: 20px 16px; }
+  .install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .install > div { padding: 20px 16px; min-width: 0; }
   .install > div:first-child { border-right: var(--line) solid var(--ink); }
   .install h2 { margin: 12px 0; font-size: 32px; text-transform: uppercase; letter-spacing: -.02em; }
   pre.code {
@@ -151,8 +151,24 @@
   .skill .tool-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .skill-install { padding: 20px 16px 28px; border-top: 0; }
   .skill-install p { margin: 10px 0 0; font-weight: 700; }
+
+  .guide { background: var(--paper); }
+  .guide-head { padding: 28px 16px 8px; max-width: 90ch; }
+  .guide-head h2 { margin: 12px 0 6px; font-size: clamp(30px, 5vw, 56px); line-height: .95; letter-spacing: -.03em; text-transform: uppercase; }
+  .guide-head p { margin: 0; font-weight: 700; }
+  .cook-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); border-top: var(--line) solid var(--ink); margin-top: 18px; }
+  .cook { border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .cook q { font-size: 17px; font-weight: 700; quotes: none; }
+  .cook .calls { background: var(--ink); color: var(--paper); padding: 8px 10px; font-size: 13px; overflow-x: auto; }
+  .cook .calls code { background: transparent; border: 0; color: var(--yellow); padding: 0; }
+  .flow { margin: 12px 16px 20px; }
+  .trouble { border-top: var(--line) solid var(--ink); margin-top: 16px; }
+  .trouble details { border-bottom: 3px solid var(--ink); padding: 10px 16px; }
+  .trouble summary { font-weight: 700; word-break: break-word; }
+  .trouble .why { margin: 8px 0 0; }
+  .trouble .fix { margin: 6px 0 0; font-weight: 700; }
   .docs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
-  .docs-grid > div { padding: 20px 16px; border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink); min-width: 0; }
+  .docs-grid > div { overflow-x: auto; padding: 20px 16px; border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink); min-width: 0; }
   .docs-grid h2 { margin: 12px 0; font-size: 30px; letter-spacing: -.02em; text-transform: uppercase; line-height: 1; }
   .docs-grid p { margin: 8px 0; }
   .docs-grid ul { margin: 8px 0 0; padding-left: 20px; }
@@ -166,7 +182,7 @@
     .counter:nth-child(2) { border-right: 0; }
     .counter:nth-child(-n+2) { border-bottom: var(--line) solid var(--ink); }
     .strip a.nav { display: none; }
-    .install { grid-template-columns: 1fr; }
+    .install { grid-template-columns: minmax(0, 1fr); }
     .install > div:first-child { border-right: 0; border-bottom: var(--line) solid var(--ink); }
     .tab { font-size: 16px; padding: 12px 8px; }
     .strip > * { padding: 8px 10px; }
@@ -182,6 +198,7 @@
   <span id="generated">catalog: loading</span>
   <a class="nav" href="#skills">skills</a>
   <a class="nav" href="#market">catalog</a>
+  <a class="nav" href="#guide">guide</a>
   <a class="nav" href="#docs">docs</a>
   <a href="https://github.com/pmaojo/floci-mcp-unofficial">github &rarr;</a>
 </div>
@@ -267,6 +284,37 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
   }
 }</pre>
   </div>
+</section>
+
+<section class="guide" id="guide" aria-label="Guide">
+  <div class="guide-head">
+    <span class="label">cookbook</span>
+    <h2>Ask it like this.</h2>
+    <p>Things to say to the agent, and what it ends up calling. If a toolset is missing, the agent switches it on.</p>
+  </div>
+  <div class="cook-grid" id="cook-grid"></div>
+  <div class="guide-head">
+    <span class="label">how it works</span>
+    <h2>Thin on purpose.</h2>
+  </div>
+  <pre class="code flow">agent (Claude, Cursor, Codex, ...)
+        |  MCP over stdio
+        v
+floci_mcp.py  -- toolsets decide which tools are registered
+        |
+        |-- boto3 ----------------------------> Floci core  :4566  (AWS)
+        |-- REST (per provider) --------------> Floci-AZ    :4577
+        |                                       Floci-GCP   :4588
+        |                                       Floci-OCI   :4599
+        `-- in-process backend
+              |-- aws CLI          run_local_aws_cmd, Glue catalog, Lambda deploy
+              `-- docker compose   marketplace, pipeline  --> recipes/</pre>
+  <div class="guide-head">
+    <span class="label warn">troubleshooting</span>
+    <h2>When it does not work.</h2>
+    <p>These are the messages the server returns.</p>
+  </div>
+  <div class="trouble" id="trouble"></div>
 </section>
 
 <section class="docs" id="docs" aria-label="Documentation">
@@ -518,6 +566,40 @@ FLOCI_TOOLSETS_ALLOWED=ops     # optional cap; unset: the agent may enable any</
     });
   }
 
+
+  function inline(text) {
+    var frag = document.createDocumentFragment();
+    String(text).split("`").forEach(function (part, i) {
+      if (!part) return;
+      frag.appendChild(i % 2 ? h("code", { text: part }) : document.createTextNode(part));
+    });
+    return frag;
+  }
+
+  function renderGuide() {
+    var cook = document.getElementById("cook-grid");
+    cook.replaceChildren();
+    (catalog.cookbook || []).forEach(function (row) {
+      var calls = h("div", { class: "calls" });
+      calls.appendChild(inline(row["it calls"] || ""));
+      cook.appendChild(h("article", { class: "cook" },
+        h("q", { text: (row.ask || "").replace(/^"|"$/g, "") }),
+        calls,
+        h("div", { class: "tags" }, (row.toolset || "").split(",").map(function (t) {
+          return h("span", { class: "tag " + (isDefault(t.trim()) ? "read" : ""), text: t.trim() });
+        }))));
+    });
+    var trouble = document.getElementById("trouble");
+    trouble.replaceChildren();
+    (catalog.troubleshooting || []).forEach(function (row) {
+      var summary = h("summary");
+      summary.appendChild(inline(row["you see"] || ""));
+      var why = h("p", { class: "why" }); why.appendChild(inline(row.why || ""));
+      var fix = h("p", { class: "fix" }); fix.appendChild(document.createTextNode("Do: ")); fix.appendChild(inline(row.do || ""));
+      trouble.appendChild(h("details", null, summary, why, fix));
+    });
+  }
+
   function chipGroup(label, key, options) {
     var wrap = h("div", { class: "chips" }, h("span", { class: "group-name", text: label }));
     options.forEach(function (opt) {
@@ -626,6 +708,7 @@ FLOCI_TOOLSETS_ALLOWED=ops     # optional cap; unset: the agent may enable any</
 
   readHash();
   renderSkills();
+  renderGuide();
   renderToolsetTable();
   render();
 })();

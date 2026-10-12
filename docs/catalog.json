@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T19:55:18Z",
+  "generatedAt": "2026-10-12T19:59:32Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 138,
@@ -43,6 +43,115 @@
       "extensibility"
     ]
   },
+  "cookbook": [
+    {
+      "ask": "\"Is my local cloud up, and what is in it?\"",
+      "it calls": "skill `floci-explore`: `list_clouds`, `check_floci_health`, `list_aws_services`, `get_service_resources`",
+      "toolset": "core"
+    },
+    {
+      "ask": "\"Create a queue `orders`, send a test message and read it back.\"",
+      "it calls": "`create_sqs_queue`, `send_sqs_message`, `receive_sqs_messages`, `delete_sqs_message`",
+      "toolset": "messaging"
+    },
+    {
+      "ask": "\"Make a table `users`, add three items and list the ones older than 21.\"",
+      "it calls": "`create_dynamodb_table`, `put_dynamodb_item`, `execute_partiql_dynamodb`",
+      "toolset": "storage"
+    },
+    {
+      "ask": "\"Why are my messages stuck?\"",
+      "it calls": "skill `floci-triage`: `list_dead_letter_queues`, `inspect_dlq_messages`, `get_sqs_queue_attributes`, then `redrive_dlq` only after you say yes",
+      "toolset": "ops, messaging"
+    },
+    {
+      "ask": "\"Compare my buckets and queues across AWS, Azure, GCP and OCI.\"",
+      "it calls": "skill `floci-multicloud`: `list_clouds` and each cloud's list tools",
+      "toolset": "core, storage, messaging"
+    },
+    {
+      "ask": "\"Store a secret and encrypt a value with a new key.\"",
+      "it calls": "`create_secret`, `create_kms_key`, `kms_encrypt`",
+      "toolset": "storage"
+    },
+    {
+      "ask": "\"Run `SELECT 1` on Athena.\"",
+      "it calls": "`run_athena_query`",
+      "toolset": "compute"
+    },
+    {
+      "ask": "\"Start a local Redis and tell me the port.\"",
+      "it calls": "`list_marketplace_recipes`, `deploy_marketplace_app`, `get_marketplace_installations`",
+      "toolset": "marketplace"
+    },
+    {
+      "ask": "\"Fill `orders` with test data.\"",
+      "it calls": "skill `floci-seed`: `list_dynamodb_tables`, `seed_mock_data`, `scan_dynamodb`",
+      "toolset": "storage, hybrid"
+    },
+    {
+      "ask": "\"Write the Terraform for what I have running.\"",
+      "it calls": "skill `floci-iac`: `export_to_terraform`; `detect_iac_drift` to compare with code",
+      "toolset": "hybrid, ops"
+    }
+  ],
+  "troubleshooting": [
+    {
+      "you see": "`Could not connect to the endpoint URL: \"http://localhost:4566/\"`",
+      "why": "Floci core is not running, or `AWS_ENDPOINT_URL` points elsewhere",
+      "do": "Start Floci; call `list_clouds` to see what answers"
+    },
+    {
+      "you see": "`Cannot reach the gcp runtime at http://localhost:4588: All connection attempts failed` (or `azure`, `oci`)",
+      "why": "That emulator is not running",
+      "do": "Start it, for example with the `multicloud` profile of the Floci UI compose file"
+    },
+    {
+      "you see": "`list_clouds` shows `unreachable`",
+      "why": "Same, one entry per runtime",
+      "do": "Same"
+    },
+    {
+      "you see": "`The aws CLI is not on PATH. Install it from https://aws.amazon.com/cli/`",
+      "why": "`run_local_aws_cmd`, the Glue catalog and Lambda deployment shell out to `aws`",
+      "do": "Install the CLI, or use the Docker image, which includes it"
+    },
+    {
+      "you see": "An installation ends `FAILED` with `'docker' was not found on PATH`",
+      "why": "The marketplace runs `docker compose`",
+      "do": "Install Docker with Compose, or mount the socket into the image"
+    },
+    {
+      "you see": "The tool you want is not in the list",
+      "why": "Its toolset is not registered",
+      "do": "`list_toolsets`, then `enable_toolset`; or set `FLOCI_TOOLSETS` and restart"
+    },
+    {
+      "you see": "`Toolset 'x' is not allowed to be enabled at runtime`",
+      "why": "The server was started with `FLOCI_TOOLSETS_ALLOWED`",
+      "do": "Change that variable and restart"
+    },
+    {
+      "you see": "`FLOCI_TOOLSETS: unknown toolset ...` at startup",
+      "why": "A typo in the toolset list",
+      "do": "The message lists the valid names"
+    },
+    {
+      "you see": "`Statement wasn't well formed` on PartiQL",
+      "why": "More than one statement in a call",
+      "do": "One statement per `execute_partiql_dynamodb`"
+    },
+    {
+      "you see": "The first Athena query takes several seconds",
+      "why": "Floci starts its DuckDB container on first use",
+      "do": "Wait; later queries are fast"
+    },
+    {
+      "you see": "From Docker on Linux the emulators are unreachable",
+      "why": "`host.docker.internal` is not defined there",
+      "do": "`--add-host=host.docker.internal:host-gateway`"
+    }
+  ],
   "defaultToolsets": [
     "core",
     "storage",

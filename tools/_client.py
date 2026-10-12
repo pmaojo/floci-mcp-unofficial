@@ -11,7 +11,7 @@ import httpx
 from floci_backend.config import config
 from floci_backend.server import app
 
-__all__ = ["make_client", "clean", "backend", "config"]
+__all__ = ["make_client", "clean", "backend", "config", "BackendError"]
 
 
 def make_client(service: str):
@@ -40,6 +40,24 @@ def clean(obj: Any) -> Any:
     return obj
 
 
+class BackendError(Exception):
+    """A call into the in-process backend failed; the message says why."""
+
+
+def _describe_failure(method: str, path: str, resp: httpx.Response) -> str:
+    detail = ""
+    try:
+        body = resp.json()
+        if isinstance(body, dict):
+            detail = str(body.get("detail") or body.get("error") or body.get("message") or "")
+        else:
+            detail = str(body)
+    except ValueError:
+        detail = resp.text.strip()
+    detail = detail.strip()[:600]
+    return f"{method.upper()} {path} failed with HTTP {resp.status_code}" + (f": {detail}" if detail else "")
+
+
 async def backend(method: str, path: str, json_data: dict | None = None) -> Any:
     """Llama al backend FastAPI en memoria via ASGI transport (sin red)."""
     headers: dict[str, str] = {}
@@ -62,5 +80,6 @@ async def backend(method: str, path: str, json_data: dict | None = None) -> Any:
             case _:
                 raise ValueError(f"Método HTTP no soportado: {method}")
 
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            raise BackendError(_describe_failure(method, path, resp))
         return resp.json()

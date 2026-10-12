@@ -25,6 +25,25 @@ You need a running Floci (`localhost:4566`). Then install the skills below so th
 
 Claude Code asks for the toolsets, read-only mode and endpoints when you enable it, and the skills appear as `/floci:floci-explore` and so on. See [Use it from other agents](#use-it-from-other-agents) for Codex, DeepSeek-TUI/Codewhale, Cursor and Claude Desktop.
 
+## How it works
+
+```
+agent (Claude, Cursor, Codex, ...)
+        |  MCP over stdio
+        v
+floci_mcp.py  -- toolsets decide which tools are registered
+        |
+        |-- boto3 ----------------------------> Floci core        :4566  (AWS)
+        |-- REST (per provider) --------------> Floci-AZ          :4577
+        |                                       Floci-GCP         :4588
+        |                                       Floci-OCI         :4599
+        `-- in-process backend (floci_backend)
+              |-- aws CLI   (run_local_aws_cmd, Glue catalog, Lambda deploy)
+              `-- docker compose (marketplace, pipeline)  --> recipes/
+```
+
+The server is a thin layer: it never emulates anything. Tools that can be answered by an SDK call use it; the few that need the `aws` CLI or Docker go through the in-process backend, which is why those two are listed under requirements.
+
 ## Skills
 
 Skills are short playbooks an agent loads on demand ([Agent Skills](https://docs.claude.com/en/docs/claude-code/skills): a folder with a `SKILL.md`). Each one names the tools it calls and the [toolsets](#toolsets-and-read-only-mode) it needs, and asks before it writes.
@@ -46,6 +65,23 @@ ln -s "$PWD"/skills/* ~/.claude/skills/      # or: cp -R skills/* ~/.claude/skil
 ```
 
 Skills that need a toolset which is not enabled by default tell the agent to ask you to enable it (see below).
+
+## Cookbook
+
+Things to ask the agent, and what it ends up calling. The toolset in brackets is where the tools live; an agent can enable a missing one with `enable_toolset`.
+
+| Ask | It calls | Toolset |
+|---|---|---|
+| "Is my local cloud up, and what is in it?" | skill `floci-explore`: `list_clouds`, `check_floci_health`, `list_aws_services`, `get_service_resources` | core |
+| "Create a queue `orders`, send a test message and read it back." | `create_sqs_queue`, `send_sqs_message`, `receive_sqs_messages`, `delete_sqs_message` | messaging |
+| "Make a table `users`, add three items and list the ones older than 21." | `create_dynamodb_table`, `put_dynamodb_item`, `execute_partiql_dynamodb` | storage |
+| "Why are my messages stuck?" | skill `floci-triage`: `list_dead_letter_queues`, `inspect_dlq_messages`, `get_sqs_queue_attributes`, then `redrive_dlq` only after you say yes | ops, messaging |
+| "Compare my buckets and queues across AWS, Azure, GCP and OCI." | skill `floci-multicloud`: `list_clouds` and each cloud's list tools | core, storage, messaging |
+| "Store a secret and encrypt a value with a new key." | `create_secret`, `create_kms_key`, `kms_encrypt` | storage |
+| "Run `SELECT 1` on Athena." | `run_athena_query` | compute |
+| "Start a local Redis and tell me the port." | `list_marketplace_recipes`, `deploy_marketplace_app`, `get_marketplace_installations` | marketplace |
+| "Fill `orders` with test data." | skill `floci-seed`: `list_dynamodb_tables`, `seed_mock_data`, `scan_dynamodb` | storage, hybrid |
+| "Write the Terraform for what I have running." | skill `floci-iac`: `export_to_terraform`; `detect_iac_drift` to compare with code | hybrid, ops |
 
 ## What it covers
 
@@ -202,6 +238,24 @@ Wherever you run it, the client starts the server from its own directory. The re
 
 The endpoint and project variables match [Floci UI](https://github.com/floci-io/floci-ui), so one `.env` serves both. The server writes its state (webhooks, captured events, a topology file) under `SIDECAR_STATE_DIR`.
 
+## Troubleshooting
+
+The messages below are the ones the server returns.
+
+| You see | Why | Do |
+|---|---|---|
+| `Could not connect to the endpoint URL: "http://localhost:4566/"` | Floci core is not running, or `AWS_ENDPOINT_URL` points elsewhere | Start Floci; call `list_clouds` to see what answers |
+| `Cannot reach the gcp runtime at http://localhost:4588: All connection attempts failed` (or `azure`, `oci`) | That emulator is not running | Start it, for example with the `multicloud` profile of the Floci UI compose file |
+| `list_clouds` shows `unreachable` | Same, one entry per runtime | Same |
+| `The aws CLI is not on PATH. Install it from https://aws.amazon.com/cli/` | `run_local_aws_cmd`, the Glue catalog and Lambda deployment shell out to `aws` | Install the CLI, or use the Docker image, which includes it |
+| An installation ends `FAILED` with `'docker' was not found on PATH` | The marketplace runs `docker compose` | Install Docker with Compose, or mount the socket into the image |
+| The tool you want is not in the list | Its toolset is not registered | `list_toolsets`, then `enable_toolset`; or set `FLOCI_TOOLSETS` and restart |
+| `Toolset 'x' is not allowed to be enabled at runtime` | The server was started with `FLOCI_TOOLSETS_ALLOWED` | Change that variable and restart |
+| `FLOCI_TOOLSETS: unknown toolset ...` at startup | A typo in the toolset list | The message lists the valid names |
+| `Statement wasn't well formed` on PartiQL | More than one statement in a call | One statement per `execute_partiql_dynamodb` |
+| The first Athena query takes several seconds | Floci starts its DuckDB container on first use | Wait; later queries are fast |
+| From Docker on Linux the emulators are unreachable | `host.docker.internal` is not defined there | `--add-host=host.docker.internal:host-gateway` |
+
 ## Safety
 
 An agent with these tools can change your machine. What to know:
@@ -231,6 +285,17 @@ claude plugin validate . --strict           # the Claude Code plugin and marketp
 ## Plugins
 
 A plugin is a directory `plugins/<name>/` with a `plugin.json` and a `tools.py` exposing `register(mcp)`. See `plugins/example_hello`.
+
+## Contributing
+
+Adding a tool is a short checklist, and `verify_all.py` fails if a step is missed:
+
+1. Write it in the right `tools/<module>.py`, with a description in English that says what it does, its parameters and when to use it. Models and tool search match on that text.
+2. Make sure the module belongs to a toolset in `toolsets.py`. If the name changes state, `is_write` must see it (a known prefix, or add it to `WRITE_NAMES`) so read-only mode and the annotations are right.
+3. Exercise it in `verify_all.py`, or give it a reason in `SKIPPED`. The coverage check fails otherwise.
+4. Run `uv run python scripts/build_catalog.py` so the site lists it.
+
+A skill is a folder `skills/<name>/SKILL.md` with `name` and `description` frontmatter, a `**Toolsets needed:**` line and the steps. The `skills` group of `verify_all.py` checks that the tools it names exist and that the stated toolsets are the right ones.
 
 ## License
 

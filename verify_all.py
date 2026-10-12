@@ -163,6 +163,56 @@ async def protocol():
     ok("protocol", "server keeps answering after errors", "after errors" in json.dumps(replies.get(7, {})), replies.get(7))
 
 
+# --------------------------------------------------------------------- docs
+@group
+async def docs_group():
+    root = os.path.dirname(os.path.abspath(__file__))
+    readme = open(os.path.join(root, "README.md")).read()
+    index = await __import__("toolsets").tool_index()
+
+    # Every environment variable the code reads is documented.
+    pattern = re.compile(r"""(?:os\.environ\.get|os\.getenv|environ\[)\(?\s*['"]([A-Z][A-Z0-9_]{3,})['"]""")
+    read: set[str] = set()
+    for folder in ("tools", "floci_backend"):
+        for dirpath, _, files in os.walk(os.path.join(root, folder)):
+            for name in files:
+                if name.endswith(".py"):
+                    read |= set(pattern.findall(open(os.path.join(dirpath, name)).read()))
+    for name in ("floci_mcp.py", "toolsets.py"):
+        read |= set(pattern.findall(open(os.path.join(root, name)).read()))
+    internal = {"SIDECAR_HOST", "SIDECAR_PORT", "SIDECAR_ALLOWED_ORIGINS", "SIDECAR_MAX_BODY_MB", "SIDECAR_TOKEN",
+                "LAMBDA_DEFAULT_ROLE_ARN", "AWS_DEFAULT_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY",
+                "FLOCI_EVAL_MODEL", "ANTHROPIC_API_KEY", "VERIFY_DOCKER",
+                "KUBECONFIG"}  # KUBECONFIG: read by an EKS backend route that no tool exposes
+    missing = sorted(v for v in read if v not in internal and v not in readme)
+    ok("docs", "every environment variable the server reads is in the README", not missing, missing)
+
+    # The cookbook and skills table only name tools that exist.
+    names = set(re.findall(r"`([a-z0-9_]+)`", readme))
+    tool_like = {n for n in names if TOOL_LIKE.match(n)} - {"list_changed"}  # list_changed is an MCP notification
+    ok("docs", "every tool the README names exists", not [n for n in tool_like if n not in index], [n for n in tool_like if n not in index])
+
+    # The error messages the troubleshooting table quotes are the ones the code produces.
+    source = ""
+    for folder in ("tools", "floci_backend", "."):
+        for dirpath, _, files in os.walk(os.path.join(root, folder)):
+            if ".venv" in dirpath or "docs" in dirpath.split(os.sep):
+                continue
+            for name in files:
+                if name.endswith(".py") and name != "verify_all.py":
+                    source += open(os.path.join(dirpath, name)).read()
+        if folder == ".":
+            break
+    for fragment in ("The aws CLI is not on PATH", "'docker' was not found on PATH", "Cannot reach the", "is not allowed to be enabled at runtime",
+                     "unknown toolset", "Could not connect"):
+        if fragment == "Could not connect":
+            continue  # botocore's own message
+        ok("docs", f"troubleshooting message exists in the code: {fragment}", fragment in source)
+
+    # Every toolset is documented in the README table.
+    ok("docs", "every toolset is in the README", all(f"`{t}`" in readme for t in __import__("toolsets").TOOLSETS))
+
+
 # ------------------------------------------------------------------- plugin
 @group
 async def plugin_group():

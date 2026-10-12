@@ -21,12 +21,19 @@ class AwsCli:
         env['AWS_DEFAULT_REGION'] = config.aws_region
         env['AWS_EC2_METADATA_DISABLED'] = 'true'
 
-        process = await asyncio.create_subprocess_exec(
-            'aws', *final_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=env
-        )
+        try:
+            process = await asyncio.create_subprocess_exec(
+                'aws', *final_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env
+            )
+        except FileNotFoundError as error:
+            raise AwsCliError(
+                "The aws CLI is not on PATH. Install it from https://aws.amazon.com/cli/ "
+                "(the Docker image already includes it).",
+                '', str(error), 127,
+            ) from error
 
         stdout, stderr = await process.communicate()
         stdout_str = stdout.decode()
