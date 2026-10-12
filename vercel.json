@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pip install uv",
+  "buildCommand": "uv run --frozen python scripts/build_catalog.py",
+  "outputDirectory": "docs"
+}
