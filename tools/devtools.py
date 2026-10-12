@@ -1,7 +1,4 @@
-"""Herramientas de desarrollo: IaC, seed data, proxy HTTP, JWT y tests."""
-import asyncio
-import glob
-import os
+"""Herramientas de desarrollo: IaC, seed data, proxy HTTP, JWT."""
 from tools._client import backend
 
 
@@ -113,30 +110,3 @@ def register(mcp):
             "secret": secret,
             "algorithm": algorithm,
         })
-
-    @mcp.tool()
-    async def run_ui_tests(test_file: str | None = None) -> dict:
-        """
-        Runs the Playwright tests of the Floci Studio frontend.
-
-        If test_file is given only that test runs.
-        Returns stdout, stderr and screenshot paths on failure.
-        """
-        cmd = ["npx", "playwright", "test"]
-        if test_file:
-            cmd.append(test_file)
-        process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        output = stdout.decode()
-        errors = stderr.decode()
-        screenshots: list[str] = []
-        if process.returncode != 0:
-            screenshots = glob.glob(os.path.join(os.path.abspath("test-results"), "**", "*.png"), recursive=True)
-        return {
-            "exit_code": process.returncode,
-            "stdout": output,
-            "stderr": errors,
-            "screenshots": screenshots,
-        }

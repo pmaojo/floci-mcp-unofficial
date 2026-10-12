@@ -18,6 +18,7 @@ from mcp.types import ToolAnnotations
 from tools import (
     athena, clouds, devtools, dynamodb, eventbridge, extensibility, hybrid, iac, kms, lambda_,
     marketplace, meta, observability, pipeline, s3, secrets, ses, sns, sqs, stepfunctions, tags,
+    code, generic,
 )
 
 MODULES = {
@@ -25,7 +26,7 @@ MODULES = {
     "sqs": sqs, "sns": sns, "eventbridge": eventbridge, "stepfunctions": stepfunctions, "ses": ses,
     "lambda": lambda_, "athena": athena, "tags": tags, "observability": observability, "iac": iac,
     "marketplace": marketplace, "pipeline": pipeline, "hybrid": hybrid, "devtools": devtools,
-    "extensibility": extensibility,
+    "extensibility": extensibility, "generic": generic, "code": code,
 }
 
 TOOLSETS = {
@@ -34,8 +35,12 @@ TOOLSETS = {
     "messaging": ("sqs", "sns", "eventbridge", "stepfunctions", "ses"),
     "compute": ("lambda", "athena"),
     "ops": ("tags", "observability", "iac"),
-    "marketplace": ("marketplace", "pipeline"),
+    "marketplace": ("marketplace",),
+    "pipeline": ("pipeline",),
     "hybrid": ("hybrid", "devtools", "extensibility"),
+    # Whole-cloud access in a handful of tools. Not in the default selection until the eval says so.
+    "generic": ("generic",),
+    "code": ("code",),
 }
 
 # One line per toolset, written for a decision model that has to say whether a task needs it.
@@ -45,7 +50,10 @@ DESCRIPTIONS = {
     "messaging": "SQS queues, SNS topics and subscriptions, EventBridge rules and events, Step Functions and SES email.",
     "compute": "Lambda functions (create, update, invoke, logs) and Athena SQL queries.",
     "ops": "Dead-letter queues and message redrive, event capture and replay, the service graph, resource tags, and IaC drift detection.",
-    "marketplace": "Starting, inspecting and removing local Docker stacks such as databases and brokers, and promoting them between environments.",
+    "marketplace": "Listing, starting and removing local Docker recipes such as databases, brokers and Keycloak.",
+    "pipeline": "Promoting a recipe between test, demo and production environments and generating Copilot manifests.",
+    "generic": "Every operation of AWS, Azure, GCP and OCI through five tools: list_services, search_operations, describe_operation, call_read, call_write.",
+    "code": "Every operation of AWS, Azure, GCP and OCI by running Python: code_read and code_write.",
     "hybrid": "Seeding synthetic data, exporting infrastructure as Terraform, calling real AWS or arbitrary URLs, tunnels, webhooks and interceptors.",
 }
 
@@ -57,9 +65,9 @@ WRITE_PREFIXES = (
     "start_", "stop_", "invoke_", "verify_", "replay_", "capture_", "edit_", "proxy_", "execute_",
 )
 # Names that change state without a write prefix.
-WRITE_NAMES = {"run_local_aws_cmd", "run_athena_query", "run_kms_diagnostic", "run_ui_tests"}
+WRITE_NAMES = {"run_local_aws_cmd", "run_athena_query", "run_kms_diagnostic", "call_write", "code_write"}
 DESTRUCTIVE_PREFIXES = ("delete_", "purge_", "teardown_", "untag_", "stop_", "unsubscribe_", "redrive_")
-DESTRUCTIVE_NAMES = {"run_local_aws_cmd", "execute_partiql_dynamodb"}
+DESTRUCTIVE_NAMES = {"run_local_aws_cmd", "execute_partiql_dynamodb", "call_write", "code_write"}
 # Reach beyond the local emulators.
 OPEN_WORLD_NAMES = {"proxy_http_request", "seed_from_cloud_dynamodb", "proxy_cloud_sqs_to_local", "start_reverse_tunnel"}
 
