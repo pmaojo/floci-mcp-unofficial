@@ -7,3 +7,7 @@ __pycache__/
 .DS_Store
 state/
 .vercel-venv/
+
+# vord analysis caches
+.vord-cache.json
+.vord-baseline.json

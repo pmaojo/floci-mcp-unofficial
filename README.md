@@ -52,6 +52,28 @@ floci_mcp.py  -- toolsets decide which tools are registered
 
 The server is a thin layer: it never emulates anything. Tools that can be answered by an SDK call use it; the few that need the `aws` CLI or Docker go through the in-process backend, which is why those two are listed under requirements.
 
+## Architecture
+
+`floci_generic` (the `generic` and `code` toolsets and the recipes cloud) is a hexagon, and `vord scan .` enforces it from `vord.toml`:
+
+```
+floci_generic/
+  domain/     pure rules: classification, policy, routing, search, deploy planning. Standard library only.
+  ports.py    what the application needs: service models, AWS and REST transports, a recipe runtime.
+  app/        use cases: the catalog, the gateway, recipes, the probe. They know ports, never an SDK.
+  adapters/   boto3, httpx, botocore models, JSON files, Docker through the backend, the code sandbox.
+  bootstrap.py  the one place where adapters meet the application.
+```
+
+Dependencies point inward: `domain` imports nothing of `app` or `adapters`, and `app` imports no adapter. A new transport or a fake in a test is a change in `bootstrap.py` and nowhere else; the tests inject recording transports and a fake recipe runtime that way.
+
+`floci_backend` is layered (`api`, `application`, `infrastructure`) but not yet a hexagon: its application services import infrastructure and frameworks directly, which `vord scan .` reports as `hexagonal-layer-violation`. Moving it behind ports is a separate piece of work.
+
+```bash
+vord scan .                       # health, the quality gate and the architecture rules
+vord arch .                       # components, their coupling and cycles
+```
+
 ## Skills
 
 Skills are short playbooks an agent loads on demand ([Agent Skills](https://docs.claude.com/en/docs/claude-code/skills): a folder with a `SKILL.md`). Each one names the tools it calls and the [toolsets](#toolsets-and-read-only-mode) it needs, and asks before it writes.
@@ -398,7 +420,7 @@ A plugin is a directory `plugins/<name>/` with a `plugin.json` and a `tools.py` 
 
 Adding a tool is a short checklist, and `verify_all.py` fails if a step is missed:
 
-1. Write it in the right `tools/<module>.py`, with a description in English that says what it does, its parameters and when to use it. Models and tool search match on that text.
+1. Write it in the right `floci_tools/<module>.py`, with a description in English that says what it does, its parameters and when to use it. Models and tool search match on that text.
 2. Make sure the module belongs to a toolset in `toolsets.py`. If the name changes state, `is_write` must see it (a known prefix, or add it to `WRITE_NAMES`) so read-only mode and the annotations are right.
 3. Exercise it in `verify_all.py`, or give it a reason in `SKIPPED`. The coverage check fails otherwise.
 4. Run `uv run python scripts/build_catalog.py` so the site lists it.

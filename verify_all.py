@@ -173,7 +173,7 @@ async def docs_group():
     # Every environment variable the code reads is documented.
     pattern = re.compile(r"""(?:os\.environ\.get|os\.getenv|environ\[|env\.get)\(?\s*['"]([A-Z][A-Z0-9_]{3,})['"]""")
     read: set[str] = set()
-    for folder in ("tools", "floci_backend"):
+    for folder in ("floci_tools", "floci_backend"):
         for dirpath, _, files in os.walk(os.path.join(root, folder)):
             for name in files:
                 if name.endswith(".py"):
@@ -194,7 +194,7 @@ async def docs_group():
 
     # The error messages the troubleshooting table quotes are the ones the code produces.
     source = ""
-    for folder in ("tools", "floci_backend", "."):
+    for folder in ("floci_tools", "floci_backend", "."):
         for dirpath, _, files in os.walk(os.path.join(root, folder)):
             if ".venv" in dirpath or "docs" in dirpath.split(os.sep):
                 continue
@@ -910,7 +910,7 @@ async def generic():
     ok("generic", "search_operations finds ListBuckets", any(h["operation"] == "ListBuckets" for h in found["hits"]), found)
     described = await call("describe_operation", cloud="aws", service="sqs", operation="CreateQueue")
     ok("generic", "describe_operation says CreateQueue is a write with a QueueName",
-       described.get("kind") == "write" and "QueueName" in described.get("params", {}), described)
+       described.get("kind") == "write" and "QueueName" in described.get("required", {}), described)
     read = await call("call_read", cloud="aws", service="s3", operation="ListBuckets")
     ok("generic", "call_read ListBuckets", "Buckets" in read, read)
     refused = await call("call_read", cloud="aws", service="s3", operation="CreateBucket", params={"Bucket": f"vfy-no-{X}"})
