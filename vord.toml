@@ -28,5 +28,12 @@ to = "floci_generic/adapters"
 from = "floci_generic/app"
 to = "floci_generic/adapters"
 
+# The hexagon of floci_backend. The application layer must not import the HTTP layer. The matching rule for
+# floci_backend/application -> floci_backend/infrastructure waits until the last service stops importing
+# aws_cli, boto_factory, json_state_store and lambda_package directly.
+[[architecture.forbidden_dependencies]]
+from = "floci_backend/application"
+to = "floci_backend/api"
+
 [gate]
 min_health_score = 60
