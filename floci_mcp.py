@@ -1,7 +1,10 @@
 """
 Floci MCP Server — entry point.
 
-Tools are organized by AWS service under mcp/tools/:
+Tools are organized by service under tools/ and grouped into toolsets (see toolsets.py).
+FLOCI_TOOLSETS picks the toolsets that are registered; FLOCI_READ_ONLY=1 drops the writers.
+
+Modules:
   meta.py        — health, architecture, inventory
   clouds.py      — Azure, GCP and OCI runtimes (Floci-AZ, Floci-GCP, Floci-OCI)
   lambda_.py     — serverless functions
@@ -28,56 +31,15 @@ import importlib.util
 import os
 
 from mcp.server.fastmcp import FastMCP
-from tools import (
-    athena,
-    clouds,
-    devtools,
-    dynamodb,
-    eventbridge,
-    extensibility,
-    hybrid,
-    iac,
-    kms,
-    lambda_,
-    marketplace,
-    meta,
-    observability,
-    pipeline,
-    s3,
-    secrets,
-    ses,
-    sns,
-    sqs,
-    stepfunctions,
-    tags,
-)
+
+import toolsets
 
 mcp = FastMCP("floci-mcp")
 
-for module in [
-    meta,
-    clouds,
-    lambda_,
-    sqs,
-    sns,
-    s3,
-    dynamodb,
-    secrets,
-    kms,
-    eventbridge,
-    stepfunctions,
-    athena,
-    ses,
-    marketplace,
-    devtools,
-    observability,
-    iac,
-    hybrid,
-    extensibility,
-    pipeline,
-    tags,
-]:
-    module.register(mcp)
+SELECTION = toolsets.parse_selection(os.environ.get("FLOCI_TOOLSETS"))
+READ_ONLY = toolsets.read_only_enabled()
+toolsets.register_selected(mcp, SELECTION)
+toolsets.register_toolset_info(mcp, SELECTION, READ_ONLY)
 
 
 def _load_community_plugins(mcp_instance) -> None:
@@ -102,6 +64,7 @@ def _load_community_plugins(mcp_instance) -> None:
 
 
 _load_community_plugins(mcp)
+toolsets.finalize(mcp, READ_ONLY)
 
 if __name__ == "__main__":
     mcp.run()
