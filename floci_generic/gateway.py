@@ -56,6 +56,21 @@ def cap(value: Any, limit: int = OUTPUT_LIMIT) -> Any:
     return {"truncated": True, "total_chars": len(text), "preview": text[:limit]}
 
 
+def _validate(service: str, operation: str, params: dict) -> str | None:
+    """What botocore would say about these parameters, without sending anything."""
+    from botocore.exceptions import ParamValidationError
+    from botocore.validate import validate_parameters
+
+    shape = catalog.aws_model(service).operation_model(operation).input_shape
+    if shape is None:
+        return None
+    try:
+        validate_parameters(params, shape)
+    except ParamValidationError as exc:
+        return str(exc)[:400]
+    return None
+
+
 def _env(name: str, default: str) -> str:
     return os.environ.get(name, default)
 
@@ -97,10 +112,16 @@ class Gateway:
         verdict = catalog.aws_verdict(service, resolved)
         entry = {"cloud": "aws", "service": service, "operation": resolved, "kind": verdict.kind, "params": params}
         if not verdict.read and not self.allow_write:
+            self.log.append({**entry, "blocked": "write"})
             raise Blocked(f"{service}.{resolved} changes state ({verdict.reason}); this is a read-only call. Use the write tool.")
         if verdict.read and verdict.sensitive and not self.allow_sensitive:
+            self.log.append({**entry, "blocked": "sensitive"})
             raise Blocked(f"{service}.{resolved} returns secret values. Set FLOCI_ALLOW_SECRET_VALUES=1 to allow it.")
         if not verdict.read and self.dry_run_writes:
+            problem = _validate(service, resolved, params)
+            if problem:
+                self.log.append({**entry, "dry_run": True, "invalid": True})
+                return {"error": "ParamValidationError", "message": problem}
             self.log.append({**entry, "dry_run": True})
             return {"dry_run": True, "would_call": f"{service}.{resolved}"}
         self.log.append(entry)

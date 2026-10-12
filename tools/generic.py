@@ -56,10 +56,11 @@ def register(mcp):
         return {"cloud": cloud, "hits": hits}
 
     @mcp.tool()
-    async def describe_operation(cloud: str, service: str, operation: str) -> dict:
+    async def describe_operation(cloud: str, service: str, operation: str, detail: str = "brief") -> dict:
         """
-        Returns what an operation does, its parameters (required ones marked), what it returns,
-        and whether it reads or writes. Read this before calling an operation you have not used.
+        Returns what an operation does, its required parameters with their docs, its optional parameters
+        by name and type, what it returns, and whether it reads or writes. Read this before calling an
+        operation you have not used. detail="full" adds the docs of every optional parameter (long).
         """
         if cloud == "aws":
             if not catalog.has_aws_service(service):
@@ -67,7 +68,7 @@ def register(mcp):
             name = catalog.resolve_aws_operation(service, operation)
             if name is None:
                 return {"error": f"{service} has no operation {operation!r}. Try search_operations(service={service!r})."}
-            return await asyncio.to_thread(catalog.describe_aws, service, name)
+            return await asyncio.to_thread(catalog.describe_aws, service, name, detail)
         if cloud == "recipes":
             return recipes.describe(operation) or {"error": f"Unknown recipe operation {operation!r}. Use one of {', '.join(recipes.OPERATIONS)}."}
         if cloud in catalog.CLOUDS:

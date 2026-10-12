@@ -141,7 +141,7 @@ def test_gateway_refuses_a_write_before_a_client_exists():
     else:
         raise AssertionError("write was not blocked")
     assert gateway._clients == {}, "a boto3 client was built for a refused call"
-    assert gateway.log == []
+    assert [e.get("blocked") for e in gateway.log] == ["write"], "the refusal is recorded, and nothing was sent"
 
 
 def test_gateway_refuses_unknown_service_operation_and_cloud():
@@ -376,6 +376,49 @@ def test_search_reaches_the_generated_catalog():
     assert any(s == "compute" for s, _ in top("list compute instances", "gcp"))
     assert any(s == "redis" for s, _ in top("list redis caches", "azure")), top("list redis caches", "azure")
     assert any(s == "queue" for s, _ in top("create an oci queue", "oci"))
+
+
+# -------------------------------------------------- describe, search, dry run
+def test_every_aws_operation_can_be_described():
+    """describe_operation once recursed forever on DynamoDB's recursive AttributeValue."""
+    failures = []
+    for service in catalog.aws_services():
+        for name in catalog.aws_operation_names(service):
+            try:
+                catalog.describe_aws(service, name)
+            except Exception as exc:  # noqa: BLE001
+                failures.append((service, name, type(exc).__name__))
+    assert not failures, failures[:5]
+
+
+def test_describe_is_brief_by_default_and_skips_support_notices():
+    import json
+    brief = catalog.describe_aws("s3", "PutObject")
+    full = catalog.describe_aws("s3", "PutObject", "full")
+    assert len(json.dumps(brief)) * 2 < len(json.dumps(full)), "brief must be much smaller than full"
+    assert "Bucket" in brief["required"] and "Key" in brief["required"]
+    assert isinstance(brief["optional"].get("ACL"), str), "optional parameters are name -> type only"
+    assert isinstance(full["optional"]["ACL"], dict) and "doc" in full["optional"]["ACL"]
+    assert brief["summary"] == "Adds an object to a bucket."
+
+
+def test_search_prefers_the_named_service_and_understands_read_messages():
+    top = lambda q, n=5: [(h["service"], h["operation"]) for h in catalog.search(q, "aws", None, n)]  # noqa: E731
+    assert top("run an athena sql query", 3)[0] == ("athena", "StartQueryExecution")
+    assert ("stepfunctions", "StartExecution") in top("start an execution of a step functions state machine", 3)
+    assert ("events", "PutRule") in top("create an eventbridge rule that runs on a schedule", 8)
+    assert top("read messages from an sqs queue", 3)[0] == ("sqs", "ReceiveMessage")
+
+
+def test_dry_run_validates_parameters_like_botocore_would():
+    g = Gateway(allow_write=True, dry_run_writes=True)
+    ok_call = g.call("aws", "sqs", "SendMessage", {"QueueUrl": "http://x/q", "MessageBody": "hi"})
+    assert ok_call.get("dry_run") is True
+    bad = g.call("aws", "sqs", "SendMessage", {"QueueUrl": "http://x/q"})
+    assert bad["error"] == "ParamValidationError" and "MessageBody" in bad["message"]
+    typo = g.call("aws", "sqs", "SendMessage", {"QueueUrl": "u", "MessageBody": "hi", "Bodyy": 1})
+    assert typo["error"] == "ParamValidationError"
+    assert g.log[-1].get("invalid") is True
 
 
 # ----------------------------------------------------------------- recipes

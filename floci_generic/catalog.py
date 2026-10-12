@@ -128,15 +128,16 @@ def _plain(text: str, limit: int = 240) -> str:
 
 
 def _signature(shape, depth: int = 2) -> str:
+    """A compact type. Shapes can be recursive (DynamoDB's AttributeValue), so depth is a hard stop."""
     kind = shape.type_name
+    if depth <= 0:
+        return "object" if kind == "structure" else kind
     if kind == "structure":
-        if depth == 0:
-            return "object"
         required = set(shape.required_members)
         inner = ", ".join(f"{n}{'*' if n in required else ''}: {_signature(m, depth - 1)}" for n, m in shape.members.items())
         return "{" + inner + "}"
     if kind == "list":
-        return f"[{_signature(shape.member, depth)}]"
+        return f"[{_signature(shape.member, depth - 1)}]"
     if kind == "map":
         return f"map<{_signature(shape.key, 0)}, {_signature(shape.value, depth - 1)}>"
     enum = getattr(shape, "enum", None)
@@ -145,23 +146,60 @@ def _signature(shape, depth: int = 2) -> str:
     return kind
 
 
-def describe_aws(service: str, operation: str) -> dict:
+_NOTICE = re.compile(r"^(end of support|note:|important:|this (api|operation|action) (is|has been) (deprecated|replaced))", re.I)
+
+
+_ACTION = re.compile(r"^[A-Z][a-z]+s\b")  # "Adds", "Retrieves", "Invokes": how most operations open
+
+
+def _summary(documentation: str, limit: int = 200) -> str:
+    """First useful sentence of an operation's documentation, skipping notices.
+
+    Notices are whole paragraphs in the HTML, so the paragraph is the unit that is skipped.
+    """
+    paragraphs = re.findall(r"<p>(.*?)</p>", documentation or "", re.S) or [documentation or ""]
+    texts = [t for t in (_plain(p, 600) for p in paragraphs) if t]
+    notices = re.compile(_NOTICE.pattern + r"|^(this change|starting|as of|beginning)", re.I)
+    pick = (next((t for t in texts if _ACTION.match(t) and not notices.match(t)), None)
+            or next((t for t in texts if not notices.match(t)), None)
+            or (texts[0] if texts else ""))
+    sentence = re.split(r"(?<=[a-z0-9)])\.\s+(?=[A-Z])", pick)[0]
+    return sentence if len(sentence) <= limit else sentence[: limit - 1].rstrip() + "…"
+
+
+def _short_type(sig: str, limit: int = 70) -> str:
+    return sig if len(sig) <= limit else sig[: limit - 1] + "…"
+
+
+def describe_aws(service: str, operation: str, detail: str = "brief") -> dict:
+    """detail="brief": required parameters with their docs, optional ones by name and type only.
+    detail="full": every parameter with its documentation (large for operations such as s3.PutObject)."""
     model = aws_model(service)
     op = model.operation_model(operation)
     verdict = aws_verdict(service, operation)
-    inputs = {}
+    required: dict = {}
+    optional: dict = {}
     if op.input_shape:
-        required = set(op.input_shape.required_members)
+        needed = set(op.input_shape.required_members)
         for name, member in op.input_shape.members.items():
-            inputs[name] = {"type": _signature(member), "required": name in required, "doc": _plain(member.documentation, 140)}
+            if name in needed:
+                required[name] = {"type": _signature(member), "doc": _plain(member.documentation, 140)}
+            elif detail == "full":
+                optional[name] = {"type": _signature(member), "doc": _plain(member.documentation, 140)}
+            else:
+                optional[name] = _short_type(_signature(member))
     outputs = list(op.output_shape.members) if op.output_shape else []
-    return {
+    out = {
         "cloud": "aws", "service": service, "operation": operation,
         "kind": verdict.kind, "destructive": verdict.destructive, "sensitive": verdict.sensitive,
-        "summary": _plain(op.documentation),
-        "params": inputs, "returns": outputs,
+        "summary": _summary(op.documentation),
+        "required": required, "optional": optional,
+        "returns": outputs[:25] + (["…"] if len(outputs) > 25 else []),
         "call_with": "call_read" if verdict.read else "call_write",
     }
+    if detail != "full" and optional:
+        out["more"] = "Optional parameters are listed by name and type; describe_operation with detail='full' adds their docs."
+    return out
 
 
 
@@ -321,23 +359,30 @@ class _BM25:
 # Plain-English verbs a user writes, mapped to the verbs APIs use.
 _SYNONYMS = {
     "show": ["list", "describe", "get"], "see": ["list", "describe", "get"], "find": ["list", "search", "describe"],
-    "which": ["list"], "all": ["list"], "read": ["get", "list"], "fetch": ["get"], "inspect": ["describe", "get"],
+    "which": ["list"], "all": ["list"], "read": ["get", "list", "receive"], "fetch": ["get"], "inspect": ["describe", "get"],
     "make": ["create"], "new": ["create"], "add": ["create", "put"], "remove": ["delete"], "drop": ["delete"],
     "upload": ["put"], "store": ["put", "create"], "write": ["put"], "run": ["start", "invoke", "execute"],
     "call": ["invoke"], "publish": ["publish", "send"], "send": ["send", "publish"], "tag": ["tag"],
     "bucket": ["bucket", "s3"], "queue": ["queue", "sqs"], "topic": ["topic", "sns"],
     "secret": ["secret", "secretsmanager"], "function": ["function", "lambda"], "table": ["table", "dynamodb"],
     "email": ["email", "ses"], "key": ["key", "kms"], "file": ["object"], "text": ["object"],
+    "eventbridge": ["events", "rule"], "cloudwatch": ["logs"], "log": ["logs"],
 }
 
 
 def _expand(query: str) -> list[str]:
     out: list[str] = []
     for token in _tokens(query):
-        for t in [token, *_SYNONYMS.get(token, [])]:
+        for t in [token, *(_stem(x) for x in _SYNONYMS.get(token, []))]:
             if t not in out:
                 out.append(t)
     return out
+
+
+def _first_sentence(service: str, operation: str) -> str:
+    """The opening of the operation's documentation: it carries words the name does not ("tagged", "queue")."""
+    text = _plain(aws_model(service).operation_model(operation).documentation, 160)
+    return text.split(". ")[0]
 
 
 def _entries(cloud: str, service: str | None) -> list[dict]:
@@ -348,7 +393,8 @@ def _entries(cloud: str, service: str | None) -> list[dict]:
             if not has_aws_service(svc):
                 continue
             for op in aws_operation_names(svc):
-                entries.append({"cloud": "aws", "service": svc, "operation": op, "name_tokens": [_stem(t) for t in split_name(op)], "text": f"{svc} {svc} " + " ".join(split_name(op) * 2)})
+                entries.append({"cloud": "aws", "service": svc, "operation": op, "name_tokens": [_stem(t) for t in split_name(op)],
+                                "text": f"{svc} {svc} " + " ".join(split_name(op) * 2) + " " + _first_sentence(svc, op)})
     elif cloud == "recipes":
         for name, (kind, _, summary, _) in recipes_module.OPERATIONS.items():
             entries.append({"cloud": cloud, "service": "marketplace", "operation": name, "summary": summary, "kind": kind,
@@ -377,11 +423,16 @@ def search(query: str, cloud: str = "aws", service: str | None = None, limit: in
     expanded = _expand(query)
     scores = index.scores(expanded)
     wanted = set(expanded)
+    flat = "".join(_tokens(query))
     # Prefer the operation whose whole name the query covers: "invoke a function" means Invoke, not
     # PutFunctionEventInvokeConfig.
     for i, entry in enumerate(entries):
         words = entry["name_tokens"]
         scores[i] *= 0.4 + 0.6 * (sum(w in wanted for w in words) / max(len(words), 1))
+        # The person named the service ("an athena query", "step functions"): that is the strongest signal.
+        svc = entry["service"].replace("-", "")
+        if svc in wanted or _stem(svc) in wanted or (len(svc) >= 6 and svc in flat):
+            scores[i] *= 2.5
     ranked = sorted(range(len(entries)), key=lambda i: -scores[i])[:limit]
     out = []
     for i in ranked:

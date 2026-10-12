@@ -196,6 +196,10 @@ def run_search(tasks: list[dict]) -> None:
 
 # ---------------------------------------------------------------------- model
 def _matches(entry: dict, task: dict) -> bool:
+    if entry.get("invalid"):  # botocore would have refused these parameters
+        return False
+    if entry.get("blocked") == "write":  # a write sent to the read tool: the model has to retry
+        return False
     if entry["cloud"] != task["cloud"]:
         return False
     if entry.get("service") != task["service"]:
@@ -206,6 +210,11 @@ def _matches(entry: dict, task: dict) -> bool:
 def _args_ok(entry: dict, task: dict) -> bool:
     blob = json.dumps(entry.get("params") or {}).lower()
     return all(str(v).lower() in blob for v in task["args"].values())
+
+
+def _gated(entries: list[dict]) -> bool:
+    """The call was right and the policy held it back (secret values): reported, not hidden."""
+    return any(e.get("blocked") == "sensitive" for e in entries)
 
 
 async def run_arm(arm: str, tasks: list[dict], model: str, concurrency: int) -> dict:

@@ -910,7 +910,7 @@ async def generic():
     ok("generic", "search_operations finds ListBuckets", any(h["operation"] == "ListBuckets" for h in found["hits"]), found)
     described = await call("describe_operation", cloud="aws", service="sqs", operation="CreateQueue")
     ok("generic", "describe_operation says CreateQueue is a write with a QueueName",
-       described.get("kind") == "write" and "QueueName" in described.get("params", {}), described)
+       described.get("kind") == "write" and "QueueName" in described.get("required", {}), described)
     read = await call("call_read", cloud="aws", service="s3", operation="ListBuckets")
     ok("generic", "call_read ListBuckets", "Buckets" in read, read)
     refused = await call("call_read", cloud="aws", service="s3", operation="CreateBucket", params={"Bucket": f"vfy-no-{X}"})
