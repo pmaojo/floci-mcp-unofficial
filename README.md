@@ -4,6 +4,8 @@
 
 > **Unofficial community project.** Not affiliated with or endorsed by the Floci project. Floci does the emulation; this server only talks to it. Please support the [upstream project](https://github.com/floci-io/floci). Extracted from [Floci Studio](https://github.com/pmaojo/floci-studio), where it started.
 
+Browse every tool and recipe in the [catalog page](docs/index.html) (open it locally, or serve `docs/` with GitHub Pages). Regenerate it with `uv run python scripts/build_catalog.py`.
+
 ## What it covers
 
 | Cloud | Runtime | Default port | Tools |
