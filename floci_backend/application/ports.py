@@ -52,3 +52,21 @@ class ResourceTagging(Protocol):
     def untag(self, resource_arns: List[str], tag_keys: List[str]) -> Dict[str, Any]:
         """ARN -> failure for the resources that could not be untagged."""
         ...
+
+
+class CommandError(Exception):
+    """A command that ran and failed, or could not run. Adapters raise a subclass of it."""
+
+    def __init__(self, message: str, stdout: str, stderr: str, exit_code: int):
+        super().__init__(message)
+        self.stdout = stdout
+        self.stderr = stderr
+        self.exit_code = exit_code
+
+
+class CliRunner(Protocol):
+    """Runs one `aws` CLI command against Floci and returns its parsed JSON output ({} when it prints nothing).
+
+    Raises CommandError (or a subclass) when the command fails."""
+
+    async def run_json(self, args: List[str]) -> Any: ...

@@ -10,7 +10,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from floci_backend.application.aws_resource_service import AwsResourceService  # noqa: E402
 from floci_backend.application.dlq_service import DlqService  # noqa: E402
+from floci_backend.application.ports import CommandError  # noqa: E402
 from floci_backend.application.tags_service import TagsService  # noqa: E402
 
 
@@ -149,6 +151,60 @@ def test_tags_sdk_errors_become_warnings_and_empty_input_is_rejected():
         pass
     else:
         raise AssertionError("empty resource_arns must be rejected")
+
+
+class FakeCli:
+    def __init__(self, outputs):
+        self.outputs, self.commands = outputs, []
+
+    async def run_json(self, args):
+        self.commands.append(args)
+        out = self.outputs[args[0]]
+        if isinstance(out, Exception):
+            raise out
+        return out
+
+
+class NoCompatibility:
+    def should_bypass_native(self, key):
+        return False
+
+    def can_handle(self, key):
+        return False
+
+    def can_handle_resource(self, key, resource_id):
+        return False
+
+
+def _single_resource_service():
+    from floci_backend.application.aws_resource_catalog import AWS_RESOURCE_CATALOG
+    return next((k, v) for k, v in AWS_RESOURCE_CATALOG.items() if len(v.get("resources", [])) == 1)
+
+
+def test_resources_reads_through_the_cli_port():
+    key, service = _single_resource_service()
+    resource = service["resources"][0]
+    cli = FakeCli({resource["command"][0]: {}})
+    overview = asyncio.run(AwsResourceService(cli, NoCompatibility()).get_overview(key))
+    assert overview["serviceKey"] == key and overview["resources"][0]["id"] == resource["id"]
+    assert overview["resources"][0]["status"] == "ok"
+    assert cli.commands == [resource["command"]]
+
+
+def test_resources_cli_failures_are_classified_from_the_port_error():
+    key, service = _single_resource_service()
+    cmd = service["resources"][0]["command"][0]
+    unsupported = CommandError("x", "", "An error occurred (UnsupportedOperation)", 255)
+    result = asyncio.run(AwsResourceService(FakeCli({cmd: unsupported}), NoCompatibility()).get_overview(key))
+    assert result["resources"][0]["status"] == "unsupported"
+    broken = CommandError("x", "", "boom", 1)
+    result = asyncio.run(AwsResourceService(FakeCli({cmd: broken}), NoCompatibility()).get_overview(key))
+    assert result["resources"][0]["status"] == "error" and result["resources"][0]["error"] == "boom"
+
+
+def test_the_infrastructure_cli_error_is_a_command_error():
+    from floci_backend.infrastructure.aws_cli import AwsCliError
+    assert issubclass(AwsCliError, CommandError)
 
 
 if __name__ == "__main__":

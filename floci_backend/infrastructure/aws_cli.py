@@ -2,14 +2,11 @@ import asyncio
 import json
 import os
 from typing import Any, Dict, List
+from floci_backend.application.ports import CommandError
 from floci_backend.config import config
 
-class AwsCliError(Exception):
-    def __init__(self, message: str, stdout: str, stderr: str, exit_code: int):
-        super().__init__(message)
-        self.stdout = stdout
-        self.stderr = stderr
-        self.exit_code = exit_code
+class AwsCliError(CommandError):
+    """The aws CLI failed or is not installed."""
 
 class AwsCli:
     async def run(self, args: List[str]) -> Dict[str, str]:

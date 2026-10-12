@@ -2,12 +2,12 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 from floci_backend.config import config
-from floci_backend.infrastructure.aws_cli import AwsCli, AwsCliError
 from floci_backend.application.aws_resource_catalog import AWS_RESOURCE_CATALOG
 from floci_backend.application.compatibility_service import CompatibilityService
+from floci_backend.application.ports import CliRunner, CommandError
 
 class AwsResourceService:
-    def __init__(self, aws_cli: AwsCli, compatibility_service: CompatibilityService):
+    def __init__(self, aws_cli: CliRunner, compatibility_service: CompatibilityService):
         self.aws_cli = aws_cli
         self.compatibility_service = compatibility_service
 
@@ -102,7 +102,7 @@ class AwsResourceService:
         return [value]
 
     def _format_aws_error(self, error: Exception) -> str:
-        if isinstance(error, AwsCliError):
+        if isinstance(error, CommandError):
             return error.stderr.strip() or error.stdout.strip() or str(error)
         return str(error) or 'AWS CLI command failed'
 
