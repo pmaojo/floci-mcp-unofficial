@@ -1,0 +1,35 @@
+{
+  "id": "qdrant",
+  "name": "Qdrant Vector Database",
+  "description": "High-performance vector search engine for embeddings, semantic search and RAG pipelines. Ships with a built-in web dashboard and both REST and gRPC APIs. Pair it with the Ollama recipe for a fully local AI stack.",
+  "version": "1.12.0",
+  "accessUrl": "http://localhost:{{QDRANT_HTTP_PORT}}/dashboard",
+  "aws": {
+    "service": "Amazon OpenSearch Serverless (vector) or Aurora pgvector",
+    "parity": "Build and query vector collections locally exactly as you will against a managed vector store in production.",
+    "deploy": "Recreate the collection on an OpenSearch Serverless vector index (or Aurora pgvector) and repoint the client."
+  },
+  "variables": [
+    {
+      "key": "QDRANT_HTTP_PORT",
+      "label": "REST / Dashboard Port",
+      "type": "number",
+      "default": 6333,
+      "description": "Host port for the REST API and the web dashboard."
+    },
+    {
+      "key": "QDRANT_GRPC_PORT",
+      "label": "gRPC Port",
+      "type": "number",
+      "default": 6334,
+      "description": "Host port for the high-throughput gRPC API."
+    },
+    {
+      "key": "QDRANT_API_KEY",
+      "label": "API Key",
+      "type": "password",
+      "default": "qdrant123",
+      "description": "API key required in the api-key header to access the cluster."
+    }
+  ]
+}

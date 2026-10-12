@@ -1,0 +1,42 @@
+{
+  "id": "postgres",
+  "name": "PostgreSQL Database",
+  "description": "A powerful, open-source object-relational database system with high stability and robust SQL features.",
+  "version": "15.0.0",
+  "accessUrl": "postgresql://{{POSTGRES_USER}}:{{POSTGRES_PASSWORD}}@localhost:{{POSTGRES_PORT}}/{{POSTGRES_DB}}",
+  "aws": {
+    "service": "Amazon RDS for PostgreSQL (or Aurora)",
+    "parity": "The same Postgres engine version runs locally and on RDS — identical SQL, extensions and wire protocol.",
+    "deploy": "Provision an RDS/Aurora PostgreSQL instance and repoint your connection string; no app changes required."
+  },
+  "variables": [
+    {
+      "key": "POSTGRES_PORT",
+      "label": "Database Port",
+      "type": "number",
+      "default": 5432,
+      "description": "Port on your host machine to bind the PostgreSQL database."
+    },
+    {
+      "key": "POSTGRES_USER",
+      "label": "Username",
+      "type": "text",
+      "default": "postgres",
+      "description": "The superuser account username."
+    },
+    {
+      "key": "POSTGRES_PASSWORD",
+      "label": "Password",
+      "type": "password",
+      "default": "postgres123",
+      "description": "The password for the superuser database account."
+    },
+    {
+      "key": "POSTGRES_DB",
+      "label": "Initial Database",
+      "type": "text",
+      "default": "postgres",
+      "description": "The name of the default database created on startup."
+    }
+  ]
+}

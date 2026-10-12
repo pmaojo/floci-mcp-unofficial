@@ -1,0 +1,14 @@
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: floci-nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - '${NPM_HTTP_PORT:-80}:80'    # Tráfico HTTP público
+      - '${NPM_ADMIN_PORT:-81}:81'   # Consola de administración
+      - '${NPM_HTTPS_PORT:-443}:443' # Tráfico HTTPS público
+    environment:
+      DB_SQLITE_FILE: "/data/database.sqlite"
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt

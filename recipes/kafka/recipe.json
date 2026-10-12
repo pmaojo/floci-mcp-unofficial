@@ -1,0 +1,28 @@
+{
+  "id": "kafka",
+  "name": "Apache Kafka + Kafka UI",
+  "description": "A distributed event streaming platform for high-performance data pipelines and real-time analytics, bundled with Kafka UI for managing topics, consumer groups and messages from the browser.",
+  "version": "3.7.0",
+  "accessUrl": "http://localhost:{{KAFKA_UI_PORT}}",
+  "aws": {
+    "service": "Amazon MSK (Managed Streaming for Apache Kafka)",
+    "parity": "Amazon MSK runs standard Apache Kafka — the same producer/consumer APIs, topic configuration and wire protocol work without modification.",
+    "deploy": "Create an MSK cluster and swap the bootstrap server address in your producers and consumers; no code changes required."
+  },
+  "variables": [
+    {
+      "key": "KAFKA_PORT",
+      "label": "Kafka Broker Port",
+      "type": "number",
+      "default": 9092,
+      "description": "Port on your host machine to reach the Kafka broker."
+    },
+    {
+      "key": "KAFKA_UI_PORT",
+      "label": "Kafka UI Port",
+      "type": "number",
+      "default": 8082,
+      "description": "Port on your host machine to access the Kafka UI web console."
+    }
+  ]
+}

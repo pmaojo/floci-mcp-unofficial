@@ -1,0 +1,28 @@
+{
+  "id": "temporal",
+  "name": "Temporal Workflow Engine",
+  "description": "Motor de orquestación de workflows duraderos con UI incluida. Complementa Step Functions y EventBridge para flujos complejos con reintentos, sagas y actividades de larga duración.",
+  "version": "1.24.0",
+  "accessUrl": "http://localhost:{{TEMPORAL_UI_PORT}}",
+  "aws": {
+    "service": "Self-host on Amazon EKS (orchestration alt: AWS Step Functions)",
+    "parity": "The same Temporal SDK workflows and activities run locally and on your cluster — identical determinism and history.",
+    "deploy": "Run the Temporal services on EKS with an RDS persistence store, or model the flow as an AWS Step Functions state machine."
+  },
+  "variables": [
+    {
+      "key": "TEMPORAL_PORT",
+      "label": "Temporal gRPC Port",
+      "type": "number",
+      "default": 7233,
+      "description": "Puerto gRPC para conexiones de workers y clients (SDK Go, Java, TypeScript, Python)."
+    },
+    {
+      "key": "TEMPORAL_UI_PORT",
+      "label": "Temporal UI Port",
+      "type": "number",
+      "default": 8088,
+      "description": "Puerto de la interfaz web de Temporal para inspeccionar workflows, historial de ejecuciones y namespaces."
+    }
+  ]
+}

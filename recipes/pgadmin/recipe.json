@@ -1,0 +1,35 @@
+{
+  "id": "pgadmin",
+  "name": "pgAdmin",
+  "description": "The most popular open-source administration and development platform for PostgreSQL — browse schemas, run queries, inspect query plans, manage users and export data from a powerful web UI.",
+  "version": "8.0.0",
+  "accessUrl": "http://localhost:{{PGADMIN_PORT}}",
+  "aws": {
+    "service": "Amazon RDS for PostgreSQL",
+    "parity": "pgAdmin connects to any PostgreSQL-compatible server — point it at a local container or an RDS/Aurora instance using the same UI and tooling.",
+    "deploy": "Add your RDS endpoint as a new server in pgAdmin (using the RDS hostname and port) and manage your production database with the same tooling."
+  },
+  "variables": [
+    {
+      "key": "PGADMIN_PORT",
+      "label": "Web Port",
+      "type": "number",
+      "default": 5050,
+      "description": "Port on your host machine to access the pgAdmin web UI."
+    },
+    {
+      "key": "PGADMIN_EMAIL",
+      "label": "Admin Email",
+      "type": "text",
+      "default": "admin@local.dev",
+      "description": "Email address used to log in to pgAdmin."
+    },
+    {
+      "key": "PGADMIN_PASSWORD",
+      "label": "Admin Password",
+      "type": "password",
+      "default": "pgadmin123",
+      "description": "Password for the pgAdmin admin account."
+    }
+  ]
+}

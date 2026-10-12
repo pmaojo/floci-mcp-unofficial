@@ -1,0 +1,28 @@
+{
+  "id": "nats",
+  "name": "NATS JetStream",
+  "description": "Broker de mensajería ultraligero con JetStream activado. Alternativa local a SNS (pub/sub) y SQS (colas persistentes). Incluye panel de monitoreo HTTP.",
+  "version": "2.10.0",
+  "accessUrl": "http://localhost:{{NATS_MONITORING_PORT}}",
+  "aws": {
+    "service": "Amazon SNS + SQS (or Amazon MQ)",
+    "parity": "Model pub/sub and durable streams locally with JetStream exactly as you will fan out via SNS and queue via SQS.",
+    "deploy": "Map subjects to SNS topics and durable consumers to SQS queues, or migrate to Amazon MQ for a managed broker."
+  },
+  "variables": [
+    {
+      "key": "NATS_PORT",
+      "label": "NATS Client Port",
+      "type": "number",
+      "default": 4222,
+      "description": "Puerto para conexiones de aplicaciones cliente (SDK nats.js, nats.py, etc.)."
+    },
+    {
+      "key": "NATS_MONITORING_PORT",
+      "label": "Monitoring HTTP Port",
+      "type": "number",
+      "default": 8222,
+      "description": "Puerto del panel de monitoreo HTTP con métricas, subjects y conexiones activas."
+    }
+  ]
+}

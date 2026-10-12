@@ -1,0 +1,14 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: floci-minio
+    ports:
+      - "${MINIO_S3_PORT:-9000}:9000" # API S3
+      - "${MINIO_WEB_PORT:-9001}:9001" # Consola Web de administración
+    volumes:
+      - ./data:/data
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-floci-admin}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-floci-secret-key}"
+    command: server /data --console-address ":9001"
+    restart: unless-stopped

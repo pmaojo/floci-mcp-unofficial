@@ -1,0 +1,35 @@
+{
+  "id": "n8n",
+  "name": "n8n Workflow Automation",
+  "description": "Plataforma visual de automatización de workflows. Conecta APIs, bases de datos y servicios con nodos drag-and-drop. Complementa EventBridge y SNS para automatizaciones con UI.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{N8N_PORT}}",
+  "aws": {
+    "service": "Self-host on Amazon ECS/EKS",
+    "parity": "Workflows run identically locally and on ECS; its AWS nodes can target the Floci endpoint (4566) in dev for true parity.",
+    "deploy": "Run the n8n image as an ECS service with an EFS-backed /home/node/.n8n volume and an RDS Postgres backend."
+  },
+  "variables": [
+    {
+      "key": "N8N_PORT",
+      "label": "Web Interface Port",
+      "type": "number",
+      "default": 5678,
+      "description": "Puerto de la interfaz web de n8n para diseñar y ejecutar workflows."
+    },
+    {
+      "key": "N8N_USER",
+      "label": "Admin Username",
+      "type": "text",
+      "default": "admin",
+      "description": "Usuario administrador para acceder a la interfaz de n8n."
+    },
+    {
+      "key": "N8N_PASSWORD",
+      "label": "Admin Password",
+      "type": "password",
+      "default": "floci2026",
+      "description": "Contraseña del usuario administrador."
+    }
+  ]
+}

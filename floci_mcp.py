@@ -3,6 +3,7 @@ Floci MCP Server — entry point.
 
 Tools are organized by AWS service under mcp/tools/:
   meta.py        — health, architecture, inventory
+  clouds.py      — Azure, GCP and OCI runtimes (Floci-AZ, Floci-GCP, Floci-OCI)
   lambda_.py     — serverless functions
   sqs.py         — message queues
   sns.py         — notifications and pub/sub
@@ -29,6 +30,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 from tools import (
     athena,
+    clouds,
     devtools,
     dynamodb,
     eventbridge,
@@ -54,6 +56,7 @@ mcp = FastMCP("floci-mcp")
 
 for module in [
     meta,
+    clouds,
     lambda_,
     sqs,
     sns,

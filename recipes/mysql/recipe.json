@@ -1,0 +1,56 @@
+{
+  "id": "mysql",
+  "name": "MySQL + Adminer",
+  "description": "The world's most popular open-source relational database, bundled with Adminer — a lightweight web-based database management UI that supports MySQL, PostgreSQL, SQLite and more.",
+  "version": "8.0.0",
+  "accessUrl": "mysql://{{MYSQL_USER}}:{{MYSQL_PASSWORD}}@localhost:{{MYSQL_PORT}}/{{MYSQL_DATABASE}}",
+  "aws": {
+    "service": "Amazon RDS for MySQL",
+    "parity": "The same MySQL 8 engine runs locally and on RDS — identical SQL dialect, connectors and wire protocol.",
+    "deploy": "Provision an RDS for MySQL instance and repoint your connection string; no application changes required."
+  },
+  "variables": [
+    {
+      "key": "MYSQL_PORT",
+      "label": "MySQL Port",
+      "type": "number",
+      "default": 3306,
+      "description": "Port on your host machine to bind the MySQL server."
+    },
+    {
+      "key": "ADMINER_PORT",
+      "label": "Adminer Web Port",
+      "type": "number",
+      "default": 8080,
+      "description": "Port on your host machine to access the Adminer web administration UI."
+    },
+    {
+      "key": "MYSQL_ROOT_PASSWORD",
+      "label": "Root Password",
+      "type": "password",
+      "default": "root123",
+      "description": "Password for the MySQL root superuser account."
+    },
+    {
+      "key": "MYSQL_DATABASE",
+      "label": "Initial Database",
+      "type": "text",
+      "default": "mydb",
+      "description": "Name of the default database created on startup."
+    },
+    {
+      "key": "MYSQL_USER",
+      "label": "Username",
+      "type": "text",
+      "default": "mysql",
+      "description": "Username for the default non-root database user."
+    },
+    {
+      "key": "MYSQL_PASSWORD",
+      "label": "Password",
+      "type": "password",
+      "default": "mysql123",
+      "description": "Password for the default non-root database user."
+    }
+  ]
+}

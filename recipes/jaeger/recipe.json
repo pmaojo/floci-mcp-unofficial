@@ -1,0 +1,35 @@
+{
+  "id": "jaeger",
+  "name": "Jaeger (Distributed Tracing)",
+  "description": "End-to-end distributed tracing with an OpenTelemetry-compatible collector and a rich web UI to inspect spans, latencies and service dependencies.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{JAEGER_UI_PORT}}",
+  "aws": {
+    "service": "AWS X-Ray (via OpenTelemetry / ADOT)",
+    "parity": "Emit OTLP spans locally to Jaeger exactly as you will to X-Ray — same instrumentation, no app changes.",
+    "deploy": "Swap the OTLP exporter target for the AWS Distro for OpenTelemetry (ADOT) collector that ships traces to X-Ray."
+  },
+  "variables": [
+    {
+      "key": "JAEGER_UI_PORT",
+      "label": "Jaeger UI Port",
+      "type": "number",
+      "default": 16686,
+      "description": "Port on your host machine to access the Jaeger web UI."
+    },
+    {
+      "key": "JAEGER_OTLP_GRPC_PORT",
+      "label": "OTLP gRPC Port",
+      "type": "number",
+      "default": 4317,
+      "description": "Port for ingesting traces via the OpenTelemetry Protocol over gRPC."
+    },
+    {
+      "key": "JAEGER_OTLP_HTTP_PORT",
+      "label": "OTLP HTTP Port",
+      "type": "number",
+      "default": 4318,
+      "description": "Port for ingesting traces via the OpenTelemetry Protocol over HTTP."
+    }
+  ]
+}

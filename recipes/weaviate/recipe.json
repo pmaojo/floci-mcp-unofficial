@@ -1,0 +1,28 @@
+{
+  "id": "weaviate",
+  "name": "Weaviate Vector Database",
+  "description": "An open-source vector database that stores data objects and performs semantic similarity searches, powering AI applications, RAG pipelines and recommendation engines with fast approximate nearest-neighbor queries.",
+  "version": "1.24.0",
+  "accessUrl": "http://localhost:{{WEAVIATE_PORT}}",
+  "aws": {
+    "service": "Amazon OpenSearch Service (k-NN plugin)",
+    "parity": "Weaviate's REST and gRPC query APIs perform the same embedding-based similarity search that OpenSearch's k-NN index provides — the same vector search logic works on both.",
+    "deploy": "Create an OpenSearch domain with the k-NN plugin enabled and migrate your index schemas to OpenSearch index mappings."
+  },
+  "variables": [
+    {
+      "key": "WEAVIATE_PORT",
+      "label": "HTTP Port",
+      "type": "number",
+      "default": 8080,
+      "description": "Port on your host machine to access the Weaviate REST API and web console."
+    },
+    {
+      "key": "WEAVIATE_GRPC_PORT",
+      "label": "gRPC Port",
+      "type": "number",
+      "default": 50051,
+      "description": "Port on your host machine for the Weaviate gRPC API (used by v4 clients)."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "iotcore",
+  "name": "AWS IoT Core (MQTT)",
+  "description": "A local MQTT broker emulating the AWS IoT Core message broker and devices registry. Connect and test publish/subscribe channels.",
+  "version": "1.0.0",
+  "accessUrl": "tcp://localhost:{{MQTT_PORT}}",
+  "aws": {
+    "service": "AWS IoT Core",
+    "parity": "Publish/subscribe over MQTT locally exactly as devices will against IoT Core — same topics, QoS and payloads.",
+    "deploy": "Repoint your MQTT clients at your AWS IoT Core ATS endpoint and attach IoT policies/certs."
+  },
+  "variables": [
+    {
+      "key": "MQTT_PORT",
+      "label": "MQTT Broker Port",
+      "type": "number",
+      "default": 1883,
+      "description": "Port on your host machine to bind the MQTT service broker."
+    }
+  ]
+}

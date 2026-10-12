@@ -1,0 +1,21 @@
+{
+  "id": "metabase",
+  "name": "Metabase",
+  "description": "An open-source business intelligence tool that lets anyone in your team ask questions about your data and display answers as charts, dashboards and automated reports — no SQL required.",
+  "version": "0.49.0",
+  "accessUrl": "http://localhost:{{METABASE_PORT}}",
+  "aws": {
+    "service": "Amazon QuickSight",
+    "parity": "Metabase connects to the same data sources as QuickSight (RDS, Redshift, Athena) — validate your dashboards locally before publishing to QuickSight.",
+    "deploy": "Configure QuickSight datasets pointing at your production data sources and recreate your dashboards using its visual editor."
+  },
+  "variables": [
+    {
+      "key": "METABASE_PORT",
+      "label": "Web Port",
+      "type": "number",
+      "default": 3000,
+      "description": "Port on your host machine to access the Metabase web UI."
+    }
+  ]
+}

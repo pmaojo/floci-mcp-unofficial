@@ -1,0 +1,28 @@
+{
+  "id": "vault",
+  "name": "HashiCorp Vault (Dev Mode)",
+  "description": "Secrets management and encryption-as-a-service in a ready-to-use dev server. Store API keys, database credentials and certificates, then read them from your apps over HTTP. A local stand-in for AWS Secrets Manager and Parameter Store.",
+  "version": "1.18.0",
+  "accessUrl": "http://localhost:{{VAULT_PORT}}",
+  "aws": {
+    "service": "AWS Secrets Manager + KMS",
+    "parity": "Read/write secrets locally through Vault's API exactly as you will via Secrets Manager — same get/put lifecycle.",
+    "deploy": "Migrate the KV secrets into AWS Secrets Manager and swap the SDK; use KMS for the encryption keys."
+  },
+  "variables": [
+    {
+      "key": "VAULT_PORT",
+      "label": "HTTP / UI Port",
+      "type": "number",
+      "default": 8200,
+      "description": "Host port for the Vault HTTP API and web UI."
+    },
+    {
+      "key": "VAULT_DEV_ROOT_TOKEN",
+      "label": "Root Token",
+      "type": "password",
+      "default": "root",
+      "description": "Root token used to authenticate against the dev server."
+    }
+  ]
+}

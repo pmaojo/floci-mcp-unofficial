@@ -1,0 +1,35 @@
+{
+  "id": "elasticsearch",
+  "name": "Elasticsearch + Kibana",
+  "description": "A distributed, RESTful search and analytics engine bundled with Kibana — the visualization and exploration UI for querying indices, building dashboards and tracing logs.",
+  "version": "8.13.0",
+  "accessUrl": "http://localhost:{{KIBANA_PORT}}",
+  "aws": {
+    "service": "Amazon OpenSearch Service",
+    "parity": "Amazon OpenSearch Service is a managed fork of Elasticsearch — the same query DSL, index mappings and REST API work on both.",
+    "deploy": "Create an Amazon OpenSearch domain and update your endpoint to point at its HTTPS address; index and search calls are wire-compatible."
+  },
+  "variables": [
+    {
+      "key": "ELASTICSEARCH_PORT",
+      "label": "Elasticsearch Port",
+      "type": "number",
+      "default": 9200,
+      "description": "Port on your host machine for the Elasticsearch HTTP API."
+    },
+    {
+      "key": "KIBANA_PORT",
+      "label": "Kibana Port",
+      "type": "number",
+      "default": 5601,
+      "description": "Port on your host machine to access the Kibana web UI."
+    },
+    {
+      "key": "ELASTIC_PASSWORD",
+      "label": "Elastic Password",
+      "type": "password",
+      "default": "elastic123",
+      "description": "Password for the built-in 'elastic' superuser account."
+    }
+  ]
+}

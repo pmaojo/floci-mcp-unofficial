@@ -1,0 +1,35 @@
+{
+  "id": "loki",
+  "name": "Loki + Grafana (Log Aggregation)",
+  "description": "Grafana Loki is a horizontally-scalable log aggregation system inspired by Prometheus. Collect, index and query your application logs by label and visualize them alongside metrics in the bundled Grafana instance.",
+  "version": "2.9.0",
+  "accessUrl": "http://localhost:{{GRAFANA_PORT}}",
+  "aws": {
+    "service": "Amazon CloudWatch Logs",
+    "parity": "Loki's label-based log model mirrors CloudWatch Logs log groups and streams — your log queries and alerting rules translate directly to CloudWatch Insights.",
+    "deploy": "Configure your log shippers (Promtail, Fluent Bit) to forward to CloudWatch Logs and switch queries to CloudWatch Insights syntax."
+  },
+  "variables": [
+    {
+      "key": "LOKI_PORT",
+      "label": "Loki Port",
+      "type": "number",
+      "default": 3100,
+      "description": "Port for the Loki log ingestion and query HTTP API."
+    },
+    {
+      "key": "GRAFANA_PORT",
+      "label": "Grafana Port",
+      "type": "number",
+      "default": 3001,
+      "description": "Port on your host machine to access the Grafana web UI."
+    },
+    {
+      "key": "GRAFANA_PASSWORD",
+      "label": "Grafana Admin Password",
+      "type": "password",
+      "default": "admin123",
+      "description": "Password for the Grafana admin account (username: admin)."
+    }
+  ]
+}

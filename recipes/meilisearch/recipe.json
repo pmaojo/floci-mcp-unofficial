@@ -1,0 +1,28 @@
+{
+  "id": "meilisearch",
+  "name": "Meilisearch Search Engine",
+  "description": "An ultra-lightweight, blazing-fast, Rust-based search engine with a clean web dashboard.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{MEILISEARCH_PORT}}",
+  "aws": {
+    "service": "Amazon OpenSearch Service (or self-host on ECS)",
+    "parity": "Index and full-text search locally with the same documents and ranking you will run in production.",
+    "deploy": "Either self-host Meilisearch on ECS behind an ALB, or migrate the index to an Amazon OpenSearch domain."
+  },
+  "variables": [
+    {
+      "key": "MEILISEARCH_PORT",
+      "label": "Binding Port",
+      "type": "number",
+      "default": 7700,
+      "description": "Port on your host machine to access Meilisearch and its dashboard."
+    },
+    {
+      "key": "MEILISEARCH_MASTER_KEY",
+      "label": "Master Security Key",
+      "type": "password",
+      "default": "meilisearch-master-key-secret-12345",
+      "description": "The administrative password required to read/write search indexes."
+    }
+  ]
+}

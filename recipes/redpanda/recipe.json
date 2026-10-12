@@ -1,0 +1,28 @@
+{
+  "id": "redpanda",
+  "name": "Redpanda Streaming (Kafka)",
+  "description": "An ultra-fast, lightweight Kafka-compatible streaming engine including the Redpanda Console GUI.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{REDPANDA_CONSOLE_PORT}}",
+  "aws": {
+    "service": "Amazon MSK (managed Apache Kafka)",
+    "parity": "Redpanda is Kafka-API compatible, so producers/consumers and topics behave locally exactly as on MSK.",
+    "deploy": "Point your Kafka bootstrap servers at the MSK cluster endpoint (add the IAM/TLS auth config)."
+  },
+  "variables": [
+    {
+      "key": "REDPANDA_PORT",
+      "label": "Kafka API Port",
+      "type": "number",
+      "default": 9092,
+      "description": "Port on your host machine for application code connections."
+    },
+    {
+      "key": "REDPANDA_CONSOLE_PORT",
+      "label": "Redpanda Console Port",
+      "type": "number",
+      "default": 8080,
+      "description": "Port on your host machine to access the visual streaming inspector dashboard."
+    }
+  ]
+}

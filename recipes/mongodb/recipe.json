@@ -1,0 +1,42 @@
+{
+  "id": "mongodb",
+  "name": "MongoDB + Mongo Express",
+  "description": "A scalable, document-oriented NoSQL database paired with Mongo Express, a lightweight web-based administration interface.",
+  "version": "7.0.0",
+  "accessUrl": "http://localhost:{{MONGO_EXPRESS_PORT}}",
+  "aws": {
+    "service": "Amazon DocumentDB (MongoDB-compatible)",
+    "parity": "The MongoDB wire protocol you use locally is the same DocumentDB speaks — same drivers, queries and indexes.",
+    "deploy": "Provision a DocumentDB cluster and repoint your connection string (add the RDS CA bundle for TLS)."
+  },
+  "variables": [
+    {
+      "key": "MONGO_PORT",
+      "label": "MongoDB Port",
+      "type": "number",
+      "default": 27017,
+      "description": "Port on your host machine to bind the MongoDB database server."
+    },
+    {
+      "key": "MONGO_EXPRESS_PORT",
+      "label": "Mongo Express Web Port",
+      "type": "number",
+      "default": 8081,
+      "description": "Port on your host machine to access the Mongo Express web administration UI."
+    },
+    {
+      "key": "MONGO_INITDB_ROOT_USERNAME",
+      "label": "Root Username",
+      "type": "text",
+      "default": "root",
+      "description": "The root username for the MongoDB administrator account."
+    },
+    {
+      "key": "MONGO_INITDB_ROOT_PASSWORD",
+      "label": "Root Password",
+      "type": "password",
+      "default": "mongo123",
+      "description": "The password for the MongoDB administrator account."
+    }
+  ]
+}

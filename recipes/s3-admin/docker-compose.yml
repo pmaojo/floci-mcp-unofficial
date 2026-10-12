@@ -1,0 +1,16 @@
+services:
+  s3-admin:
+    image: cloudlena/s3manager:latest
+    container_name: floci-s3-admin
+    ports:
+      - "${S3_ADMIN_PORT}:8080"
+    environment:
+      ACCESS_KEY_ID: "test"
+      SECRET_ACCESS_KEY: "test"
+      ENDPOINT: "${S3_ENDPOINT}"
+      REGION: "${AWS_REGION}"
+      USE_SSL: "false"
+      SKIP_SSL_VERIFICATION: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

@@ -1,0 +1,35 @@
+{
+  "id": "airflow",
+  "name": "Apache Airflow",
+  "description": "An open-source workflow orchestration platform for authoring, scheduling and monitoring data pipelines as code. Define your DAGs in Python and track every run in the built-in web UI.",
+  "version": "2.9.0",
+  "accessUrl": "http://localhost:{{AIRFLOW_PORT}}",
+  "aws": {
+    "service": "Amazon MWAA (Managed Workflows for Apache Airflow)",
+    "parity": "Amazon MWAA runs the same Airflow engine — your DAG files, operators, hooks and connections work without modification.",
+    "deploy": "Create an MWAA environment, upload your DAG folder to the associated S3 bucket and configure the same Connections and Variables via the Airflow UI or Secrets Manager."
+  },
+  "variables": [
+    {
+      "key": "AIRFLOW_PORT",
+      "label": "Web UI Port",
+      "type": "number",
+      "default": 8080,
+      "description": "Port on your host machine to access the Airflow web UI."
+    },
+    {
+      "key": "AIRFLOW_USERNAME",
+      "label": "Admin Username",
+      "type": "text",
+      "default": "airflow",
+      "description": "Username for the Airflow admin account."
+    },
+    {
+      "key": "AIRFLOW_PASSWORD",
+      "label": "Admin Password",
+      "type": "password",
+      "default": "airflow123",
+      "description": "Password for the Airflow admin account."
+    }
+  ]
+}

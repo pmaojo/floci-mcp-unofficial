@@ -1,0 +1,42 @@
+{
+  "id": "keycloak",
+  "name": "Keycloak + PostgreSQL",
+  "description": "An open-source identity and access management solution, bundled with a robust PostgreSQL database.",
+  "version": "22.0.0",
+  "accessUrl": "http://localhost:{{KEYCLOAK_PORT}}",
+  "aws": {
+    "service": "Amazon Cognito",
+    "parity": "Run the same OIDC / OAuth2 / SAML flows locally that Cognito serves — login, tokens and JWKS all behave identically.",
+    "deploy": "Create a Cognito user pool and swap your app's issuer/JWKS URL for the Cognito hosted UI endpoints."
+  },
+  "variables": [
+    {
+      "key": "KEYCLOAK_PORT",
+      "label": "External HTTP Port",
+      "type": "number",
+      "default": 8080,
+      "description": "The host port that Keycloak will be exposed on."
+    },
+    {
+      "key": "KEYCLOAK_ADMIN",
+      "label": "Admin Username",
+      "type": "text",
+      "default": "admin",
+      "description": "The administrator username."
+    },
+    {
+      "key": "KEYCLOAK_ADMIN_PASSWORD",
+      "label": "Admin Password",
+      "type": "password",
+      "default": "admin123",
+      "description": "The administrator password."
+    },
+    {
+      "key": "POSTGRES_DB",
+      "label": "Database Name",
+      "type": "text",
+      "default": "keycloak_db",
+      "description": "The database name for PostgreSQL."
+    }
+  ]
+}

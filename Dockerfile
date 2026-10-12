@@ -7,11 +7,14 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 
 # Instalar dependencias en una capa estable independiente
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --no-install-project --no-dev
 
 # Copiar el código del servidor
 COPY floci_mcp.py ./
+COPY tools/ ./tools/
+COPY plugins/ ./plugins/
+COPY recipes/ ./recipes/
 COPY floci_backend/ ./floci_backend/
 RUN uv sync --no-dev
 
@@ -28,6 +31,9 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     SIDECAR_URL="http://host.docker.internal:4317" \
     AWS_ENDPOINT_URL="http://host.docker.internal:4566" \
+    FLOCI_AZURE_ENDPOINT="http://host.docker.internal:4577" \
+    FLOCI_GCP_ENDPOINT="http://host.docker.internal:4588" \
+    FLOCI_OCI_ENDPOINT="http://host.docker.internal:4599" \
     SIDECAR_TOKEN="open"
 
 # Correr el servidor a traves de stdio interactivo

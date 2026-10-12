@@ -1,0 +1,56 @@
+{
+  "id": "supabase",
+  "name": "Supabase",
+  "description": "An open-source Firebase alternative built on PostgreSQL — get a full backend in minutes with a managed database, auto-generated REST & GraphQL APIs, authentication, realtime subscriptions and a beautiful Studio dashboard.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{STUDIO_PORT}}",
+  "aws": {
+    "service": "AWS Amplify + Amazon RDS + Amazon Cognito",
+    "parity": "Supabase wraps standard PostgreSQL — the same schema, queries and RLS policies run on RDS; Auth maps to Cognito and Storage maps to S3.",
+    "deploy": "Migrate your PostgreSQL schema to RDS, replace Supabase Auth with Cognito user pools, swap Supabase Storage for S3 presigned URLs, and update client SDKs to point at the new endpoints."
+  },
+  "variables": [
+    {
+      "key": "STUDIO_PORT",
+      "label": "Studio Port",
+      "type": "number",
+      "default": 3000,
+      "description": "Port on your host machine to access the Supabase Studio dashboard."
+    },
+    {
+      "key": "POSTGRES_PORT",
+      "label": "PostgreSQL Port",
+      "type": "number",
+      "default": 5432,
+      "description": "Port on your host machine to connect directly to the PostgreSQL database."
+    },
+    {
+      "key": "POSTGRES_PASSWORD",
+      "label": "Database Password",
+      "type": "password",
+      "default": "supabase123",
+      "description": "Password for the PostgreSQL superuser account."
+    },
+    {
+      "key": "JWT_SECRET",
+      "label": "JWT Secret",
+      "type": "password",
+      "default": "super-secret-jwt-token-with-at-least-32-characters-long",
+      "description": "Secret used to sign and verify JSON Web Tokens. Must be at least 32 characters."
+    },
+    {
+      "key": "ANON_KEY",
+      "label": "Anon Key",
+      "type": "text",
+      "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTYxMzUzMTk4NSwiZXhwIjoxOTI5MTA3OTg1fQ.ReNhHIoqBCTbC_i0Ot9BhQMIA1wgQGsHEVkpHOCJRyY",
+      "description": "Public anonymous JWT key used in client-side SDK calls. Replace with a key signed by your JWT_SECRET for production."
+    },
+    {
+      "key": "SERVICE_KEY",
+      "label": "Service Role Key",
+      "type": "password",
+      "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjEzNTMxOTg1LCJleHAiOjE5MjkxMDc5ODV9.FGbxBPMU7C6_1h9y5_y2PuVf4vp5SqBxFcCvQOGFmHU",
+      "description": "Private service role JWT key that bypasses RLS. Keep this secret and use only in server-side code."
+    }
+  ]
+}

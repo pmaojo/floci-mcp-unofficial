@@ -1,0 +1,28 @@
+{
+  "id": "mailpit",
+  "name": "Mailpit (SMTP)",
+  "description": "Email and SMTP testing tool for developers with a web interface.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{MAILPIT_WEB_PORT}}",
+  "aws": {
+    "service": "Amazon SES",
+    "parity": "Send over plain SMTP locally (captured by Mailpit) exactly as you will to the SES SMTP endpoint — same MIME, headers and auth.",
+    "deploy": "Verify a domain/identity in SES and point your SMTP host/port/credentials at the SES SMTP relay."
+  },
+  "variables": [
+    {
+      "key": "MAILPIT_SMTP_PORT",
+      "label": "SMTP Port",
+      "type": "number",
+      "default": 1025,
+      "description": "Port on your host machine to bind the SMTP server."
+    },
+    {
+      "key": "MAILPIT_WEB_PORT",
+      "label": "Web Interface Port",
+      "type": "number",
+      "default": 8025,
+      "description": "Port on your host machine to bind the Mailpit web interface."
+    }
+  ]
+}

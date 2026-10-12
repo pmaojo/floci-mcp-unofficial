@@ -1,0 +1,35 @@
+{
+  "id": "nginx-proxy-manager",
+  "name": "Nginx Proxy Manager",
+  "description": "Docker container for managing Nginx proxy hosts with a simple, powerful interface, providing free SSL, and acting as a local API Gateway.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{NPM_ADMIN_PORT}}",
+  "aws": {
+    "service": "AWS Application Load Balancer + ACM",
+    "parity": "Terminate TLS and route hosts/paths locally exactly as an ALB + ACM certificate will in production.",
+    "deploy": "Recreate the proxy hosts as ALB listener rules/target groups and issue the cert in ACM."
+  },
+  "variables": [
+    {
+      "key": "NPM_HTTP_PORT",
+      "label": "HTTP Port",
+      "type": "number",
+      "default": 80,
+      "description": "Public HTTP traffic port."
+    },
+    {
+      "key": "NPM_ADMIN_PORT",
+      "label": "Admin Panel Port",
+      "type": "number",
+      "default": 81,
+      "description": "Port to access the Nginx Proxy Manager administration web interface."
+    },
+    {
+      "key": "NPM_HTTPS_PORT",
+      "label": "HTTPS Port",
+      "type": "number",
+      "default": 443,
+      "description": "Public HTTPS traffic port."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "pocketbase",
+  "name": "PocketBase",
+  "description": "Open Source backend in 1 file with embedded SQLite database, real-time subscriptions, and a beautiful Admin dashboard.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{POCKETBASE_PORT}}/_/",
+  "aws": {
+    "service": "Self-host on Amazon ECS/Fargate",
+    "parity": "The single PocketBase binary runs the same locally and on Fargate — identical REST API, auth and admin UI.",
+    "deploy": "Run the image as a Fargate service with an EFS volume mounted at /pb_data so the SQLite store persists."
+  },
+  "variables": [
+    {
+      "key": "POCKETBASE_PORT",
+      "label": "API and Admin Panel Port",
+      "type": "number",
+      "default": 8090,
+      "description": "Port on your host machine to bind both the PocketBase API and the visual Admin Dashboard."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "minio",
+  "name": "MinIO (S3 Compatible Storage)",
+  "description": "High-Performance Object Storage compatible with Amazon S3 APIs, complete with a visual Web Console.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{MINIO_WEB_PORT}}",
+  "aws": {
+    "service": "Amazon S3",
+    "parity": "MinIO speaks the S3 API, so buckets, objects and presigned URLs behave locally exactly as on real S3.",
+    "deploy": "Drop the custom endpoint from your AWS SDK config so the S3 client talks to real Amazon S3."
+  },
+  "variables": [
+    {
+      "key": "MINIO_S3_PORT",
+      "label": "S3 API Port",
+      "type": "number",
+      "default": 9000,
+      "description": "Port on your host machine to bind the MinIO S3 API."
+    },
+    {
+      "key": "MINIO_WEB_PORT",
+      "label": "Web Console Port",
+      "type": "number",
+      "default": 9001,
+      "description": "Port on your host machine to bind the MinIO administration web console."
+    },
+    {
+      "key": "MINIO_ROOT_USER",
+      "label": "Root User",
+      "type": "text",
+      "default": "floci-admin",
+      "description": "The root username to access MinIO."
+    },
+    {
+      "key": "MINIO_ROOT_PASSWORD",
+      "label": "Root Password",
+      "type": "password",
+      "default": "floci-secret-key",
+      "description": "The root password to access MinIO."
+    }
+  ]
+}

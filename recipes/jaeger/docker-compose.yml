@@ -1,0 +1,11 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: floci-jaeger
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"      # Web UI
+      - "${JAEGER_OTLP_GRPC_PORT:-4317}:4317" # OTLP gRPC ingest
+      - "${JAEGER_OTLP_HTTP_PORT:-4318}:4318" # OTLP HTTP ingest
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped

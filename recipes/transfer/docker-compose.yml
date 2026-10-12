@@ -1,0 +1,6 @@
+services:
+  sftp:
+    image: atmoz/sftp:latest
+    ports:
+      - "${SFTP_PORT}:22"
+    command: ${SFTP_USER}:${SFTP_PASSWORD}:1001::upload

@@ -1,0 +1,6 @@
+services:
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "${MQTT_PORT}:1883"
+    entrypoint: [ "sh", "-c", "echo 'listener 1883' > /tmp/mosquitto.conf && echo 'allow_anonymous true' >> /tmp/mosquitto.conf && exec mosquitto -c /tmp/mosquitto.conf" ]

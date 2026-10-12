@@ -1,0 +1,28 @@
+{
+  "id": "observability",
+  "name": "Observability Stack (Prometheus + Grafana)",
+  "description": "A pre-configured observability stack containing Prometheus metrics collection and a clean Grafana dashboard.",
+  "version": "1.0.0",
+  "accessUrl": "http://localhost:{{GRAFANA_PORT}}",
+  "aws": {
+    "service": "Amazon Managed Grafana + Amazon Managed Service for Prometheus",
+    "parity": "The same Prometheus scrape config and Grafana dashboards you build locally run unchanged on the AWS-managed pair.",
+    "deploy": "Remote-write metrics to an AMP workspace and import the dashboards into Amazon Managed Grafana."
+  },
+  "variables": [
+    {
+      "key": "GRAFANA_PORT",
+      "label": "Grafana Dashboard Port",
+      "type": "number",
+      "default": 3001,
+      "description": "Port on your host machine to access the Grafana visual dashboard (avoid 3000, used by the Floci dev server)."
+    },
+    {
+      "key": "PROMETHEUS_PORT",
+      "label": "Prometheus API Port",
+      "type": "number",
+      "default": 9090,
+      "description": "Port on your host machine to access the Prometheus raw metrics console."
+    }
+  ]
+}

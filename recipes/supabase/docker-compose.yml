@@ -1,0 +1,54 @@
+services:
+  db:
+    image: supabase/postgres:15.1.0.147
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - supabase-db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  meta:
+    image: supabase/postgres-meta:v0.80.0
+    environment:
+      - PG_META_PORT=8080
+      - PG_META_DB_HOST=db
+      - PG_META_DB_PORT=5432
+      - PG_META_DB_NAME=postgres
+      - PG_META_DB_USER=postgres
+      - PG_META_DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  rest:
+    image: postgrest/postgrest:v12.0.2
+    environment:
+      - PGRST_DB_URI=postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
+      - PGRST_JWT_SECRET=${JWT_SECRET}
+      - PGRST_DB_ANON_ROLE=anon
+      - PGRST_DB_SCHEMAS=public
+      - PGRST_DB_EXTRA_SEARCH_PATH=public,extensions
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  studio:
+    image: supabase/studio:latest
+    ports:
+      - "${STUDIO_PORT}:3000"
+    environment:
+      - STUDIO_PG_META_URL=http://meta:8080
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - SUPABASE_URL=http://rest:3000
+      - SUPABASE_ANON_KEY=${ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SERVICE_KEY}
+    depends_on:
+      - db
+      - meta
+      - rest
+    restart: unless-stopped
+
+volumes:
+  supabase-db:

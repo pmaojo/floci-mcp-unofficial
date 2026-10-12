@@ -1,0 +1,21 @@
+{
+  "id": "portainer",
+  "name": "Portainer (Docker Cockpit)",
+  "description": "A slick web UI to manage Docker itself — inspect containers, images, volumes and networks, tail logs and open a shell, all from the browser. The perfect companion for watching the services you deploy from the Floci Marketplace.",
+  "version": "2.21.4",
+  "accessUrl": "https://localhost:{{PORTAINER_PORT}}",
+  "aws": {
+    "service": "Amazon ECS / EKS console",
+    "parity": "Manage the very containers locally that you will run as ECS tasks or EKS pods — same images, same compose topology.",
+    "deploy": "Push images to ECR and define the services as an ECS task definition or EKS deployment."
+  },
+  "variables": [
+    {
+      "key": "PORTAINER_PORT",
+      "label": "HTTPS UI Port",
+      "type": "number",
+      "default": 9443,
+      "description": "Host port for the Portainer web UI (served over HTTPS with a self-signed cert)."
+    }
+  ]
+}

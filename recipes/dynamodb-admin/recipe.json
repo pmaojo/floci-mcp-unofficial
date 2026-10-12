@@ -1,0 +1,35 @@
+{
+  "id": "dynamodb-admin",
+  "name": "DynamoDB Admin",
+  "description": "A web-based GUI for DynamoDB — browse tables, items and indexes, run queries and edit data. Connects to your local Floci DynamoDB endpoint out of the box.",
+  "version": "4.x",
+  "accessUrl": "http://localhost:{{DYNAMODB_ADMIN_PORT}}",
+  "aws": {
+    "service": "Amazon DynamoDB console",
+    "parity": "Browses the very same tables locally (via the Floci endpoint on 4566) that you will see in the DynamoDB console — zero schema drift.",
+    "deploy": "Already Floci-wired: set DYNAMO_ENDPOINT to your real regional endpoint (or drop it) to inspect production DynamoDB."
+  },
+  "variables": [
+    {
+      "key": "DYNAMODB_ADMIN_PORT",
+      "label": "Web UI Port",
+      "type": "number",
+      "default": 8001,
+      "description": "Port on your host machine to access the DynamoDB Admin web UI."
+    },
+    {
+      "key": "DYNAMO_ENDPOINT",
+      "label": "DynamoDB Endpoint",
+      "type": "text",
+      "default": "http://host.docker.internal:4566",
+      "description": "URL of the DynamoDB endpoint. Defaults to Floci (LocalStack) on port 4566."
+    },
+    {
+      "key": "AWS_REGION",
+      "label": "AWS Region",
+      "type": "text",
+      "default": "us-east-1",
+      "description": "AWS region used when connecting to DynamoDB."
+    }
+  ]
+}

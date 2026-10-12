@@ -1,0 +1,49 @@
+{
+  "id": "clickhouse",
+  "name": "ClickHouse Analytics DB",
+  "description": "Column-oriented OLAP database for real-time analytics over billions of rows. Blazing-fast aggregations, a SQL interface and a built-in web Play console. A local powerhouse for dashboards, logs and event analytics.",
+  "version": "24.10",
+  "accessUrl": "http://localhost:{{CLICKHOUSE_HTTP_PORT}}/play",
+  "aws": {
+    "service": "Self-host on Amazon ECS/EKS (analytics alt: Amazon Redshift)",
+    "parity": "The exact same ClickHouse engine runs locally and in your ECS/Fargate task — identical SQL, table engines and wire protocol.",
+    "deploy": "Push the image to ECR and run it as an ECS service; attach an EBS/EFS volume for /var/lib/clickhouse."
+  },
+  "variables": [
+    {
+      "key": "CLICKHOUSE_HTTP_PORT",
+      "label": "HTTP / Play Port",
+      "type": "number",
+      "default": 8123,
+      "description": "Host port for the HTTP interface and the web Play console."
+    },
+    {
+      "key": "CLICKHOUSE_NATIVE_PORT",
+      "label": "Native TCP Port",
+      "type": "number",
+      "default": 9000,
+      "description": "Host port for the native protocol used by clickhouse-client and drivers."
+    },
+    {
+      "key": "CLICKHOUSE_USER",
+      "label": "Username",
+      "type": "text",
+      "default": "default",
+      "description": "Database user created on first boot."
+    },
+    {
+      "key": "CLICKHOUSE_PASSWORD",
+      "label": "Password",
+      "type": "password",
+      "default": "clickhouse123",
+      "description": "Password for the database user."
+    },
+    {
+      "key": "CLICKHOUSE_DB",
+      "label": "Default Database",
+      "type": "text",
+      "default": "analytics",
+      "description": "Name of the database created on first boot."
+    }
+  ]
+}

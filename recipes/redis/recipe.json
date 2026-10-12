@@ -1,0 +1,28 @@
+{
+  "id": "redis",
+  "name": "Redis Cache & Broker",
+  "description": "An in-memory data structure store used as a distributed, in-memory key-value database, cache, and message broker.",
+  "version": "7.0.0",
+  "accessUrl": "redis://localhost:{{REDIS_PORT}}",
+  "aws": {
+    "service": "Amazon ElastiCache for Redis (or MemoryDB)",
+    "parity": "The same Redis engine and RESP protocol run locally and on ElastiCache — identical commands and data structures.",
+    "deploy": "Provision an ElastiCache for Redis cluster and point REDIS_URL at its primary endpoint."
+  },
+  "variables": [
+    {
+      "key": "REDIS_PORT",
+      "label": "Redis Host Port",
+      "type": "number",
+      "default": 6379,
+      "description": "Port on your host machine to bind the Redis service."
+    },
+    {
+      "key": "REDIS_PASSWORD",
+      "label": "Access Password",
+      "type": "password",
+      "default": "redis123",
+      "description": "Password required to connect to the Redis instance."
+    }
+  ]
+}

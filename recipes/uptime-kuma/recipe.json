@@ -1,0 +1,21 @@
+{
+  "id": "uptime-kuma",
+  "name": "Uptime Kuma",
+  "description": "A self-hosted monitoring tool to track the uptime of your websites, APIs and services, with real-time dashboards, beautiful status pages and instant notifications to Slack, Telegram, email and 90+ integrations.",
+  "version": "1.23.0",
+  "accessUrl": "http://localhost:{{UPTIME_KUMA_PORT}}",
+  "aws": {
+    "service": "Amazon Route 53 Health Checks",
+    "parity": "Uptime Kuma monitors the same endpoints that Route 53 Health Checks poll — validate your alerting thresholds and notification flows locally before wiring up CloudWatch alarms.",
+    "deploy": "Create Route 53 Health Checks for your production endpoints and configure CloudWatch alarms to trigger SNS notifications on failure."
+  },
+  "variables": [
+    {
+      "key": "UPTIME_KUMA_PORT",
+      "label": "Web Port",
+      "type": "number",
+      "default": 3001,
+      "description": "Port on your host machine to access the Uptime Kuma dashboard."
+    }
+  ]
+}

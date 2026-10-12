@@ -1,0 +1,35 @@
+{
+  "id": "transfer",
+  "name": "AWS Transfer Family (SFTP)",
+  "description": "A high-performance local SFTP server emulating AWS Transfer Family. Connect and transfer files using standard SFTP clients.",
+  "version": "1.0.0",
+  "accessUrl": "sftp://{{SFTP_USER}}@localhost:{{SFTP_PORT}}",
+  "aws": {
+    "service": "AWS Transfer Family (SFTP)",
+    "parity": "Move files over SFTP locally exactly as clients will against a Transfer Family server — same protocol and auth.",
+    "deploy": "Provision an AWS Transfer Family SFTP server backed by an S3 bucket and migrate the users."
+  },
+  "variables": [
+    {
+      "key": "SFTP_PORT",
+      "label": "SFTP Host Port",
+      "type": "number",
+      "default": 2222,
+      "description": "Port on your host machine to bind the SFTP service."
+    },
+    {
+      "key": "SFTP_USER",
+      "label": "Username",
+      "type": "text",
+      "default": "floci",
+      "description": "SFTP user name for authentication."
+    },
+    {
+      "key": "SFTP_PASSWORD",
+      "label": "Password",
+      "type": "password",
+      "default": "flocipass",
+      "description": "SFTP user password for authentication."
+    }
+  ]
+}

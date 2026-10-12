@@ -1,0 +1,28 @@
+{
+  "id": "ollama",
+  "name": "Ollama (Local LLM Runtime)",
+  "description": "Run open-source large language models (Llama 3, Mistral, Phi, Gemma, and more) entirely on your machine. Exposes an OpenAI-compatible HTTP API — perfect for wiring local AI into Floci workflows, Lambdas, and agents at zero cost.",
+  "version": "0.5.4",
+  "accessUrl": "http://localhost:{{OLLAMA_PORT}}",
+  "aws": {
+    "service": "Amazon Bedrock",
+    "parity": "Develop against an OpenAI-compatible chat/embeddings API locally, then call Bedrock's managed models with the same request shape.",
+    "deploy": "Swap the base URL/SDK for the Bedrock Runtime API (or host the model on SageMaker) — your prompt code stays the same."
+  },
+  "variables": [
+    {
+      "key": "OLLAMA_PORT",
+      "label": "API Port",
+      "type": "number",
+      "default": 11434,
+      "description": "Port on your host machine to expose the Ollama HTTP API."
+    },
+    {
+      "key": "OLLAMA_KEEP_ALIVE",
+      "label": "Model Keep-Alive",
+      "type": "text",
+      "default": "5m",
+      "description": "How long a model stays loaded in memory after the last request (e.g. 5m, 1h, -1 for forever)."
+    }
+  ]
+}

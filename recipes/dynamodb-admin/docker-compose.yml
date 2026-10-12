@@ -1,0 +1,14 @@
+services:
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: floci-dynamodb-admin
+    ports:
+      - "${DYNAMODB_ADMIN_PORT:-8001}:8001"
+    environment:
+      DYNAMO_ENDPOINT: "${DYNAMO_ENDPOINT:-http://host.docker.internal:4566}"
+      AWS_ACCESS_KEY_ID: "test"
+      AWS_SECRET_ACCESS_KEY: "test"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

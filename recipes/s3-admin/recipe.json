@@ -1,0 +1,35 @@
+{
+  "id": "s3-admin",
+  "name": "S3 Admin (Floci-wired)",
+  "description": "A web GUI to browse, upload and download S3 buckets and objects — pre-wired to the Floci (LocalStack) S3 endpoint on port 4566. Test your S3 workflows locally exactly as they will run against real Amazon S3.",
+  "version": "1.x",
+  "accessUrl": "http://localhost:{{S3_ADMIN_PORT}}",
+  "aws": {
+    "service": "Amazon S3 console",
+    "parity": "Browses the very same buckets and objects locally (via the Floci endpoint on 4566) that you will see in the S3 console — same API, same presigned URLs.",
+    "deploy": "Already Floci-wired: set S3_ENDPOINT to your real regional S3 endpoint (or drop it) to point the browser at production S3."
+  },
+  "variables": [
+    {
+      "key": "S3_ADMIN_PORT",
+      "label": "Web UI Port",
+      "type": "number",
+      "default": 8002,
+      "description": "Port on your host machine to access the S3 Admin web UI."
+    },
+    {
+      "key": "S3_ENDPOINT",
+      "label": "S3 Endpoint",
+      "type": "text",
+      "default": "host.docker.internal:4566",
+      "description": "Host:port of the S3 endpoint. Defaults to Floci (LocalStack) on port 4566."
+    },
+    {
+      "key": "AWS_REGION",
+      "label": "AWS Region",
+      "type": "text",
+      "default": "us-east-1",
+      "description": "AWS region used when connecting to S3."
+    }
+  ]
+}
