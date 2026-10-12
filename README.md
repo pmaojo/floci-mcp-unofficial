@@ -398,7 +398,7 @@ A plugin is a directory `plugins/<name>/` with a `plugin.json` and a `tools.py` 
 
 Adding a tool is a short checklist, and `verify_all.py` fails if a step is missed:
 
-1. Write it in the right `tools/<module>.py`, with a description in English that says what it does, its parameters and when to use it. Models and tool search match on that text.
+1. Write it in the right `floci_tools/<module>.py`, with a description in English that says what it does, its parameters and when to use it. Models and tool search match on that text.
 2. Make sure the module belongs to a toolset in `toolsets.py`. If the name changes state, `is_write` must see it (a known prefix, or add it to `WRITE_NAMES`) so read-only mode and the annotations are right.
 3. Exercise it in `verify_all.py`, or give it a reason in `SKIPPED`. The coverage check fails otherwise.
 4. Run `uv run python scripts/build_catalog.py` so the site lists it.

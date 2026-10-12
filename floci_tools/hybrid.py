@@ -1,5 +1,5 @@
 """Hybrid development: cloud proxying, cloud seeding and reverse tunnels (Area 5)."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

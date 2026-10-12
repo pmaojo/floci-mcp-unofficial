@@ -173,7 +173,7 @@ async def docs_group():
     # Every environment variable the code reads is documented.
     pattern = re.compile(r"""(?:os\.environ\.get|os\.getenv|environ\[|env\.get)\(?\s*['"]([A-Z][A-Z0-9_]{3,})['"]""")
     read: set[str] = set()
-    for folder in ("tools", "floci_backend"):
+    for folder in ("floci_tools", "floci_backend"):
         for dirpath, _, files in os.walk(os.path.join(root, folder)):
             for name in files:
                 if name.endswith(".py"):
@@ -194,7 +194,7 @@ async def docs_group():
 
     # The error messages the troubleshooting table quotes are the ones the code produces.
     source = ""
-    for folder in ("tools", "floci_backend", "."):
+    for folder in ("floci_tools", "floci_backend", "."):
         for dirpath, _, files in os.walk(os.path.join(root, folder)):
             if ".venv" in dirpath or "docs" in dirpath.split(os.sep):
                 continue

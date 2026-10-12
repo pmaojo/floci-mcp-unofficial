@@ -1,6 +1,6 @@
 """Herramientas Step Functions: state machines y ejecuciones."""
 import json
-from tools._client import clean, make_client
+from floci_tools._client import clean, make_client
 
 
 def register(mcp):

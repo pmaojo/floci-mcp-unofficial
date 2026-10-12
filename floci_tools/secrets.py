@@ -1,5 +1,5 @@
 """Herramientas Secrets Manager: crear, leer, actualizar y eliminar secretos."""
-from tools._client import make_client
+from floci_tools._client import make_client
 
 
 def register(mcp):

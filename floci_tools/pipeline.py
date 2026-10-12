@@ -1,5 +1,5 @@
 """Pipeline MCP tools — deploy marketplace recipes to test/demo and generate production manifests."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

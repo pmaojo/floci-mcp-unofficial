@@ -1,5 +1,5 @@
 """Herramientas Lambda: funciones serverless completas."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

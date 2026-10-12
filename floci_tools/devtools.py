@@ -1,5 +1,5 @@
 """Herramientas de desarrollo: IaC, seed data, proxy HTTP, JWT."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

@@ -10,7 +10,7 @@ import uuid
 
 from mcp.server.fastmcp import FastMCP
 
-from tools import clouds
+from floci_tools import clouds
 
 SUFFIX = uuid.uuid4().hex[:8]
 

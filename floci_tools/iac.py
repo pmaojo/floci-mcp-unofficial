@@ -1,7 +1,7 @@
 """Bidirectional IaC: auto-discovery and drift detection (Area 4)."""
 from urllib.parse import quote
 
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

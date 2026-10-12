@@ -2,7 +2,7 @@
 import asyncio
 import time
 
-from tools._client import backend, clean, make_client
+from floci_tools._client import backend, clean, make_client
 
 
 def register(mcp):

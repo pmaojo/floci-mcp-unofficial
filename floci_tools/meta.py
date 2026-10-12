@@ -2,7 +2,7 @@
 import httpx
 from floci_backend.config import config
 from floci_backend.server import app
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

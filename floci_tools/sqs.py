@@ -1,5 +1,5 @@
 """Herramientas SQS: colas estándar y FIFO, mensajes y atributos."""
-from tools._client import clean, make_client
+from floci_tools._client import clean, make_client
 
 
 def register(mcp):

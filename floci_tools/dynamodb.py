@@ -1,5 +1,5 @@
 """Herramientas DynamoDB: tablas, ítems, queries y scans."""
-from tools._client import clean, make_client
+from floci_tools._client import clean, make_client
 
 
 def register(mcp):

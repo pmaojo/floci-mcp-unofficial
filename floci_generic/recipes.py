@@ -101,7 +101,7 @@ def render_url(recipe: dict, variables: dict) -> str | None:
 
 # ---------------------------------------------------------------- backend
 async def _backend(method: str, path: str, json_data: dict | None = None) -> Any:
-    from tools._client import backend
+    from floci_tools._client import backend
     return await backend(method, path, json_data=json_data)
 
 

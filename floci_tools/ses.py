@@ -1,5 +1,5 @@
 """Herramientas SES: identidades verificadas y envío de emails."""
-from tools._client import make_client
+from floci_tools._client import make_client
 
 
 def register(mcp):

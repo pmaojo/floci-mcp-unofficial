@@ -209,7 +209,7 @@ class Gateway:
             self.log.append({**entry, "dry_run": True})
             return {"dry_run": True, "would_call": f"{method} {path}"}
         self.log.append(entry)
-        from tools.clouds import AZURE_API_VERSION, endpoint
+        from floci_tools.clouds import AZURE_API_VERSION, endpoint
         headers = {str(k): str(v) for k, v in (request.get("headers") or {}).items()}
         if cloud == "azure":
             headers.setdefault("x-ms-version", AZURE_API_VERSION)

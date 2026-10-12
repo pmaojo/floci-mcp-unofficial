@@ -1,5 +1,5 @@
 """Herramientas SNS: topics, publicación y suscripciones."""
-from tools._client import clean, make_client
+from floci_tools._client import clean, make_client
 
 
 def register(mcp):

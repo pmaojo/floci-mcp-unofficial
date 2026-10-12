@@ -15,7 +15,7 @@ import os
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from tools import (
+from floci_tools import (
     athena, clouds, devtools, dynamodb, eventbridge, extensibility, hybrid, iac, kms, lambda_,
     marketplace, meta, observability, pipeline, s3, secrets, ses, sns, sqs, stepfunctions, tags,
     code, generic,

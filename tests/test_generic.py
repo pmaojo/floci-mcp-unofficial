@@ -589,7 +589,7 @@ def test_live_every_cloud_answers_a_read():
         assert out.get("status") == 200, out
         checks.append("oci")
     if _up("http://localhost:4566/"):
-        recipes._backend = __import__("tools._client", fromlist=["backend"]).backend
+        recipes._backend = __import__("floci_tools._client", fromlist=["backend"]).backend
         recipes._native_cache = None
         out = run(Gateway().acall("recipes", operation="ListRecipes"))
         assert out["count"] >= 30, out

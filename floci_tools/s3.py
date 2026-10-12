@@ -1,5 +1,5 @@
 """Herramientas S3: buckets y objetos."""
-from tools._client import clean, config, make_client
+from floci_tools._client import clean, config, make_client
 
 
 def register(mcp):

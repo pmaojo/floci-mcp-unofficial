@@ -1,5 +1,5 @@
 """Extensibility: lifecycle webhooks, HTTP interceptors and plugins (Area 6)."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

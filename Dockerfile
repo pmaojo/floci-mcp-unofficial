@@ -12,7 +12,7 @@ RUN uv sync --no-install-project --no-dev
 
 # Copiar el código del servidor
 COPY floci_mcp.py toolsets.py decider.py skills_catalog.py ./
-COPY tools/ ./tools/
+COPY floci_tools/ ./floci_tools/
 COPY floci_generic/ ./floci_generic/
 COPY plugins/ ./plugins/
 COPY recipes/ ./recipes/

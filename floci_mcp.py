@@ -1,7 +1,7 @@
 """
 Floci MCP Server — entry point.
 
-Tools are organized by service under tools/ and grouped into toolsets (see toolsets.py).
+Tools are organized by service under floci_tools/ and grouped into toolsets (see toolsets.py).
 FLOCI_TOOLSETS picks the toolsets that are registered; FLOCI_READ_ONLY=1 drops the writers.
 
 Modules:
@@ -19,7 +19,7 @@ Modules:
   athena.py      — analytical SQL queries
   ses.py         — email sending
   marketplace.py — local Docker recipes
-  devtools.py    — IaC, seed data, proxy, JWT, tests
+  devtools.py    — IaC, seed data, proxy, JWT
   observability.py — DLQ, flight recorder (time-travel), service graph
   iac.py         — drift detection and IaC auto-discovery
   hybrid.py      — cloud proxying, cloud seeding, reverse tunnels

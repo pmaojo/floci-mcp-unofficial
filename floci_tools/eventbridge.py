@@ -1,6 +1,6 @@
 """Herramientas EventBridge: buses, reglas y envío de eventos."""
 import json
-from tools._client import clean, make_client
+from floci_tools._client import clean, make_client
 
 
 def register(mcp):

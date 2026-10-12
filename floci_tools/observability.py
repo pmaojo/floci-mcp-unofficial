@@ -1,5 +1,5 @@
 """Observability: DLQ, flight recorder (time-travel) and service graph (Area 3)."""
-from tools._client import backend
+from floci_tools._client import backend
 
 
 def register(mcp):

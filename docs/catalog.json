@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T20:49:30Z",
+  "generatedAt": "2026-10-12T20:56:43Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 142,
@@ -2831,7 +2831,7 @@
       "cloud": "aws",
       "writes": false,
       "toolset": "generic",
-      "description": "Returns what an operation does, its parameters (required ones marked), what it returns, and whether it reads or writes. Read this before calling an operation you have not used.",
+      "description": "Returns what an operation does, its required parameters with their docs, its optional parameters by name and type, what it returns, and whether it reads or writes. Read this before calling an operation you have not used. detail=\"full\" adds the docs of every optional parameter (long).",
       "params": [
         {
           "name": "cloud",
@@ -2847,6 +2847,12 @@
           "name": "operation",
           "type": "string",
           "required": true
+        },
+        {
+          "name": "detail",
+          "type": "string",
+          "required": false,
+          "default": "brief"
         }
       ]
     },
