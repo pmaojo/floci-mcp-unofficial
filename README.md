@@ -115,7 +115,7 @@ Floci is much bigger than what these tools reach. Counted from each emulator's o
 | **GCP** (floci-gcp) | 26 | Cloud Storage, Pub/Sub topics, Secret Manager names. 3 | Firestore, Datastore, Managed Kafka, Eventarc, KMS, IAM, STS, Firebase Auth, GKE, Compute Engine, Cloud Run, Cloud Functions, Cloud Tasks, Scheduler, Cloud SQL, BigQuery, Logging, Monitoring |
 | **OCI** (floci-oci) | 8 | Object Storage (buckets, objects). 1 | Identity, Queue, Streaming, Vault and KMS, Secrets, Functions, OKE |
 
-That is roughly one service in ten on every cloud. Inside the covered ones the tools are also thin: for Azure, GCP and OCI there is no upload, download or delete of objects, no publish or receive on queues and topics, and secret tools never return values. This is a starting surface, not parity. The backlog is a strategy question rather than a list of tools to write; see the open issues.
+That is roughly one service in ten on every cloud. Inside the covered ones the tools are also thin: for Azure, GCP and OCI there is no upload, download or delete of objects, no publish or receive on queues and topics, and secret tools never return values. This is a starting surface, not parity, and writing one tool per operation will not close it: a cloud has thousands of operations.
 
 Run the emulators with the `multicloud` profile of the [Floci UI compose file](https://github.com/floci-io/floci-ui/blob/main/docker-compose.yml), or on their own.
 
