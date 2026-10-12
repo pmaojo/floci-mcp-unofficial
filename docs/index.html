@@ -134,6 +134,34 @@
   footer p { margin: 6px 0; max-width: 90ch; }
 
 
+
+  .star {
+    position: relative; overflow: hidden; border-bottom: var(--line) solid var(--ink);
+    background: repeating-linear-gradient(-45deg, var(--red) 0 22px, #ff5a3d 22px 44px);
+    padding: 32px 16px 32px 16px;
+  }
+  .star-body {
+    position: relative; max-width: min(78ch, calc(100% - 150px)); background: var(--paper); border: var(--line) solid var(--ink);
+    box-shadow: 10px 10px 0 var(--ink); padding: 20px 20px 18px;
+  }
+  .star-kicker { margin: 0; font-size: 18px; font-weight: 700; text-transform: uppercase; }
+  .star-body h2 { margin: 8px 0 6px; font-size: clamp(22px, 5.2vw, 58px); line-height: 1; letter-spacing: -.04em; overflow-wrap: anywhere; }
+  .star-body h2 code { background: var(--yellow); border: var(--line) solid var(--ink); padding: 0 .12em; font-size: inherit; overflow-wrap: anywhere; }
+  .star-tag { margin: 0 0 12px; font-size: 20px; font-weight: 700; }
+  .star-list { margin: 0 0 14px; padding-left: 22px; font-size: 16px; }
+  .star-list li { margin: 7px 0; }
+  .star-quote { border: 3px dashed var(--ink); padding: 10px 12px; margin: 0 0 12px; font-weight: 700; background: #fff8b8; }
+  .star-quote .stars { display: block; font-size: 22px; letter-spacing: .1em; }
+  .star-quote small { display: block; margin-top: 4px; font-weight: 400; }
+  .star-fine { margin: 12px 0 0; font-size: 11px; line-height: 1.35; }
+  .star-burst {
+    position: absolute; right: 18px; top: 14px; width: 128px; height: 128px; display: grid; place-items: center;
+    text-align: center; font-weight: 700; font-size: 17px; line-height: 1.05; text-transform: uppercase;
+    background: var(--yellow); border: var(--line) solid var(--ink); transform: rotate(14deg);
+    clip-path: polygon(50% 0, 61% 12%, 77% 6%, 80% 22%, 96% 24%, 90% 40%, 100% 50%, 90% 60%, 96% 76%, 80% 78%, 77% 94%, 61% 88%, 50% 100%, 39% 88%, 23% 94%, 20% 78%, 4% 76%, 10% 60%, 0 50%, 10% 40%, 4% 24%, 20% 22%, 23% 6%, 39% 12%);
+    border: 0; padding: 10px;
+  }
+  @media (max-width: 760px) { .star-burst { position: relative; right: auto; top: auto; margin: 0 0 14px; } .star-body { max-width: none; box-shadow: 6px 6px 0 var(--ink); } }
   .skills { background: var(--yellow); }
   .skills-head { padding: 28px 16px 8px; max-width: 90ch; }
   .skills-head h2 { margin: 12px 0 8px; font-size: clamp(36px, 7vw, 84px); line-height: .9; letter-spacing: -.04em; text-transform: uppercase; }
@@ -196,6 +224,7 @@
   <span>floci-mcp-unofficial</span>
   <span class="flag">unofficial</span>
   <span id="generated">catalog: loading</span>
+  <a class="nav" href="#star">&#9733; star</a>
   <a class="nav" href="#skills">skills</a>
   <a class="nav" href="#market">catalog</a>
   <a class="nav" href="#guide">guide</a>
@@ -218,6 +247,32 @@
   <div class="counter"><b id="c-skills">&ndash;</b><span>skills</span></div>
   <div class="counter"><b id="c-clouds">4</b><span>clouds</span></div>
 </div>
+
+<section class="star" id="star" aria-label="Star feature">
+  <div class="star-burst" aria-hidden="true">NEW!<br>&#9733;<br>STAR<br>FEATURE</div>
+  <div class="star-body">
+    <p class="star-kicker">Do YOU suffer from <b>Tool Overload&trade;</b>?</p>
+    <h2><code>suggest_toolsets</code></h2>
+    <p class="star-tag">138 tools. 7 toolsets. One agent. <u>ZERO</u> idea which one it needs. Until NOW.</p>
+    <ul class="star-list">
+      <li><b>SEVEN (7!) yes/no questions</b> answered in <b>ONE call</b>. We counted. Twice.</li>
+      <li><b>Calibrated probabilities!</b> Not vibes. Okay, vibes with decimals.</li>
+      <li>Powered by <b>TypeSafe Jev</b> <i>or</i> <b>Mercury Decide</b>. Pick your fighter.</li>
+      <li><code>apply=true</code> and the toolsets switch themselves on. It's like magic, but with HTTP.</li>
+      <li>Thinks so your agent doesn't have to. (Thinking is <i>expensive</i>.)</li>
+      <li>Off by default, because we respect your wallet.</li>
+    </ul>
+    <div class="star-quote">
+      <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      &ldquo;I said <i>messages are stuck</i> and it said <b>messaging, ops</b>. Ten out of ten.&rdquo;
+      <small>&mdash; a test fixture</small>
+    </div>
+    <pre class="code">FLOCI_DECIDER=openrouter-jev OPENROUTER_API_KEY=... uv run python floci_mcp.py</pre>
+    <p class="star-fine">*Tested end to end against a very convincing fake, not yet against a live provider. Needs an API key.
+      The probabilities are the model's, not ours. The OpenRouter path is <code>alpha</code>. Not a substitute for reading the tool list.
+      May contain nouls (that is what the request calls a yes/no).</p>
+  </div>
+</section>
 
 <section class="skills" id="skills" aria-label="Skills">
   <div class="skills-head">

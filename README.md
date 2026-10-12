@@ -6,6 +6,16 @@
 
 **Site and live catalog of every tool, skill and recipe:** [`docs/index.html`](docs/index.html) (regenerate with `uv run python scripts/build_catalog.py`; the Vercel build does it on every deploy).
 
+> ### ★ NEW! The star feature: `suggest_toolsets` ★
+>
+> **Do YOU suffer from Tool Overload™?** 138 tools. 7 toolsets. One agent. *Zero* idea which one it needs.
+> Introducing **`suggest_toolsets`**: *seven (7!)* yes/no questions answered in *one call*, by a real decision model
+> (**TypeSafe Jev** or **Mercury Decide**, pick your fighter), with calibrated probabilities. Not vibes. Okay, vibes with decimals.
+> Add `apply=true` and the toolsets switch themselves on. It's like magic, but with HTTP. Off by default, because we respect your wallet.
+>
+> *Tested end to end against a very convincing fake, not yet against a live provider. Needs an API key. Not a substitute for reading the tool list.*
+> [How to turn it on](#decision-model-router-optional).
+
 ## Quick start
 
 ```bash
@@ -96,15 +106,16 @@ Azure, GCP and OCI are called through each provider's own REST contract, the sam
 
 ### Coverage
 
-AWS is covered broadly (138 tools minus the ones below). The other three clouds are covered **partially**: the services Floci UI can drive are a superset of what the tools reach.
+Floci is much bigger than what these tools reach. Counted from each emulator's own "Supported Services" list:
 
-| Cloud | Services the emulator exposes (as Floci UI drives them) | Covered here | Not covered |
-|---|---|---|---|
-| **Azure** | Storage, Queue, Key Vault, Service Bus, Event Hubs, Table, Cosmos DB, SQL, PostgreSQL, Compute, AKS, Networking, Functions | Blob containers (list, create), blobs (list), queues (list, create), Key Vault secret names | Service Bus, Event Hubs, Table, Cosmos DB, SQL, PostgreSQL, Compute, AKS, Networking, Functions |
-| **GCP** | Cloud Storage, Pub/Sub, Secret Manager, Firestore, Cloud SQL, Cloud Functions, Cloud Run, GKE, Scheduler | Buckets (list, create), objects (list), topics (list, create), secret names | Firestore, Cloud SQL, Cloud Functions, Cloud Run, GKE, Scheduler |
-| **OCI** | Object Storage, Queue, Streaming, Secrets, KMS, Identity, Functions, OKE | Buckets (list, create), objects (list) | Queue, Streaming, Secrets, KMS, Identity, Functions, OKE |
+| Cloud | Services the emulator lists | Reached by a tool here | Not reached (examples) |
+|---|:-:|---|---|
+| **AWS** (floci) | about 130 | S3, SQS, SNS, DynamoDB, Lambda, Secrets Manager, KMS, EventBridge, Step Functions, Athena, Glue (catalog), SES, Tagging API, CloudWatch Logs (Lambda logs), STS-less IaC export. Around 14 | EC2, ECS, EKS, RDS, ElastiCache, Cognito, API Gateway, AppSync, Kinesis, Route 53, CloudFormation, IAM, OpenSearch, Redshift, MSK, Batch, Bedrock and the rest |
+| **Azure** (floci-az) | 28 | Blob (containers, blobs), Queue, Key Vault secret names. 3 | Table, Functions, App Configuration, Cosmos DB, Event Hubs, Service Bus, SQL, PostgreSQL, MySQL, MariaDB, AKS, Container Apps, API Management, Virtual Network, VMs, Redis, ACR, ACI, Event Grid, Monitor, Email, Managed Identity, Policy, SignalR |
+| **GCP** (floci-gcp) | 26 | Cloud Storage, Pub/Sub topics, Secret Manager names. 3 | Firestore, Datastore, Managed Kafka, Eventarc, KMS, IAM, STS, Firebase Auth, GKE, Compute Engine, Cloud Run, Cloud Functions, Cloud Tasks, Scheduler, Cloud SQL, BigQuery, Logging, Monitoring |
+| **OCI** (floci-oci) | 8 | Object Storage (buckets, objects). 1 | Identity, Queue, Streaming, Vault and KMS, Secrets, Functions, OKE |
 
-Inside the covered services the tools are read-mostly: there is no upload, download or delete of objects, no publish or receive on Pub/Sub or Azure queues, no delete of buckets, queues or topics, and secret tools never return values. So this is a starting surface, not parity with AWS. Adding a service is one function in `tools/clouds.py` plus a line in `verify_clouds.py`; the REST paths are the ones in Floci UI's adapters.
+That is roughly one service in ten on every cloud. Inside the covered ones the tools are also thin: for Azure, GCP and OCI there is no upload, download or delete of objects, no publish or receive on queues and topics, and secret tools never return values. This is a starting surface, not parity. The backlog is a strategy question rather than a list of tools to write; see the open issues.
 
 Run the emulators with the `multicloud` profile of the [Floci UI compose file](https://github.com/floci-io/floci-ui/blob/main/docker-compose.yml), or on their own.
 
