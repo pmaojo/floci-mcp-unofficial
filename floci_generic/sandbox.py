@@ -15,7 +15,9 @@ import json
 import sys
 from typing import Callable
 
-from floci_generic.gateway import Blocked, Gateway, cap
+from floci_generic.errors import Blocked
+from floci_generic.gateway import Gateway
+from floci_generic.payload import cap
 
 MAX_CALLS = 200
 OUTPUT_LIMIT = 20_000

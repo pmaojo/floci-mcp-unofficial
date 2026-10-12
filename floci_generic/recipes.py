@@ -118,7 +118,7 @@ def native_for(recipes: list[dict]) -> dict[str, str]:
     global _native_cache
     if _native_cache is None:
         from floci_generic import catalog
-        from floci_generic.gateway import probe_aws
+        from floci_generic.probe import probe_aws
 
         wanted = sorted({s for r in recipes for s in AWS_EQUIVALENT.get(r["id"], []) if catalog.has_aws_service(s)})
         answering = {s for s, v in probe_aws(wanted).items() if v == "answers"} if wanted else set()

@@ -11,7 +11,8 @@ import asyncio
 
 from floci_generic import catalog, recipes
 from floci_generic import gateway as gw
-from floci_generic.gateway import Blocked, probe_aws
+from floci_generic.errors import Blocked
+from floci_generic.probe import probe_aws
 
 _probe_cache: dict[str, str] = {}
 
