@@ -30,3 +30,25 @@ class QueueTransport(Protocol):
     def send(self, queue_url: str, body: str, message_attributes: Dict[str, Any]) -> None: ...
 
     def delete(self, queue_url: str, receipt_handle: str) -> None: ...
+
+
+class ResourceTagging(Protocol):
+    """Tags across every resource type (the Resource Groups Tagging API). Failures propagate as the SDK raises them."""
+
+    def resources(
+        self, tag_filters: Optional[List[Dict[str, Any]]] = None, resource_types: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Every resource-tag mapping matching the filters, all pages."""
+        ...
+
+    def tag_keys(self) -> List[str]: ...
+
+    def tag_values(self, key: str) -> List[str]: ...
+
+    def tag(self, resource_arns: List[str], tags: Dict[str, str]) -> Dict[str, Any]:
+        """ARN -> failure for the resources that could not be tagged."""
+        ...
+
+    def untag(self, resource_arns: List[str], tag_keys: List[str]) -> Dict[str, Any]:
+        """ARN -> failure for the resources that could not be untagged."""
+        ...

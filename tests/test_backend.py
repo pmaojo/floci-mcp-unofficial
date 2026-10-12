@@ -3,6 +3,7 @@
 Run with pytest or `uv run python tests/test_backend.py`.
 """
 import asyncio
+import asyncio
 import json
 import os
 import sys
@@ -10,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from floci_backend.application.dlq_service import DlqService  # noqa: E402
+from floci_backend.application.tags_service import TagsService  # noqa: E402
 
 
 class FakeQueues:
@@ -92,6 +94,61 @@ def test_dlq_unknown_arn_has_no_url_and_zero_count():
     }})
     dlq = DlqService(queues).list_dead_letter_queues()["deadLetterQueues"][0]
     assert dlq["dlqUrl"] is None and dlq["messageCount"] == 0
+
+
+class FakeTagging:
+    def __init__(self, failed=None, error=None):
+        self.failed, self.error, self.calls = failed or {}, error, []
+
+    def _go(self, *call):
+        self.calls.append(call)
+        if self.error:
+            raise self.error
+
+    def resources(self, tag_filters=None, resource_types=None):
+        self._go("resources", tag_filters, resource_types)
+        return [{"ResourceARN": "arn:a"}, {"ResourceARN": "arn:b"}]
+
+    def tag_keys(self):
+        self._go("tag_keys")
+        return ["b", "a"]
+
+    def tag_values(self, key):
+        self._go("tag_values", key)
+        return ["y", "x"]
+
+    def tag(self, resource_arns, tags):
+        self._go("tag", resource_arns, tags)
+        return self.failed
+
+    def untag(self, resource_arns, tag_keys):
+        self._go("untag", resource_arns, tag_keys)
+        return self.failed
+
+
+def test_tags_reads_are_sorted_and_counted():
+    service = TagsService(FakeTagging())
+    assert asyncio.run(service.get_tag_keys()) == {"tagKeys": ["a", "b"]}
+    assert asyncio.run(service.get_tag_values("k")) == {"key": "k", "values": ["x", "y"]}
+    assert asyncio.run(service.get_resources())["count"] == 2
+
+
+def test_tags_partial_failure_is_reported_per_arn():
+    service = TagsService(FakeTagging(failed={"arn:b": "denied"}))
+    result = asyncio.run(service.tag_resources(["arn:a", "arn:b"], {"env": "dev"}))
+    assert result == {"tagged": ["arn:a"], "failed": {"arn:b": "denied"}, "success": False}
+
+
+def test_tags_sdk_errors_become_warnings_and_empty_input_is_rejected():
+    service = TagsService(FakeTagging(error=RuntimeError("down")))
+    assert asyncio.run(service.get_resources()) == {"count": 0, "resources": [], "warning": "down"}
+    assert asyncio.run(service.untag_resources(["arn:a"], ["k"]))["failed"] == {"arn:a": "down"}
+    try:
+        asyncio.run(service.tag_resources([], {"k": "v"}))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("empty resource_arns must be rejected")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from floci_backend.config import config, SIDECAR_HEADER_NAME
 
 from floci_backend.infrastructure.aws_cli import AwsCli
 from floci_backend.infrastructure.sqs_transport import BotoQueueTransport
+from floci_backend.infrastructure.tagging_api import BotoResourceTagging
 from floci_backend.application.lambda_service import LambdaService
 from floci_backend.application.eks_service import EksService
 from floci_backend.application.aws_resource_service import AwsResourceService
@@ -56,7 +57,7 @@ eks_service = EksService(aws_cli=aws_cli)
 aws_resource_service = AwsResourceService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 diagnostics_service = DiagnosticsService(aws_cli=aws_cli, compatibility_service=compatibility_service)
 athena_service = AthenaService(aws_cli=aws_cli)
-tags_service = TagsService()
+tags_service = TagsService(BotoResourceTagging())
 realtime_service = RealtimeService(aws_cli=aws_cli)
 
 # Enterprise-parity services (Areas 3/4/5/6)
