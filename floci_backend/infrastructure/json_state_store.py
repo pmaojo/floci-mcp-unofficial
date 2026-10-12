@@ -20,15 +20,20 @@ class JsonStateStore(Generic[T]):
                 content = await f.read()
             data = {**self.initial_state_dict, **json.loads(content)}
             return self.initial_state_cls(**data)
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
+            # A missing file, or one left empty or truncated by an interrupted write,
+            # starts again from the initial state.
             initial_state = self.initial_state_cls(**self.initial_state_dict)
             await self.write(initial_state)
             return initial_state
 
     async def write(self, state: T):
         await self._ensure_directory()
-        async with aiofiles.open(self._file_path(), 'w') as f:
-            await f.write(state.model_dump_json(indent=2) + '\n')
+        payload = state.model_dump_json(indent=2) if hasattr(state, 'model_dump_json') else json.dumps(state, indent=2, default=str)
+        temp_path = f"{self._file_path()}.{os.getpid()}.tmp"
+        async with aiofiles.open(temp_path, 'w') as f:
+            await f.write(payload + '\n')
+        os.replace(temp_path, self._file_path())
 
     async def update(self, mutator) -> T:
         current = await self.read()
