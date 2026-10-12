@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>floci-mcp-unofficial</title>
+<meta name="description" content="Unofficial MCP server for Floci: tools and Docker recipes for AI agents on your local AWS, Azure, GCP and OCI.">
+<style>
+  :root {
+    --paper: #f1efe4;
+    --ink: #0b0b0b;
+    --yellow: #ffe500;
+    --red: #ff2e1f;
+    --blue: #1d3bff;
+    --green: #00c46a;
+    --line: 4px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Courier New", monospace;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  a { color: inherit; text-decoration-thickness: 3px; text-underline-offset: 3px; }
+  a:hover { background: var(--yellow); }
+  :focus-visible { outline: var(--line) solid var(--blue); outline-offset: 2px; }
+  button, input, select { font: inherit; color: inherit; border-radius: 0; }
+  ::selection { background: var(--ink); color: var(--yellow); }
+
+  .strip {
+    display: flex; flex-wrap: wrap; gap: 0; border-bottom: var(--line) solid var(--ink);
+    background: var(--ink); color: var(--paper); font-weight: 700; text-transform: uppercase;
+  }
+  .strip > * { padding: 10px 16px; border-right: 2px solid var(--paper); }
+  .strip .flag { background: var(--red); color: var(--ink); }
+  .strip a { margin-left: auto; border-right: 0; }
+
+  header.hero { padding: 40px 16px 24px; border-bottom: var(--line) solid var(--ink); }
+  h1 {
+    margin: 0; font-size: clamp(40px, 11vw, 150px); line-height: .88; letter-spacing: -.04em;
+    text-transform: uppercase; word-break: break-word;
+  }
+  h1 mark { background: var(--yellow); padding: 0 .08em; }
+  .lede { max-width: 70ch; margin: 24px 0 0; font-size: 18px; font-weight: 700; }
+  .disclaimer {
+    margin: 20px 0 0; max-width: 78ch; border: var(--line) solid var(--ink); background: var(--yellow);
+    padding: 12px 14px; font-weight: 700;
+  }
+
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: var(--line) solid var(--ink); }
+  .counter { padding: 18px 16px; border-right: var(--line) solid var(--ink); }
+  .counter:last-child { border-right: 0; }
+  .counter b { display: block; font-size: clamp(36px, 7vw, 88px); line-height: 1; letter-spacing: -.04em; }
+  .counter span { text-transform: uppercase; font-weight: 700; }
+
+  section { border-bottom: var(--line) solid var(--ink); }
+  .label {
+    display: inline-block; background: var(--ink); color: var(--paper); padding: 4px 10px;
+    text-transform: uppercase; font-weight: 700; letter-spacing: .04em;
+  }
+
+  .market { padding: 0; }
+  .tabs { display: flex; border-bottom: var(--line) solid var(--ink); }
+  .tab {
+    flex: 1; background: var(--paper); border: 0; border-right: var(--line) solid var(--ink);
+    padding: 16px; font-size: 22px; font-weight: 700; text-transform: uppercase; cursor: pointer;
+  }
+  .tab:last-child { border-right: 0; }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--yellow); }
+  .tab small { font-size: 14px; margin-left: 8px; }
+
+  .controls { display: grid; gap: 12px; padding: 14px 16px; border-bottom: var(--line) solid var(--ink); background: #e6e3d2; }
+  .search { display: flex; border: var(--line) solid var(--ink); background: #fff; }
+  .search label { padding: 10px 12px; background: var(--ink); color: var(--paper); font-weight: 700; text-transform: uppercase; }
+  .search input { flex: 1; min-width: 0; border: 0; padding: 10px 12px; background: transparent; outline: none; }
+  .search:focus-within { outline: var(--line) solid var(--blue); outline-offset: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chips .group-name { text-transform: uppercase; font-weight: 700; margin-right: 4px; }
+  .chip {
+    border: 3px solid var(--ink); background: var(--paper); padding: 4px 10px; font-weight: 700;
+    text-transform: uppercase; cursor: pointer; box-shadow: 3px 3px 0 var(--ink);
+  }
+  .chip:active { transform: translate(3px, 3px); box-shadow: none; }
+  .chip[aria-pressed="true"] { background: var(--yellow); }
+  .status { padding: 10px 16px; font-weight: 700; border-bottom: var(--line) solid var(--ink); text-transform: uppercase; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0; }
+  .card {
+    border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink);
+    padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--paper); min-width: 0;
+  }
+  .card:hover { background: #fff; }
+  .card h3 { margin: 0; font-size: 18px; word-break: break-all; line-height: 1.15; }
+  .card p { margin: 0; }
+  .card .sig { background: var(--ink); color: var(--paper); padding: 8px 10px; overflow-x: auto; white-space: pre; font-size: 13px; }
+  .card .sig i { color: var(--yellow); font-style: normal; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { border: 2px solid var(--ink); padding: 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .tag.write { background: var(--red); color: var(--ink); }
+  .tag.read { background: var(--green); }
+  .tag.aws { background: #ffb347; }
+  .tag.azure { background: #7fb2ff; }
+  .tag.gcp { background: #ff9ec7; }
+  .tag.oci { background: #d6b3ff; }
+  .actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 3px solid var(--ink); background: var(--yellow); padding: 6px 12px; font-weight: 700; cursor: pointer;
+    text-transform: uppercase; box-shadow: 4px 4px 0 var(--ink);
+  }
+  .btn:active { transform: translate(4px, 4px); box-shadow: none; }
+  .btn.alt { background: var(--paper); }
+  details { border-top: 3px solid var(--ink); padding-top: 8px; }
+  summary { cursor: pointer; font-weight: 700; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  th, td { border: 2px solid var(--ink); padding: 4px 6px; text-align: left; vertical-align: top; word-break: break-word; }
+  th { background: var(--ink); color: var(--paper); text-transform: uppercase; }
+  .empty { padding: 60px 16px; font-size: 28px; font-weight: 700; text-transform: uppercase; }
+
+  .install { display: grid; grid-template-columns: 1fr 1fr; }
+  .install > div { padding: 20px 16px; }
+  .install > div:first-child { border-right: var(--line) solid var(--ink); }
+  .install h2 { margin: 12px 0; font-size: 32px; text-transform: uppercase; letter-spacing: -.02em; }
+  pre.code {
+    margin: 12px 0 0; padding: 12px; background: var(--ink); color: var(--paper); overflow-x: auto;
+    border: var(--line) solid var(--ink); font-size: 13px;
+  }
+
+  footer { padding: 24px 16px 48px; font-weight: 700; }
+  footer p { margin: 6px 0; max-width: 90ch; }
+
+  @media (max-width: 760px) {
+    .counters { grid-template-columns: 1fr 1fr; }
+    .counter:nth-child(2) { border-right: 0; }
+    .counter:nth-child(-n+2) { border-bottom: var(--line) solid var(--ink); }
+    .install { grid-template-columns: 1fr; }
+    .install > div:first-child { border-right: 0; border-bottom: var(--line) solid var(--ink); }
+    .tab { font-size: 16px; padding: 12px 8px; }
+    .strip > * { padding: 8px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<div class="strip">
+  <span>floci-mcp-unofficial</span>
+  <span class="flag">unofficial</span>
+  <span id="generated">catalog: loading</span>
+  <a href="https://github.com/pmaojo/floci-mcp-unofficial">github &rarr;</a>
+</div>
+
+<header class="hero">
+  <h1>Floci<br>for <mark>agents.</mark></h1>
+  <p class="lede">An MCP server that lets an AI agent inspect and provision your local AWS, Azure, GCP and OCI.
+    Tools below are the real ones the server registers. Recipes are the Docker stacks it can start for you.</p>
+  <p class="disclaimer">Unofficial community project. Not affiliated with or endorsed by the Floci project.
+    Floci does the emulation; this server only talks to it.
+    Support <a href="https://github.com/floci-io/floci">floci-io/floci</a>.</p>
+</header>
+
+<div class="counters" aria-label="Catalog counters">
+  <div class="counter"><b id="c-tools">&ndash;</b><span>tools</span></div>
+  <div class="counter"><b id="c-recipes">&ndash;</b><span>recipes</span></div>
+  <div class="counter"><b id="c-clouds">4</b><span>clouds</span></div>
+  <div class="counter"><b id="c-writes">&ndash;</b><span>tools that write</span></div>
+</div>
+
+<section class="market" id="market" aria-label="Marketplace">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-tools" aria-selected="true" data-view="tools">Tools <small id="n-tools"></small></button>
+    <button class="tab" role="tab" id="tab-recipes" aria-selected="false" data-view="recipes">Recipes <small id="n-recipes"></small></button>
+  </div>
+  <div class="controls">
+    <div class="search">
+      <label for="q">search</label>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="sqs, dynamodb, redis, kafka... (press /)">
+    </div>
+    <div class="chips" id="filters" aria-label="Filters"></div>
+  </div>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="install" id="install">
+  <div>
+    <span class="label">install</span>
+    <h2>Three commands.</h2>
+    <pre class="code">git clone https://github.com/pmaojo/floci-mcp-unofficial
+cd floci-mcp-unofficial
+uv sync &amp;&amp; uv run python floci_mcp.py</pre>
+    <p>Needs Python 3.10+, <a href="https://docs.astral.sh/uv/">uv</a> and a running Floci. Docker for recipes.</p>
+  </div>
+  <div>
+    <span class="label">client config</span>
+    <h2>Point your agent at it.</h2>
+    <pre class="code">{
+  "mcpServers": {
+    "floci": {
+      "command": "uv",
+      "args": ["run", "--project", "/path/to/floci-mcp-unofficial",
+               "python", "/path/to/floci-mcp-unofficial/floci_mcp.py"],
+      "env": {
+        "AWS_ENDPOINT_URL": "http://localhost:4566",
+        "FLOCI_AZURE_ENDPOINT": "http://localhost:4577",
+        "FLOCI_GCP_ENDPOINT": "http://localhost:4588",
+        "FLOCI_OCI_ENDPOINT": "http://localhost:4599"
+      }
+    }
+  }
+}</pre>
+  </div>
+</section>
+
+<footer>
+  <p>Azure, GCP and OCI tools cover storage, messaging and secrets. AWS keeps the full surface.</p>
+  <p>Secret tools return names, never values. Tools marked WRITE change the local emulator or your Docker.</p>
+  <p>MIT. Extracted from <a href="https://github.com/pmaojo/floci-studio">Floci Studio</a>.</p>
+</footer>
+
+<script src="catalog.js"></script>
+<script>
+(function () {
+  "use strict";
+  var catalog = window.FLOCI_CATALOG;
+  var grid = document.getElementById("grid");
+  var statusEl = document.getElementById("status");
+  var filtersEl = document.getElementById("filters");
+  var q = document.getElementById("q");
+
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") el.className = attrs[k];
+      else if (k === "text") el.textContent = attrs[k];
+      else if (k.slice(0, 2) === "on") el.addEventListener(k.slice(2), attrs[k]);
+      else el.setAttribute(k, attrs[k]);
+    });
+    function add(child) {
+      if (child == null) return;
+      if (Array.isArray(child)) { child.forEach(add); return; }
+      el.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+    }
+    for (var i = 2; i < arguments.length; i++) add(arguments[i]);
+    return el;
+  }
+
+  if (!catalog) {
+    statusEl.textContent = "catalog.js did not load. Run scripts/build_catalog.py.";
+    return;
+  }
+
+  var state = { view: "tools", q: "", cloud: "all", mode: "all", group: "all" };
+
+  function readHash() {
+    var raw = location.hash.replace(/^#/, "");
+    state.view = "tools"; state.q = ""; state.cloud = "all"; state.mode = "all"; state.group = "all";
+    if (!raw) return;
+    var params = new URLSearchParams(raw);
+    ["view", "q", "cloud", "mode", "group"].forEach(function (k) {
+      if (params.has(k)) state[k] = params.get(k);
+    });
+    if (state.view !== "tools" && state.view !== "recipes") state.view = "tools";
+  }
+  function writeHash() {
+    var params = new URLSearchParams();
+    Object.keys(state).forEach(function (k) {
+      var defaults = { view: "tools", q: "", cloud: "all", mode: "all", group: "all" };
+      if (state[k] !== defaults[k]) params.set(k, state[k]);
+    });
+    var next = params.toString();
+    history.replaceState(null, "", next ? "#" + next : location.pathname + location.search);
+  }
+
+  function copy(text, button) {
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "copied";
+      setTimeout(function () { button.textContent = old; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+    else done();
+  }
+
+  function signature(tool) {
+    var el = h("div", { class: "sig" });
+    el.appendChild(document.createTextNode(tool.name + "("));
+    tool.params.forEach(function (p, i) {
+      if (i) el.appendChild(document.createTextNode(", "));
+      el.appendChild(document.createTextNode(p.name));
+      if (p.required) el.appendChild(h("i", { text: "*" }));
+    });
+    el.appendChild(document.createTextNode(")"));
+    return el;
+  }
+
+  function toolCard(tool) {
+    var tags = h("div", { class: "tags" },
+      h("span", { class: "tag " + tool.cloud, text: tool.cloud }),
+      h("span", { class: "tag " + (tool.writes ? "write" : "read"), text: tool.writes ? "write" : "read" }),
+      h("span", { class: "tag", text: tool.group }));
+    var card = h("article", { class: "card" },
+      h("h3", { text: tool.name }),
+      tags,
+      signature(tool),
+      h("p", { text: tool.description || "No description." }));
+    if (tool.params.length) {
+      var rows = tool.params.map(function (p) {
+        return h("tr", null,
+          h("td", { text: p.name + (p.required ? " *" : "") }),
+          h("td", { text: String(p.type) }),
+          h("td", { text: p.default === undefined ? "" : JSON.stringify(p.default) }));
+      });
+      card.appendChild(h("details", null, h("summary", { text: "parameters (" + tool.params.length + ")" }),
+        h("table", null,
+          h("thead", null, h("tr", null, h("th", { text: "name" }), h("th", { text: "type" }), h("th", { text: "default" }))),
+          h("tbody", null, rows))));
+    }
+    card.appendChild(h("div", { class: "actions" },
+      h("button", { class: "btn alt", type: "button", text: "copy name", onclick: function (e) { copy(tool.name, e.currentTarget); } })));
+    return card;
+  }
+
+  function recipeCall(recipe) {
+    var vars = {};
+    recipe.variables.forEach(function (v) {
+      if (v.type !== "password" && v.default !== "" && v.default !== null) vars[v.key] = v.default;
+    });
+    return "deploy_marketplace_app(" + JSON.stringify(recipe.id) + ", " + JSON.stringify(vars) + ")";
+  }
+
+  function recipeCard(recipe) {
+    var card = h("article", { class: "card" },
+      h("h3", { text: recipe.name }),
+      h("div", { class: "tags" },
+        h("span", { class: "tag", text: recipe.id }),
+        recipe.version ? h("span", { class: "tag", text: "v" + recipe.version }) : null,
+        h("span", { class: "tag", text: recipe.variables.length + " vars" })),
+      h("p", { text: recipe.description }));
+    if (recipe.aws && recipe.aws.service) {
+      card.appendChild(h("p", null, h("b", { text: "AWS: " }), recipe.aws.service));
+    }
+    if (recipe.accessUrl) card.appendChild(h("div", { class: "sig", text: recipe.accessUrl }));
+    if (recipe.variables.length) {
+      var rows = recipe.variables.map(function (v) {
+        return h("tr", null,
+          h("td", { text: v.key }),
+          h("td", { text: String(v.type) }),
+          h("td", { text: v.type === "password" ? "(secret)" : String(v.default === null ? "" : v.default) }));
+      });
+      card.appendChild(h("details", null, h("summary", { text: "variables" }),
+        h("table", null,
+          h("thead", null, h("tr", null, h("th", { text: "key" }), h("th", { text: "type" }), h("th", { text: "default" }))),
+          h("tbody", null, rows))));
+    }
+    card.appendChild(h("div", { class: "actions" },
+      h("button", { class: "btn", type: "button", text: "copy deploy call", onclick: function (e) { copy(recipeCall(recipe), e.currentTarget); } }),
+      h("button", { class: "btn alt", type: "button", text: "copy id", onclick: function (e) { copy(recipe.id, e.currentTarget); } })));
+    return card;
+  }
+
+  function chipGroup(label, key, options) {
+    var wrap = h("div", { class: "chips" }, h("span", { class: "group-name", text: label }));
+    options.forEach(function (opt) {
+      var btn = h("button", {
+        class: "chip", type: "button", "aria-pressed": String(state[key] === opt.value), text: opt.label,
+        onclick: function () { state[key] = opt.value; render(); },
+      });
+      wrap.appendChild(btn);
+    });
+    return wrap;
+  }
+
+  function uniq(list) { return list.filter(function (v, i) { return list.indexOf(v) === i; }); }
+
+  function renderFilters() {
+    filtersEl.replaceChildren();
+    if (state.view === "tools") {
+      filtersEl.appendChild(chipGroup("cloud", "cloud", [{ value: "all", label: "all" }]
+        .concat(["aws", "azure", "gcp", "oci"].map(function (c) { return { value: c, label: c }; }))));
+      filtersEl.appendChild(chipGroup("mode", "mode", [
+        { value: "all", label: "all" }, { value: "read", label: "read" }, { value: "write", label: "write" }]));
+      var groups = uniq(catalog.tools.map(function (t) { return t.group; })).sort();
+      var select = h("select", {
+        "aria-label": "Group", class: "chip",
+        onchange: function (e) { state.group = e.target.value; render(); },
+      }, h("option", { value: "all", text: "group: all" }));
+      groups.forEach(function (g) {
+        var opt = h("option", { value: g, text: g });
+        if (state.group === g) opt.selected = true;
+        select.appendChild(opt);
+      });
+      filtersEl.appendChild(select);
+    }
+  }
+
+  function matches(text, needle) {
+    return !needle || text.toLowerCase().indexOf(needle) !== -1;
+  }
+
+  function render() {
+    document.getElementById("tab-tools").setAttribute("aria-selected", String(state.view === "tools"));
+    document.getElementById("tab-recipes").setAttribute("aria-selected", String(state.view === "recipes"));
+    if (q.value !== state.q) q.value = state.q;
+    renderFilters();
+    var needle = state.q.trim().toLowerCase();
+    var items;
+    if (state.view === "tools") {
+      items = catalog.tools.filter(function (t) {
+        if (state.cloud !== "all" && t.cloud !== state.cloud) return false;
+        if (state.mode === "read" && t.writes) return false;
+        if (state.mode === "write" && !t.writes) return false;
+        if (state.group !== "all" && t.group !== state.group) return false;
+        return matches([t.name, t.group, t.description, t.params.map(function (p) { return p.name; }).join(" ")].join(" "), needle);
+      });
+    } else {
+      items = catalog.recipes.filter(function (r) {
+        return matches([r.id, r.name, r.description, (r.aws && r.aws.service) || "",
+          r.variables.map(function (v) { return v.key; }).join(" ")].join(" "), needle);
+      });
+    }
+    var total = state.view === "tools" ? catalog.tools.length : catalog.recipes.length;
+    statusEl.textContent = items.length + " of " + total + " " + state.view + (needle ? " matching “" + needle + "”" : "");
+    grid.replaceChildren();
+    if (!items.length) {
+      grid.appendChild(h("div", { class: "empty", text: "Nothing. Loosen the filters." }));
+    } else {
+      var frag = document.createDocumentFragment();
+      items.forEach(function (item) { frag.appendChild(state.view === "tools" ? toolCard(item) : recipeCard(item)); });
+      grid.appendChild(frag);
+    }
+    writeHash();
+  }
+
+  document.getElementById("c-tools").textContent = catalog.counts.tools;
+  document.getElementById("c-recipes").textContent = catalog.counts.recipes;
+  document.getElementById("c-writes").textContent = catalog.tools.filter(function (t) { return t.writes; }).length;
+  document.getElementById("n-tools").textContent = catalog.counts.tools;
+  document.getElementById("n-recipes").textContent = catalog.counts.recipes;
+  document.getElementById("generated").textContent = "catalog: " + String(catalog.generatedAt).slice(0, 10);
+
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () { state.view = tab.dataset.view; render(); });
+  });
+  q.addEventListener("input", function () { state.q = q.value; render(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "/" && document.activeElement !== q && !/input|textarea|select/i.test(document.activeElement.tagName)) {
+      e.preventDefault();
+      q.focus();
+    }
+  });
+  window.addEventListener("hashchange", function () { readHash(); render(); });
+
+  readHash();
+  render();
+})();
+</script>
+</body>
+</html>
