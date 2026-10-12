@@ -482,7 +482,7 @@ wheels = [
 [[package]]
 name = "floci-mcp"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "asyncpg" },
@@ -493,6 +493,7 @@ dependencies = [
     { name = "httpx" },
     { name = "mcp" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -508,6 +509,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "mcp", specifier = ">=1.0.0,<2" },
     { name = "pydantic", specifier = ">=2.13.4" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.48.0" },
 ]
