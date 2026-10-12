@@ -8,7 +8,7 @@ argument-hint: "<dynamodb|s3|postgres> <name> [schema json]"
 
 Inject synthetic data with `seed_mock_data`.
 
-**Toolsets needed:** `hybrid` (where `seed_mock_data` lives) and `storage`. `hybrid` is not enabled by default; if the tool is missing, tell the user to add it to `FLOCI_TOOLSETS` and restart.
+**Toolsets needed:** `hybrid` (where `seed_mock_data` lives) and `storage`. `hybrid` is not enabled by default; if the tool is missing, call `enable_toolset` for it if that tool exists; otherwise tell the user to add it to `FLOCI_TOOLSETS` and restart.
 
 ## Arguments
 

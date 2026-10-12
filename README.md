@@ -84,6 +84,22 @@ FLOCI_READ_ONLY=1              # remove every tool that changes state
 
 An unknown toolset name stops the server at startup and lists the valid ones. Every tool carries MCP annotations (`readOnlyHint`, `destructiveHint`, `openWorldHint`) so a client can ask before a write, and `list_toolsets` tells an agent what is enabled and how to enable the rest.
 
+Claude Code also defers MCP tool definitions by itself (tool search is on by default there), so the token cost above matters most for clients without that.
+
+### Switching toolsets while it runs
+
+The agent decides what it needs. The server registers `enable_toolset` and `disable_toolset`, advertises `tools.listChanged` and sends `notifications/tools/list_changed` after each change, so a toolset that was not registered at the start can be switched on without a restart and switched off again to save context. Read-only mode still applies to whatever gets enabled.
+
+```bash
+FLOCI_TOOLSETS=core                          # what is registered at the start
+FLOCI_TOOLSETS_ALLOWED=ops,marketplace       # optional: cap what an agent may enable
+FLOCI_TOOLSETS_ALLOWED=                      # optional: forbid switching altogether
+```
+
+Unset, an agent can reach every toolset, `hybrid` included. That toolset holds the tools that use real AWS credentials and request arbitrary URLs; they carry `openWorldHint`, so a client can confirm before one runs, and `FLOCI_READ_ONLY=1` removes the ones that write. If you want a restriction to hold against the agent, set `FLOCI_TOOLSETS_ALLOWED`.
+
+Claude Code applies `list_changed` in interactive sessions and in `-p` mode. Other clients vary; if yours ignores it, set the toolsets up front.
+
 ### Measuring it
 
 ```bash
@@ -178,6 +194,7 @@ Wherever you run it, the client starts the server from its own directory. The re
 | `FLOCI_OCI_ENDPOINT` | `http://localhost:4599` |
 | `FLOCI_OCI_TENANCY_ID` | Floci-OCI's built-in tenancy |
 | `FLOCI_TOOLSETS` | `core,storage,messaging,compute` (`all` for everything) |
+| `FLOCI_TOOLSETS_ALLOWED` | every toolset (an empty value forbids switching) |
 | `FLOCI_READ_ONLY` | off |
 | `FLOCI_PLUGINS_DIR` | `plugins/` next to the server |
 | `SIDECAR_STATE_DIR` | `~/.floci-mcp` |
@@ -193,7 +210,7 @@ An agent with these tools can change your machine. What to know:
 - **Secrets.** `gcp_list_secrets` and `azure_list_secrets` return names only. `get_secret_value` (AWS) returns the value.
 - **`run_local_aws_cmd`** runs the `aws` CLI with the emulator endpoint and test credentials, but a command can pass its own `--endpoint-url`. Treat it as full CLI access.
 - **`proxy_http_request`** sends a request to any URL from the machine running the server.
-- **Hybrid tools** (`seed_from_cloud_dynamodb`, `proxy_cloud_sqs_to_local`) can use real AWS credentials. They are in the `hybrid` toolset, off by default.
+- **Hybrid tools** (`seed_from_cloud_dynamodb`, `proxy_cloud_sqs_to_local`) can use real AWS credentials. They are in the `hybrid` toolset, off at the start, but an agent can enable it with `enable_toolset` unless you cap it with `FLOCI_TOOLSETS_ALLOWED`.
 - **The marketplace** starts containers on your Docker, and `teardown_marketplace_app` removes their volumes.
 - **Tool definitions are text the model obeys.** A server that changes a description after you approved it can steer the agent (a "rug pull"). `list_toolsets` returns `definitions_sha256`, a digest of every registered name, description and schema: record it and compare after an update. Skills are instructions too; read a `SKILL.md` before installing one from anywhere.
 

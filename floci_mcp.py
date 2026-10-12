@@ -37,9 +37,13 @@ import toolsets
 mcp = FastMCP("floci-mcp")
 
 SELECTION = toolsets.parse_selection(os.environ.get("FLOCI_TOOLSETS"))
+ALLOWED = toolsets.parse_allowed(os.environ.get("FLOCI_TOOLSETS_ALLOWED"))
 READ_ONLY = toolsets.read_only_enabled()
 toolsets.register_selected(mcp, SELECTION)
-toolsets.register_toolset_info(mcp, SELECTION, READ_ONLY)
+DYNAMIC = toolsets.DynamicToolsets(mcp, SELECTION, ALLOWED, READ_ONLY)
+toolsets.register_toolset_info(mcp, SELECTION, READ_ONLY, DYNAMIC)
+if ALLOWED:
+    toolsets.register_dynamic_tools(mcp, DYNAMIC)
 
 
 def _load_community_plugins(mcp_instance) -> None:

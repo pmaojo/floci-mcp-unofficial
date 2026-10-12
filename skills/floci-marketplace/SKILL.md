@@ -8,7 +8,7 @@ argument-hint: "[status | deploy <id> [KEY=value ...] | teardown <id> | logs <id
 
 Manage the recipes in `recipes/` through the marketplace tools.
 
-**Toolsets needed:** `marketplace` (not enabled by default) and Docker reachable from the server. If `list_marketplace_recipes` is missing, tell the user to add `marketplace` to `FLOCI_TOOLSETS` and restart.
+**Toolsets needed:** `marketplace` (not enabled by default) and Docker reachable from the server. If `list_marketplace_recipes` is missing, call `enable_toolset` with `marketplace` if that tool exists; otherwise tell the user to add it to `FLOCI_TOOLSETS` and restart.
 
 ## Actions
 

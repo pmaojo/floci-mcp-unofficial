@@ -8,7 +8,7 @@ argument-hint: "[terraform|cdk] | drift [path]"
 
 Two jobs: export what exists, and compare code against it.
 
-**Toolsets needed:** `core` (default), `hybrid` for the export tools and `ops` for the drift tools. `hybrid` and `ops` are not enabled by default; if a tool is missing, say which toolset to add to `FLOCI_TOOLSETS`.
+**Toolsets needed:** `core` (default), `hybrid` for the export tools and `ops` for the drift tools. `hybrid` and `ops` are not enabled by default; if a tool is missing, call `enable_toolset` for the right one if that tool exists; otherwise say which toolset to add to `FLOCI_TOOLSETS`.
 
 ## Export
 

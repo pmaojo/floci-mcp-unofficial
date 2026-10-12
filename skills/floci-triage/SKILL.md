@@ -8,7 +8,7 @@ argument-hint: "[queue URL or name]"
 
 Find stuck messages, explain them, and only then move them.
 
-**Toolsets needed:** `ops` (for the DLQ tools) and `messaging`. `ops` is not enabled by default: if `list_dead_letter_queues` is missing, tell the user to set `FLOCI_TOOLSETS=core,storage,messaging,ops` and restart.
+**Toolsets needed:** `ops` (for the DLQ tools) and `messaging`. `ops` is not enabled by default: if `list_dead_letter_queues` is missing, call `enable_toolset` with `ops` if that tool exists; otherwise tell the user to set `FLOCI_TOOLSETS=core,storage,messaging,ops` and restart.
 
 ## Steps
 

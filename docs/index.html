@@ -279,7 +279,8 @@ uv sync &amp;&amp; uv run python floci_mcp.py</pre>
       <table id="toolset-table"><thead><tr><th>toolset</th><th>tools</th><th>default</th></tr></thead><tbody></tbody></table>
       <pre class="code">FLOCI_TOOLSETS=core,storage    # only these
 FLOCI_TOOLSETS=all             # everything
-FLOCI_READ_ONLY=1              # drop every tool that writes</pre>
+FLOCI_READ_ONLY=1              # drop every tool that writes
+FLOCI_TOOLSETS_ALLOWED=ops     # optional cap; unset: the agent may enable any</pre>
     </div>
     <div>
       <span class="label">clouds</span>
@@ -306,6 +307,7 @@ FLOCI_READ_ONLY=1              # drop every tool that writes</pre>
           <tr><td>FLOCI_GCP_ENDPOINT</td><td>http://localhost:4588</td></tr>
           <tr><td>FLOCI_OCI_ENDPOINT</td><td>http://localhost:4599</td></tr>
           <tr><td>FLOCI_TOOLSETS</td><td>core,storage,messaging,compute</td></tr>
+          <tr><td>FLOCI_TOOLSETS_ALLOWED</td><td>all toolsets</td></tr>
           <tr><td>FLOCI_READ_ONLY</td><td>off</td></tr>
           <tr><td>SIDECAR_STATE_DIR</td><td>~/.floci-mcp</td></tr>
         </tbody>
@@ -320,7 +322,7 @@ FLOCI_READ_ONLY=1              # drop every tool that writes</pre>
         <li><code>run_local_aws_cmd</code> is full aws CLI access: a command can pass its own <code>--endpoint-url</code>.</li>
         <li><code>proxy_http_request</code> requests any URL from the host.</li>
         <li>Tool descriptions steer the model. <code>list_toolsets</code> returns a SHA-256 of every registered definition: pin it and compare after updates.</li>
-        <li>Hybrid tools can use real AWS credentials. They live in <code>hybrid</code>, off by default.</li>
+        <li>Hybrid tools can use real AWS credentials. They live in <code>hybrid</code>, off at the start, but an agent may enable it unless you cap it with <code>FLOCI_TOOLSETS_ALLOWED</code>.</li>
         <li>The marketplace starts containers on your Docker. Teardown removes their volumes.</li>
       </ul>
     </div>

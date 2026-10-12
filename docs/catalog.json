@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T19:16:48Z",
+  "generatedAt": "2026-10-12T19:55:18Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 138,
@@ -3861,6 +3861,7 @@
       "tools": [
         "detect_iac_drift",
         "discover_iac_resources",
+        "enable_toolset",
         "export_recipes_to_terraform",
         "export_to_terraform",
         "list_aws_services"
@@ -3880,6 +3881,7 @@
       "tools": [
         "deploy_marketplace_app",
         "deploy_to_environment",
+        "enable_toolset",
         "get_marketplace_installations",
         "get_marketplace_logs",
         "list_marketplace_recipes",
@@ -3927,6 +3929,7 @@
       "tools": [
         "create_dynamodb_table",
         "create_s3_bucket",
+        "enable_toolset",
         "list_dynamodb_tables",
         "list_s3_buckets",
         "list_s3_objects",
@@ -3946,6 +3949,7 @@
       "argumentHint": "[queue URL or name]",
       "tools": [
         "delete_sqs_queue",
+        "enable_toolset",
         "get_sqs_queue_attributes",
         "inspect_dlq_messages",
         "list_dead_letter_queues",

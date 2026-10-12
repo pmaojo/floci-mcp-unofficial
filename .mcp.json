@@ -2,7 +2,13 @@
   "mcpServers": {
     "floci": {
       "command": "uv",
-      "args": ["run", "--project", "${CLAUDE_PLUGIN_ROOT}", "python", "${CLAUDE_PLUGIN_ROOT}/floci_mcp.py"],
+      "args": [
+        "run",
+        "--project",
+        "${CLAUDE_PLUGIN_ROOT}",
+        "python",
+        "${CLAUDE_PLUGIN_ROOT}/floci_mcp.py"
+      ],
       "env": {
         "UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/venv",
         "SIDECAR_STATE_DIR": "${CLAUDE_PLUGIN_DATA}/state",
@@ -11,7 +17,8 @@
         "AWS_ENDPOINT_URL": "${user_config.aws_endpoint}",
         "FLOCI_AZURE_ENDPOINT": "${user_config.azure_endpoint}",
         "FLOCI_GCP_ENDPOINT": "${user_config.gcp_endpoint}",
-        "FLOCI_OCI_ENDPOINT": "${user_config.oci_endpoint}"
+        "FLOCI_OCI_ENDPOINT": "${user_config.oci_endpoint}",
+        "FLOCI_TOOLSETS_ALLOWED": "${user_config.allowed_toolsets}"
       }
     }
   }

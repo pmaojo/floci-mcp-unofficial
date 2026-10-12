@@ -35,7 +35,9 @@ GROUPS: list = []
 
 SKIPPED = {
     "run_ui_tests": "runs the Floci Studio Playwright suite; meaningless outside Studio",
-    "list_toolsets": "covered by the toolsets group, which runs it in a subprocess",
+    "list_toolsets": "covered by the toolsets and dynamic groups, which run it in a subprocess",
+    "enable_toolset": "only registered when FLOCI_TOOLSETS_ALLOWED is set; the dynamic group drives it over stdio",
+    "disable_toolset": "only registered when FLOCI_TOOLSETS_ALLOWED is set; the dynamic group drives it over stdio",
     "start_reverse_tunnel": "spawns an external tunnel binary; only its error path is checked",
     "stop_reverse_tunnel": "needs a live tunnel pid",
 }
@@ -789,6 +791,127 @@ async def clouds():
         ok("oci", "objects of a missing bucket is an error", has_error(await attempt("oci_list_objects", bucket=f"absent-{X}")))
     else:
         skip("oci", "oci tools", "runtime not reachable")
+
+
+# -------------------------------------------------------- dynamic toolsets
+class StdioClient:
+    """A minimal MCP client over stdio that also records notifications."""
+
+    def __init__(self, **env):
+        root = os.path.dirname(os.path.abspath(__file__))
+        full = {k: v for k, v in os.environ.items() if not k.startswith("FLOCI_")}
+        full.update(env)
+        self.proc = subprocess.Popen([sys.executable, "-u", os.path.join(root, "floci_mcp.py")], stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=full, cwd=root)
+        self.next_id = 1
+        self.notifications: list[str] = []
+
+    def request(self, method, params=None):
+        request_id = self.next_id
+        self.next_id += 1
+        self.proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params or {}}) + "\n")
+        self.proc.stdin.flush()
+        while True:
+            line = self.proc.stdout.readline()
+            if not line:
+                raise RuntimeError("server closed the connection")
+            if not line.startswith("{"):
+                continue
+            message = json.loads(line)
+            if "id" not in message and "method" in message:
+                self.notifications.append(message["method"])
+            elif message.get("id") == request_id:
+                return message
+
+    def initialize(self):
+        reply = self.request("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "verify", "version": "0"}})
+        self.proc.stdin.write(json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}) + "\n")
+        self.proc.stdin.flush()
+        return reply["result"]
+
+    def tool_names(self):
+        return [t["name"] for t in self.request("tools/list")["result"]["tools"]]
+
+    def call(self, tool, /, **arguments):
+        reply = self.request("tools/call", {"name": tool, "arguments": arguments})
+        return json.loads(reply["result"]["content"][0]["text"])
+
+    def close(self):
+        try:
+            self.proc.stdin.close()
+            self.proc.wait(timeout=15)
+        except Exception:  # noqa: BLE001
+            self.proc.kill()
+
+
+@group
+async def dynamic_toolsets():
+    forbidden = StdioClient(FLOCI_TOOLSETS="core", FLOCI_TOOLSETS_ALLOWED="")
+    try:
+        caps = forbidden.initialize()["capabilities"]
+        names = forbidden.tool_names()
+        ok("dynamic", "an empty FLOCI_TOOLSETS_ALLOWED forbids switching: no enable/disable tools",
+           "enable_toolset" not in names and "disable_toolset" not in names, names[:5])
+        ok("dynamic", "and listChanged is not advertised", not caps.get("tools", {}).get("listChanged"), caps)
+    finally:
+        forbidden.close()
+
+    free = StdioClient(FLOCI_TOOLSETS="core")
+    try:
+        free.initialize()
+        before_free = free.tool_names()
+        ok("dynamic", "by default the agent has enable_toolset and disable_toolset",
+           {"enable_toolset", "disable_toolset"} <= set(before_free))
+        granted = free.call("enable_toolset", name="hybrid")
+        ok("dynamic", "by default the agent can enable any toolset, hybrid included",
+           granted.get("enabled") is True and "seed_mock_data" in free.tool_names(), granted)
+        listing_free = free.call("list_toolsets")
+        ok("dynamic", "list_toolsets reports every toolset as reachable",
+           len(listing_free["allowed_at_runtime"]) == 7, listing_free["allowed_at_runtime"])
+    finally:
+        free.close()
+
+    client = StdioClient(FLOCI_TOOLSETS="core", FLOCI_TOOLSETS_ALLOWED="ops,marketplace")
+    try:
+        caps = client.initialize()["capabilities"]
+        ok("dynamic", "the server advertises tools.listChanged", caps.get("tools", {}).get("listChanged") is True, caps)
+        before = client.tool_names()
+        digest_before = client.call("list_toolsets")["definitions_sha256"]
+        ok("dynamic", "enable_toolset and disable_toolset are registered", {"enable_toolset", "disable_toolset"} <= set(before))
+        ok("dynamic", "ops tools are absent at the start", "list_dead_letter_queues" not in before)
+
+        rejected = client.call("enable_toolset", name="hybrid")
+        ok("dynamic", "a toolset outside the allowed list is refused", rejected.get("enabled") is False and "FLOCI_TOOLSETS_ALLOWED" in rejected.get("reason", ""), rejected)
+        ok("dynamic", "refusing changes nothing", sorted(client.tool_names()) == sorted(before))
+        unknown = client.call("enable_toolset", name="nope")
+        ok("dynamic", "an unknown toolset is refused with the valid names", unknown.get("enabled") is False and "Available:" in unknown.get("reason", ""), unknown)
+
+        enabled = client.call("enable_toolset", name="ops")
+        after = client.tool_names()
+        ok("dynamic", "enabling adds the toolset's tools", enabled.get("enabled") is True and "list_dead_letter_queues" in after, enabled)
+        ok("dynamic", "enabling sends tools/list_changed", "notifications/tools/list_changed" in client.notifications, client.notifications)
+        listing = client.call("list_toolsets")
+        ok("dynamic", "list_toolsets reflects the change", "ops" in listing["enabled"] and listing["allowed_at_runtime"] == ["ops", "marketplace"], listing)
+        again = client.call("enable_toolset", name="ops")
+        ok("dynamic", "enabling twice adds nothing and does not duplicate", again.get("tools_added") == [] and len(client.tool_names()) == len(after))
+
+        disabled = client.call("disable_toolset", name="ops")
+        ok("dynamic", "disabling removes the tools again", disabled.get("disabled") is True and sorted(client.tool_names()) == sorted(before), disabled)
+        ok("dynamic", "the digest changes while a toolset is enabled and returns after disabling it",
+           listing["definitions_sha256"] != digest_before and client.call("list_toolsets")["definitions_sha256"] == digest_before)
+    finally:
+        client.close()
+
+    restricted = StdioClient(FLOCI_TOOLSETS="core", FLOCI_TOOLSETS_ALLOWED="ops,hybrid", FLOCI_READ_ONLY="1")
+    try:
+        restricted.initialize()
+        restricted.call("enable_toolset", name="ops")
+        names = restricted.tool_names()
+        import toolsets as ts
+        ok("dynamic", "read-only mode also holds for tools enabled later",
+           "list_dead_letter_queues" in names and not [n for n in names if ts.is_write(n)], [n for n in names if ts.is_write(n)])
+    finally:
+        restricted.close()
 
 
 # ------------------------------------------------------------------- cwd
