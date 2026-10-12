@@ -1,0 +1,7 @@
+.git
+.venv
+__pycache__
+.sidecar-state
+state
+verify_*.py
+plugins
