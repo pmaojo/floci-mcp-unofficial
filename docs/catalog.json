@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-10-12T20:02:49Z",
+  "generatedAt": "2026-10-12T20:49:30Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
-    "tools": 138,
+    "tools": 142,
     "recipes": 35,
-    "skills": 6
+    "skills": 7
   },
   "toolsets": {
     "core": [
@@ -34,13 +34,21 @@
       "iac"
     ],
     "marketplace": [
-      "marketplace",
+      "marketplace"
+    ],
+    "pipeline": [
       "pipeline"
     ],
     "hybrid": [
       "hybrid",
       "devtools",
       "extensibility"
+    ],
+    "generic": [
+      "generic"
+    ],
+    "code": [
+      "code"
     ]
   },
   "cookbook": [
@@ -81,8 +89,8 @@
     },
     {
       "ask": "\"Start a local Redis and tell me the port.\"",
-      "it calls": "`list_marketplace_recipes`, `deploy_marketplace_app`, `get_marketplace_installations`",
-      "toolset": "marketplace"
+      "it calls": "`list_marketplace_recipes`, `deploy_marketplace_app`; or with no extra tools, `call_write(cloud=\"recipes\", operation=\"DeployRecipe\")`",
+      "toolset": "marketplace, or generic"
     },
     {
       "ask": "\"Fill `orders` with test data.\"",
@@ -2130,30 +2138,25 @@
       "cloud": "aws",
       "writes": false,
       "toolset": "marketplace",
-      "description": "Lists every Marketplace recipe with its configurable variables.",
-      "params": []
-    },
-    {
-      "name": "get_marketplace_installations",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": false,
-      "toolset": "marketplace",
-      "description": "Gets the state of every Marketplace installation.",
-      "params": []
-    },
-    {
-      "name": "get_marketplace_logs",
-      "group": "marketplace",
-      "cloud": "aws",
-      "writes": false,
-      "toolset": "marketplace",
-      "description": "Gets the Docker Compose logs of a Marketplace recipe.",
+      "description": "Lists the Docker recipes (postgres, redis, kafka, keycloak, ollama...), or details one.",
       "params": [
         {
           "name": "recipe_id",
           "type": "string",
-          "required": true
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "status",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "logs",
+          "type": "boolean",
+          "required": false,
+          "default": false
         }
       ]
     },
@@ -2163,7 +2166,7 @@
       "cloud": "aws",
       "writes": true,
       "toolset": "marketplace",
-      "description": "Installs and starts a Marketplace recipe on local Docker.",
+      "description": "Starts a recipe on local Docker and waits until it is RUNNING or FAILED.",
       "params": [
         {
           "name": "recipe_id",
@@ -2175,6 +2178,12 @@
           "type": "any",
           "required": false,
           "default": null
+        },
+        {
+          "name": "wait_seconds",
+          "type": "integer",
+          "required": false,
+          "default": 90
         }
       ]
     },
@@ -2184,12 +2193,18 @@
       "cloud": "aws",
       "writes": true,
       "toolset": "marketplace",
-      "description": "Stops and removes the containers and volumes of a Marketplace recipe.",
+      "description": "Stops a recipe and removes its containers AND volumes (its data). Confirm with the user first.",
       "params": [
         {
           "name": "recipe_id",
           "type": "string",
           "required": true
+        },
+        {
+          "name": "wait_seconds",
+          "type": "integer",
+          "required": false,
+          "default": 60
         }
       ]
     },
@@ -2198,7 +2213,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": false,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Lists the pipeline environments (test, demo, production) with the state of each recipe deployed in each one.",
       "params": []
     },
@@ -2207,7 +2222,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": true,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Deploys a marketplace recipe to a pipeline environment (test or demo).",
       "params": [
         {
@@ -2233,7 +2248,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": true,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Stops and removes a recipe deployed in a pipeline environment (test or demo).",
       "params": [
         {
@@ -2253,7 +2268,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": true,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Promotes a recipe from one pipeline environment to the next.",
       "params": [
         {
@@ -2278,7 +2293,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": false,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Generates AWS Copilot manifests to deploy a recipe on ECS/Fargate.",
       "params": [
         {
@@ -2293,7 +2308,7 @@
       "group": "pipeline",
       "cloud": "aws",
       "writes": false,
-      "toolset": "marketplace",
+      "toolset": "pipeline",
       "description": "Gets the Docker Compose logs of a recipe in a pipeline environment.",
       "params": [
         {
@@ -2619,22 +2634,6 @@
       ]
     },
     {
-      "name": "run_ui_tests",
-      "group": "devtools",
-      "cloud": "aws",
-      "writes": true,
-      "toolset": "hybrid",
-      "description": "Runs the Playwright tests of the Floci Studio frontend.",
-      "params": [
-        {
-          "name": "test_file",
-          "type": "any",
-          "required": false,
-          "default": null
-        }
-      ]
-    },
-    {
       "name": "list_lifecycle_webhooks",
       "group": "extensibility",
       "cloud": "aws",
@@ -2770,6 +2769,206 @@
       "toolset": "hybrid",
       "description": "Lists the community plugins found in the plugins directory.",
       "params": []
+    },
+    {
+      "name": "list_services",
+      "group": "generic",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "generic",
+      "description": "Lists the services of a cloud: aws, azure, gcp, oci or recipes (local Docker stacks).",
+      "params": [
+        {
+          "name": "cloud",
+          "type": "string",
+          "required": false,
+          "default": "aws"
+        },
+        {
+          "name": "probe",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": "search_operations",
+      "group": "generic",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "generic",
+      "description": "Finds operations by what they do, e.g. \"list buckets\", \"send message to queue\", \"start a local redis\".",
+      "params": [
+        {
+          "name": "query",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "cloud",
+          "type": "string",
+          "required": false,
+          "default": "aws"
+        },
+        {
+          "name": "service",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "limit",
+          "type": "integer",
+          "required": false,
+          "default": 8
+        }
+      ]
+    },
+    {
+      "name": "describe_operation",
+      "group": "generic",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "generic",
+      "description": "Returns what an operation does, its parameters (required ones marked), what it returns, and whether it reads or writes. Read this before calling an operation you have not used.",
+      "params": [
+        {
+          "name": "cloud",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "service",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "call_read",
+      "group": "generic",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "generic",
+      "description": "Calls an operation that only reads. Refuses anything that would change state.",
+      "params": [
+        {
+          "name": "cloud",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "service",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "params",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "request",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "call_write",
+      "group": "generic",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "generic",
+      "description": "Calls an operation that creates, changes, sends or deletes. Same arguments as call_read.",
+      "params": [
+        {
+          "name": "cloud",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "service",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "operation",
+          "type": "string",
+          "required": false,
+          "default": ""
+        },
+        {
+          "name": "params",
+          "type": "any",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "request",
+          "type": "any",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "code_read",
+      "group": "code",
+      "cloud": "aws",
+      "writes": false,
+      "toolset": "code",
+      "description": "Reads from AWS, Azure, GCP and OCI by running Python. Refuses any call that changes state. Runs Python 3 (standard library only) with three helpers: aws(service, operation, **params)   e.g. aws(\"s3\", \"ListBuckets\"), aws(\"sqs\", \"GetQueueUrl\", QueueName=\"orders\") call(cloud, service, operation, **params)   catalogued Azure, GCP and OCI routes rest(cloud, method, path, query=None, json=None, body=None, headers=None)   any route of azure, gcp or oci Each returns the decoded response (errors come back as {\"error\": ...}; CloudError is raised when a call is refused). Print what you need or set `result`; keep output small by filtering in code. Parameter names are the service model's (PascalCase for AWS). Imports are limited to json, re, math, datetime, collections, itertools, statistics, base64, textwrap, string, functools, decimal, time, uuid, hashlib.",
+      "params": [
+        {
+          "name": "code",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "timeout_seconds",
+          "type": "integer",
+          "required": false,
+          "default": 30
+        }
+      ]
+    },
+    {
+      "name": "code_write",
+      "group": "code",
+      "cloud": "aws",
+      "writes": true,
+      "toolset": "code",
+      "description": "Reads and changes AWS, Azure, GCP and OCI by running Python. Ask the user before anything destructive. Runs Python 3 (standard library only) with three helpers: aws(service, operation, **params)   e.g. aws(\"s3\", \"ListBuckets\"), aws(\"sqs\", \"GetQueueUrl\", QueueName=\"orders\") call(cloud, service, operation, **params)   catalogued Azure, GCP and OCI routes rest(cloud, method, path, query=None, json=None, body=None, headers=None)   any route of azure, gcp or oci Each returns the decoded response (errors come back as {\"error\": ...}; CloudError is raised when a call is refused). Print what you need or set `result`; keep output small by filtering in code. Parameter names are the service model's (PascalCase for AWS). Imports are limited to json, re, math, datetime, collections, itertools, statistics, base64, textwrap, string, functools, decimal, time, uuid, hashlib.",
+      "params": [
+        {
+          "name": "code",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "timeout_seconds",
+          "type": "integer",
+          "required": false,
+          "default": 30
+        }
+      ]
     }
   ],
   "recipes": [
@@ -3964,6 +4163,27 @@
       "path": "skills/floci-explore/SKILL.md"
     },
     {
+      "name": "floci-generic",
+      "description": "Operate any service of the local AWS, Azure, GCP and OCI runtimes, and the Docker recipes, through the few generic tools instead of one tool per operation. Use when a request names a service or operation that no dedicated tool covers, or when it chains several calls or needs a big result filtered first.",
+      "argumentHint": "[what you want to do, e.g. 'list the queues with messages in them']",
+      "tools": [
+        "call_read",
+        "call_write",
+        "code_read",
+        "code_write",
+        "describe_operation",
+        "enable_toolset",
+        "list_services",
+        "search_operations"
+      ],
+      "requires": [
+        "generic",
+        "code"
+      ],
+      "enabledByDefault": false,
+      "path": "skills/floci-generic/SKILL.md"
+    },
+    {
       "name": "floci-iac",
       "description": "Export the resources in the local emulator as Terraform or CDK, and check a Terraform or CDK project for drift against what is actually running. Use when the user wants infrastructure code from a working local stack, or asks whether code and emulator agree.",
       "argumentHint": "[terraform|cdk] | drift [path]",
@@ -3988,17 +4208,19 @@
       "description": "Browse the Docker recipe catalog and start, inspect or remove local stacks such as PostgreSQL, Redis, Kafka, Keycloak or Ollama. Use when the user wants a local database, broker or tool running next to the emulator.",
       "argumentHint": "[status | deploy <id> [KEY=value ...] | teardown <id> | logs <id>]",
       "tools": [
+        "call_read",
+        "call_write",
         "deploy_marketplace_app",
         "deploy_to_environment",
         "enable_toolset",
-        "get_marketplace_installations",
-        "get_marketplace_logs",
         "list_marketplace_recipes",
         "promote_recipe",
         "teardown_marketplace_app"
       ],
       "requires": [
-        "marketplace"
+        "marketplace",
+        "pipeline",
+        "generic"
       ],
       "enabledByDefault": false,
       "path": "skills/floci-marketplace/SKILL.md"

@@ -6,15 +6,13 @@
 
 **Site and live catalog of every tool, skill and recipe:** [`docs/index.html`](docs/index.html) (regenerate with `uv run python scripts/build_catalog.py`; the Vercel build does it on every deploy).
 
-> ### ★ NEW! The star feature: `suggest_toolsets` ★
+> ### Whole cloud, small context
 >
-> **Do YOU suffer from Tool Overload™?** 138 tools. 7 toolsets. One agent. *Zero* idea which one it needs.
-> Introducing **`suggest_toolsets`**: *seven (7!)* yes/no questions answered in *one call*, by a real decision model
-> (**TypeSafe Jev** or **Mercury Decide**, pick your fighter), with calibrated probabilities. Not vibes. Okay, vibes with decimals.
-> Add `apply=true` and the toolsets switch themselves on. It's like magic, but with HTTP. Off by default, because we respect your wallet.
+> The `generic` toolset (5 tools, about 0.9K tokens) and the `code` toolset (2 tools, about 0.6K) can address every
+> operation of AWS, Azure, GCP and OCI, and the Docker recipes, instead of one tool per operation. Reads and writes are
+> separate tools, so `FLOCI_READ_ONLY=1` removes the writer. See [Whole-cloud access](#whole-cloud-access-generic-and-code-toolsets).
 >
-> *Tested end to end against a very convincing fake, not yet against a live provider. Needs an API key. Not a substitute for reading the tool list.*
-> [How to turn it on](#decision-model-router-optional).
+> *Not yet measured against a live model: tokens, classification and offline search are tested; accuracy needs `eval/generic.py model`.*
 
 ## Quick start
 
@@ -24,7 +22,7 @@ uv sync
 uv run python floci_mcp.py        # stdio; point your MCP client at it (see Install)
 ```
 
-You need a running Floci (`localhost:4566`). Then install the skills below so the agent knows how to use the tools.
+You need a running Floci (`localhost:4566`). For the smallest context start with `FLOCI_TOOLSETS=generic,core`; the default is still the curated toolsets until the eval says otherwise. Then install the skills below so the agent knows how to use the tools.
 
 **Claude Code, in two commands** (server, skills and settings together):
 
@@ -42,14 +40,14 @@ agent (Claude, Cursor, Codex, ...)
         |  MCP over stdio
         v
 floci_mcp.py  -- toolsets decide which tools are registered
-        |
+        |            generic / code -> one gateway: classifies every call read or write
         |-- boto3 ----------------------------> Floci core        :4566  (AWS)
         |-- REST (per provider) --------------> Floci-AZ          :4577
         |                                       Floci-GCP         :4588
         |                                       Floci-OCI         :4599
         `-- in-process backend (floci_backend)
               |-- aws CLI   (run_local_aws_cmd, Glue catalog, Lambda deploy)
-              `-- docker compose (marketplace, pipeline)  --> recipes/
+              `-- docker compose (recipes: marketplace, generic cloud="recipes")  --> recipes/
 ```
 
 The server is a thin layer: it never emulates anything. Tools that can be answered by an SDK call use it; the few that need the `aws` CLI or Docker go through the in-process backend, which is why those two are listed under requirements.
@@ -65,7 +63,8 @@ Skills are short playbooks an agent loads on demand ([Agent Skills](https://docs
 | [`floci-triage`](skills/floci-triage/SKILL.md) | Find and explain stuck messages in dead-letter queues, then redrive on confirmation | `ops`, `messaging` |
 | [`floci-seed`](skills/floci-seed/SKILL.md) | Fill a table, bucket or database with synthetic data | `storage`, `hybrid` |
 | [`floci-iac`](skills/floci-iac/SKILL.md) | Export the emulator as Terraform or CDK, and check code for drift | `core`, `ops`, `hybrid` |
-| [`floci-marketplace`](skills/floci-marketplace/SKILL.md) | Start, inspect and remove local Docker stacks from the recipe catalog | `marketplace` |
+| [`floci-marketplace`](skills/floci-marketplace/SKILL.md) | Start, inspect and remove local Docker stacks from the recipe catalog; prefers the Floci-native service when there is one | `generic` or `marketplace`, `pipeline` |
+| [`floci-generic`](skills/floci-generic/SKILL.md) | Operate any service of any cloud, and chain calls in code, with a handful of tools | `generic`, `code` |
 
 Install them for Claude Code (personal skills; use `.claude/skills/` inside a project for a per-project install):
 
@@ -89,7 +88,7 @@ Things to ask the agent, and what it ends up calling. The toolset in brackets is
 | "Compare my buckets and queues across AWS, Azure, GCP and OCI." | skill `floci-multicloud`: `list_clouds` and each cloud's list tools | core, storage, messaging |
 | "Store a secret and encrypt a value with a new key." | `create_secret`, `create_kms_key`, `kms_encrypt` | storage |
 | "Run `SELECT 1` on Athena." | `run_athena_query` | compute |
-| "Start a local Redis and tell me the port." | `list_marketplace_recipes`, `deploy_marketplace_app`, `get_marketplace_installations` | marketplace |
+| "Start a local Redis and tell me the port." | `list_marketplace_recipes`, `deploy_marketplace_app`; or with no extra tools, `call_write(cloud="recipes", operation="DeployRecipe")` | marketplace, or generic |
 | "Fill `orders` with test data." | skill `floci-seed`: `list_dynamodb_tables`, `seed_mock_data`, `scan_dynamodb` | storage, hybrid |
 | "Write the Terraform for what I have running." | skill `floci-iac`: `export_to_terraform`; `detect_iac_drift` to compare with code | hybrid, ops |
 
@@ -106,22 +105,22 @@ Azure, GCP and OCI are called through each provider's own REST contract, the sam
 
 ### Coverage
 
-Floci is much bigger than what these tools reach. Counted from each emulator's own "Supported Services" list:
+Counted from each emulator's own "Supported Services" list, and from the generic toolset's catalog, which is checked against a running Floci (`scripts/build_rest_catalog.py`):
 
-| Cloud | Services the emulator lists | Reached by a tool here | Not reached (examples) |
+| Cloud | Services the emulator lists | Curated tools | `generic` / `code` catalog |
 |---|:-:|---|---|
-| **AWS** (floci) | about 130 | S3, SQS, SNS, DynamoDB, Lambda, Secrets Manager, KMS, EventBridge, Step Functions, Athena, Glue (catalog), SES, Tagging API, CloudWatch Logs (Lambda logs), STS-less IaC export. Around 14 | EC2, ECS, EKS, RDS, ElastiCache, Cognito, API Gateway, AppSync, Kinesis, Route 53, CloudFormation, IAM, OpenSearch, Redshift, MSK, Batch, Bedrock and the rest |
-| **Azure** (floci-az) | 28 | Blob (containers, blobs), Queue, Key Vault secret names. 3 | Table, Functions, App Configuration, Cosmos DB, Event Hubs, Service Bus, SQL, PostgreSQL, MySQL, MariaDB, AKS, Container Apps, API Management, Virtual Network, VMs, Redis, ACR, ACI, Event Grid, Monitor, Email, Managed Identity, Policy, SignalR |
-| **GCP** (floci-gcp) | 26 | Cloud Storage, Pub/Sub topics, Secret Manager names. 3 | Firestore, Datastore, Managed Kafka, Eventarc, KMS, IAM, STS, Firebase Auth, GKE, Compute Engine, Cloud Run, Cloud Functions, Cloud Tasks, Scheduler, Cloud SQL, BigQuery, Logging, Monitoring |
-| **OCI** (floci-oci) | 8 | Object Storage (buckets, objects). 1 | Identity, Queue, Streaming, Vault and KMS, Secrets, Functions, OKE |
+| **AWS** (floci) | about 130 | about 14 services | every operation in the boto3 models (~18,000 over ~420 services); `list_services(probe=true)` shows which ones answer |
+| **Azure** (floci-az) | 28 | Blob, Queue, Key Vault names | data plane (blob, queue, table, key vault) and **15 ARM resource types** that answer: storage, SQL, Redis, virtual networks, VMs, AKS, Container Apps, ACR, ACI, managed identity, PostgreSQL, MySQL, MariaDB, Email. Service Bus, Event Hubs, Functions, Cosmos DB, API Management, Event Grid, Monitor, Policy, SignalR and App Configuration did not answer on the ARM paths tried |
+| **GCP** (floci-gcp) | 26 | Cloud Storage, Pub/Sub, Secret Manager names | **20 APIs, 2,283 operations** generated from Google's discovery documents (Compute, IAM, KMS, BigQuery, Cloud SQL, Firestore, GKE, Cloud Run, Scheduler, Logging...). 70 list operations were verified against Floci; the rest are the provider's contract, not proof that Floci implements them |
+| **OCI** (floci-oci) | 8 | Object Storage | all 8: Object Storage, Identity, Queue, Streaming, Vault, Secrets, Functions, OKE, each with list, get, create and delete; every list answers |
 
-That is roughly one service in ten on every cloud. Inside the covered ones the tools are also thin: for Azure, GCP and OCI there is no upload, download or delete of objects, no publish or receive on queues and topics, and secret tools never return values. This is a starting surface, not parity, and writing one tool per operation will not close it: a cloud has thousands of operations.
+The catalog is a map of the provider's API, and `verified_on_floci` in `describe_operation` says whether Floci answered it when the catalog was built. A route that is not catalogued is still reachable with `request={method, path}`. The curated tools stay thin (no object upload or delete, no publish or receive on Azure, GCP and OCI queues, secret tools never return values); the generic toolset is how the rest is reached.
 
 Run the emulators with the `multicloud` profile of the [Floci UI compose file](https://github.com/floci-io/floci-ui/blob/main/docker-compose.yml), or on their own.
 
 ## Toolsets and read-only mode
 
-A client sends every tool definition to the model on every conversation. All 138 tools cost about 16K tokens, and models pick worse when many similar tools are visible. So tools are grouped and only some are registered.
+A client sends every tool definition to the model on every conversation. All 142 tools cost about 17K tokens, and models pick worse when many similar tools are visible. So tools are grouped and only some are registered.
 
 | Toolset | Modules | Default |
 |---|---|:-:|
@@ -161,6 +160,12 @@ Claude Code applies `list_changed` in interactive sessions and in `-p` mode. Oth
 
 ### Decision-model router (optional)
 
+> **★ `suggest_toolsets`.** One yes/no question per toolset, answered in one call by a decision model (**TypeSafe Jev** or **Mercury Decide**),
+> with calibrated probabilities. With `apply=true` the toolsets switch themselves on. It exists for clients that cannot defer tool
+> definitions and keep the curated toolsets; with `generic` or `code` there is nothing to route.
+>
+> *Tested end to end against a fake, not yet against a live provider. Needs an API key. The OpenRouter path is `alpha`.*
+
 A decision model answers typed questions about a piece of state and returns calibrated probabilities instead of text. Here the state is the task and there is one yes/no question per toolset, so one cheap call says which toolsets a request needs. It is off unless you set `FLOCI_DECIDER`; toolsets, `enable_toolset` and the agent's own judgement work without it.
 
 | `FLOCI_DECIDER` | Endpoint | Model | Key from |
@@ -192,14 +197,49 @@ ANTHROPIC_API_KEY=... uv run python eval/run.py model   # real tool selection by
 
 `eval/tasks.json` holds 40 realistic tasks. The model mode sends only the definitions and the task, reads the first tool call and executes nothing.
 
+## Whole-cloud access: `generic` and `code` toolsets
+
+Two toolsets can address **every** operation of AWS, Azure, GCP and OCI with a handful of tools, instead of one tool per operation. What answers is what Floci emulates; `list_services(probe=true)` shows which AWS services do. Neither depends on the decision model: with 2 to 5 tools there is nothing to route.
+
+| Toolset | Tools | ~Tokens | Use |
+|---|---|---|---|
+| `generic` | `list_services`, `search_operations`, `describe_operation`, `call_read`, `call_write` | ~0.9K | Look up an operation, read its parameters, call it |
+| `code` | `code_read`, `code_write` | ~0.6K | Chain calls and filter large results in Python before they reach the model |
+
+(The 135 curated tools weigh ~15.6K; the default selection ~9.3K.)
+
+- **AWS** is driven by the botocore service models: all ~18,000 operations of ~420 services can be addressed, and new boto3 releases are picked up with no change here. Floci implements a subset of them.
+- **Azure, GCP, OCI** have no botocore-style model, so their catalog is generated: GCP from Google's discovery documents (2,283 operations), Azure as the data plane plus the ARM resource types that answer, OCI as list/get/create/delete over its eight services. `describe_operation` reports `verified_on_floci`. `request={method, path, query, json}` (or `rest(...)` in code) reaches any route that is not catalogued.
+- **Read and write are separate tools.** `FLOCI_READ_ONLY=1` removes `call_write` and `code_write`. The decision is also enforced inside the gateway, so `code_read` cannot write whatever the code says.
+- **Classification is default-deny** (`floci_generic/classify.py`): an operation is a read only when its verb says so and nothing contradicts it. AWS is cross-checked against each operation's HTTP method; the other clouds are classified by HTTP method. `tests/test_generic.py` checks it against every operation of every service model.
+- **Secret values** (`GetSecretValue`, SSM parameters) need `FLOCI_ALLOW_SECRET_VALUES=1`.
+- **The code sandbox is a guardrail, not isolation.** The child process has the standard library only and an empty environment, and every cloud call goes back through the gateway, but it can still open a socket to localhost. It is meant for local emulators with throwaway credentials, never for a real cloud.
+
+```bash
+FLOCI_TOOLSETS=generic,core uv run python floci_mcp.py     # or code, or both
+uv run python tests/test_generic.py                          # classification, guard, sandbox, live reads
+uv run python eval/generic.py static|oracle|search           # offline
+uv run python eval/generic.py model --arms generic,code      # needs ANTHROPIC_API_KEY
+```
+
 ## Recipes as a kickstarter
 
-`recipes/` holds a catalog of local Docker recipes (PostgreSQL, Redis, MinIO, Keycloak, RabbitMQ, Kafka, Temporal and others, each with a `recipe.json` and a Compose file). They need the `marketplace` toolset:
+`recipes/` holds a catalog of local Docker recipes (PostgreSQL, Redis, MinIO, Keycloak, RabbitMQ, Kafka, Temporal and others, each with a `recipe.json` and a Compose file). They ship with the server and need only Docker.
 
-- `list_marketplace_recipes`: the catalog with each recipe's configurable variables.
-- `deploy_marketplace_app` / `teardown_marketplace_app`: install and remove a recipe with Docker Compose.
-- `get_marketplace_installations` and `get_marketplace_logs`: state and logs.
-- `deploy_to_environment` and `promote_recipe`: the same recipe across `test` and `demo`.
+**They cost no context.** The `generic` and `code` toolsets reach them as one more cloud, `recipes`, with the same five tools:
+
+```
+search_operations("start a local redis", cloud="recipes")     -> DeployRecipe
+call_read (cloud="recipes", operation="ListRecipes")           -> id, what it is, AWS counterpart, floci_native
+call_write(cloud="recipes", operation="DeployRecipe", params={"recipe_id": "redis"})
+```
+
+- `ListRecipes` marks `floci_native` when Floci already emulates the AWS service a recipe stands in for (RDS for `postgres`, ElastiCache for `redis`, MSK for `kafka`...). It is checked against the running Floci, so it is never stale. Prefer the native service; use a recipe for what Floci does not emulate (Keycloak, Metabase, n8n, Ollama...).
+- `DeployRecipe` waits for `RUNNING` or `FAILED` and returns the access URL. A default port already taken on your machine is moved to a free one and reported (`ports_adjusted`); a port you set that is taken is refused with a suggestion.
+- `TeardownRecipe` removes containers **and volumes**. It is a write and flagged destructive.
+- Only the server process touches Docker. The code sandbox reaches recipes through the same gateway and its read/write rule.
+
+If you prefer named tools, the `marketplace` toolset has three: `list_marketplace_recipes` (also state and logs), `deploy_marketplace_app` and `teardown_marketplace_app`. `deploy_to_environment` and `promote_recipe` moved to their own `pipeline` toolset.
 
 A recipe is plain data, so you can add your own under `recipes/<name>/`.
 
@@ -233,6 +273,24 @@ Client configuration (Claude Desktop, Cursor, Claude Code):
   }
 }
 ```
+
+### Without cloning
+
+The package builds as a wheel with the recipes and the route catalogs inside, and installs a `floci-mcp` command. Until it is on PyPI, install straight from the repository:
+
+```bash
+uvx --from git+https://github.com/pmaojo/floci-mcp-unofficial floci-mcp
+```
+
+```json
+{ "mcpServers": { "floci": {
+  "command": "uvx",
+  "args": ["--from", "git+https://github.com/pmaojo/floci-mcp-unofficial", "floci-mcp"],
+  "env": { "FLOCI_TOOLSETS": "generic,core" }
+} } }
+```
+
+The wheel was built and run from a clean environment outside the checkout. The `git+` form needs this branch to be on the default branch of the remote.
 
 ### Docker
 

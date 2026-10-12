@@ -6,24 +6,45 @@ argument-hint: "[status | deploy <id> [KEY=value ...] | teardown <id> | logs <id
 
 # Floci marketplace
 
-Manage the recipes in `recipes/` through the marketplace tools.
+Manage the recipes in `recipes/`. They are Docker Compose stacks, so Docker must be reachable from the server.
 
-**Toolsets needed:** `marketplace` (not enabled by default) and Docker reachable from the server. If `list_marketplace_recipes` is missing, call `enable_toolset` with `marketplace` if that tool exists; otherwise tell the user to add it to `FLOCI_TOOLSETS` and restart.
+**Toolsets needed:** `generic` or `marketplace`, and `pipeline` only for promoting between environments (none is enabled by default).
+
+**How to reach them (use the first that exists):**
+
+1. `generic` or `code` toolset: `call_read` / `call_write` with `cloud="recipes"`. Operations: `ListRecipes`, `GetRecipe`, `GetStatus`, `GetLogs`, `DeployRecipe`, `TeardownRecipe`. Use `search_operations(cloud="recipes")` if unsure.
+2. `marketplace` toolset: `list_marketplace_recipes` (with `recipe_id`, `status`, `logs`), `deploy_marketplace_app`, `teardown_marketplace_app`.
+
+If neither is available, tell the user to add `generic` (or `marketplace`) to `FLOCI_TOOLSETS`, or call `enable_toolset` when that tool exists.
+
+## Floci first
+
+Many recipes stand in for an AWS service that Floci may already emulate. `ListRecipes` marks those `floci_native`. Before deploying one, say so and offer the native route:
+
+| Recipe | Floci service | Use the recipe when |
+|---|---|---|
+| `postgres`, `mysql` | RDS | you need a plain engine on a fixed port, or an extension Floci's RDS lacks |
+| `redis` | ElastiCache | same |
+| `kafka`, `redpanda` | MSK | you need the real broker tooling |
+| `minio` | S3 | you need the MinIO console or its API |
+| `mailpit` | SES | you want to read the mail in a web UI |
+
+For recipes without `floci_native` (Keycloak, Metabase, n8n, Ollama, Jaeger, Loki...) deploying the recipe is the way.
 
 ## Actions
 
 Read the first word of `$ARGUMENTS`.
 
-- **none**: call `list_marketplace_recipes` and `get_marketplace_installations`; show name, what it is, and which are running.
-- **`status`**: call `get_marketplace_installations` (states: IDLE, INSTALLING, RUNNING, UNINSTALLING, FAILED).
+- **none**: `ListRecipes` and `GetStatus`; show name, what it is, floci_native, and which are running.
+- **`status`**: `GetStatus` (IDLE, INSTALLING, RUNNING, UNINSTALLING, FAILED), with the access URL of the running ones.
 - **`deploy <id> [KEY=value ...]`**:
-  1. Call `list_marketplace_recipes` and read the variables of that recipe.
-  2. Ask for any variable that has no default and was not given. Do not invent passwords.
-  3. Call `deploy_marketplace_app`. Starting a container changes the user's Docker: say what will start before doing it if the user did not ask for it by name.
-  4. Poll `get_marketplace_installations` until `RUNNING` or `FAILED`, then report the access URL and port. On `FAILED` call `get_marketplace_logs`.
-- **`teardown <id>`**: call `teardown_marketplace_app`. It removes containers **and volumes**; confirm first if the recipe holds data.
-- **`logs <id>`**: call `get_marketplace_logs` and show the last 50 lines in a code block.
+  1. `GetRecipe` and read its variables. Ask for any variable with no default that was not given. Do not invent passwords.
+  2. If the recipe is `floci_native`, mention it once and continue only if the user wants the recipe.
+  3. Starting a container changes the user's Docker: say what will start unless they named it.
+  4. `DeployRecipe`. It waits for `RUNNING` or `FAILED` and returns `access_url`. Report the URL and any `ports_adjusted` (the default port was taken, so a free one was used). On `FAILED` show `log_tail`.
+- **`teardown <id>`**: `TeardownRecipe`. It removes containers **and volumes**; confirm first if the recipe holds data.
+- **`logs <id>`**: `GetLogs` and show the lines in a code block.
 
 ## Moving on
 
-For the same recipe across `test` and `demo` environments use the `deploy_to_environment` and `promote_recipe` tools (`marketplace` toolset).
+For the same recipe across `test` and `demo` use `deploy_to_environment` and `promote_recipe` (`pipeline` toolset).

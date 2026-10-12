@@ -24,7 +24,7 @@
     "toolsets": {
       "type": "string",
       "title": "Toolsets",
-      "description": "Comma separated toolsets to register: core, storage, messaging, compute, ops, marketplace, hybrid, or all. Fewer tools means fewer tokens per conversation.",
+      "description": "Comma separated toolsets to register: core, storage, messaging, compute, ops, marketplace, pipeline, hybrid, generic, code, or all. Fewer tools means fewer tokens per conversation.",
       "default": "core,storage,messaging,compute"
     },
     "read_only": {
