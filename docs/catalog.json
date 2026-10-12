@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T19:59:32Z",
+  "generatedAt": "2026-10-12T20:02:49Z",
   "repo": "https://github.com/pmaojo/floci-mcp-unofficial",
   "counts": {
     "tools": 138,
@@ -250,7 +250,7 @@
       "name": "gcp_create_bucket",
       "group": "clouds",
       "cloud": "gcp",
-      "writes": false,
+      "writes": true,
       "toolset": "core",
       "description": "Creates a Cloud Storage bucket in the configured GCP project (Floci-GCP).",
       "params": [
@@ -295,7 +295,7 @@
       "name": "gcp_create_topic",
       "group": "clouds",
       "cloud": "gcp",
-      "writes": false,
+      "writes": true,
       "toolset": "core",
       "description": "Creates a Pub/Sub topic (Floci-GCP uses PUT, as the real API does).",
       "params": [
@@ -328,7 +328,7 @@
       "name": "azure_create_container",
       "group": "clouds",
       "cloud": "azure",
-      "writes": false,
+      "writes": true,
       "toolset": "core",
       "description": "Creates a Blob Storage container.",
       "params": [
@@ -373,7 +373,7 @@
       "name": "azure_create_queue",
       "group": "clouds",
       "cloud": "azure",
-      "writes": false,
+      "writes": true,
       "toolset": "core",
       "description": "Creates a Queue Storage queue.",
       "params": [
@@ -406,7 +406,7 @@
       "name": "oci_create_bucket",
       "group": "clouds",
       "cloud": "oci",
-      "writes": false,
+      "writes": true,
       "toolset": "core",
       "description": "Creates an Object Storage bucket in the default compartment.",
       "params": [

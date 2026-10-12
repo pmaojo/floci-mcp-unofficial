@@ -94,6 +94,18 @@ Things to ask the agent, and what it ends up calling. The toolset in brackets is
 
 Azure, GCP and OCI are called through each provider's own REST contract, the same one their emulators serve. Start with `list_clouds`: it reports which runtimes answer, so the agent knows which tools can work.
 
+### Coverage
+
+AWS is covered broadly (138 tools minus the ones below). The other three clouds are covered **partially**: the services Floci UI can drive are a superset of what the tools reach.
+
+| Cloud | Services the emulator exposes (as Floci UI drives them) | Covered here | Not covered |
+|---|---|---|---|
+| **Azure** | Storage, Queue, Key Vault, Service Bus, Event Hubs, Table, Cosmos DB, SQL, PostgreSQL, Compute, AKS, Networking, Functions | Blob containers (list, create), blobs (list), queues (list, create), Key Vault secret names | Service Bus, Event Hubs, Table, Cosmos DB, SQL, PostgreSQL, Compute, AKS, Networking, Functions |
+| **GCP** | Cloud Storage, Pub/Sub, Secret Manager, Firestore, Cloud SQL, Cloud Functions, Cloud Run, GKE, Scheduler | Buckets (list, create), objects (list), topics (list, create), secret names | Firestore, Cloud SQL, Cloud Functions, Cloud Run, GKE, Scheduler |
+| **OCI** | Object Storage, Queue, Streaming, Secrets, KMS, Identity, Functions, OKE | Buckets (list, create), objects (list) | Queue, Streaming, Secrets, KMS, Identity, Functions, OKE |
+
+Inside the covered services the tools are read-mostly: there is no upload, download or delete of objects, no publish or receive on Pub/Sub or Azure queues, no delete of buckets, queues or topics, and secret tools never return values. So this is a starting surface, not parity with AWS. Adding a service is one function in `tools/clouds.py` plus a line in `verify_clouds.py`; the REST paths are the ones in Floci UI's adapters.
+
 Run the emulators with the `multicloud` profile of the [Floci UI compose file](https://github.com/floci-io/floci-ui/blob/main/docker-compose.yml), or on their own.
 
 ## Toolsets and read-only mode
@@ -136,11 +148,34 @@ Unset, an agent can reach every toolset, `hybrid` included. That toolset holds t
 
 Claude Code applies `list_changed` in interactive sessions and in `-p` mode. Other clients vary; if yours ignores it, set the toolsets up front.
 
+### Decision-model router (optional)
+
+A decision model answers typed questions about a piece of state and returns calibrated probabilities instead of text. Here the state is the task and there is one yes/no question per toolset, so one cheap call says which toolsets a request needs. It is off unless you set `FLOCI_DECIDER`; toolsets, `enable_toolset` and the agent's own judgement work without it.
+
+| `FLOCI_DECIDER` | Endpoint | Model | Key from |
+|---|---|---|---|
+| `openrouter-jev` | `https://openrouter.ai/api/alpha/decisions` | `~typesafe/jev-latest` | `OPENROUTER_API_KEY` |
+| `openrouter-mercury` | same | `inception/mercury-decide` | `OPENROUTER_API_KEY` |
+| `zenmux-jev` | `https://zenmux.ai/api/v1/systemone` | `typesafe/jev-latest` | `ZENMUX_API_KEY` |
+| `digitalocean-jev` | `https://inference.do-ai.run/v1/systemone` | `typesafe-jev-1.13.0` | `MODEL_ACCESS_KEY` |
+| `custom` | `FLOCI_DECIDER_URL` | `FLOCI_DECIDER_MODEL` | `FLOCI_DECIDER_API_KEY` |
+
+```bash
+FLOCI_DECIDER=openrouter-jev OPENROUTER_API_KEY=... uv run python floci_mcp.py
+FLOCI_DECIDER=openrouter-mercury FLOCI_DECIDER_MODEL=inception/mercury-decide:free ...   # the free variant
+FLOCI_DECIDER_MIN_CONFIDENCE=0.5     # recommend a toolset at or above this probability (default 0.5)
+```
+
+It registers one tool, `suggest_toolsets(task, apply=false)`: it returns every toolset ranked by probability, the recommended ones and which are not enabled yet; with `apply=true` it enables them, within `FLOCI_TOOLSETS_ALLOWED`. Measure it on the same 40 tasks with `uv run python eval/run.py decision`.
+
+What is and is not verified: the request and response shapes follow the System One schema as documented by [ZenMux](https://zenmux.ai/docs/api/typesafe/systemone), [DigitalOcean](https://docs.digitalocean.com/products/inference/how-to/use-system-one-api/index.html.md) and the `pi-decider` package (question type `noul`, options and levels under `criteria`). The server is tested end to end against a fake endpoint, not against a live provider. The OpenRouter path is `alpha`, so it may change, and the Mercury Decide model id is the one on its OpenRouter model page, which has not been tried against that path here. Jev is the one documented on the Decisions API.
+
 ### Measuring it
 
 ```bash
 uv run python eval/run.py static       # tokens per configuration
 uv run python eval/run.py retrieval    # does BM25 find the expected tool? (offline)
+FLOCI_DECIDER=openrouter-jev OPENROUTER_API_KEY=... uv run python eval/run.py decision
 ANTHROPIC_API_KEY=... uv run python eval/run.py model   # real tool selection by a model
 ```
 
@@ -232,6 +267,10 @@ Wherever you run it, the client starts the server from its own directory. The re
 | `FLOCI_TOOLSETS` | `core,storage,messaging,compute` (`all` for everything) |
 | `FLOCI_TOOLSETS_ALLOWED` | every toolset (an empty value forbids switching) |
 | `FLOCI_READ_ONLY` | off |
+| `FLOCI_DECIDER` | off (`openrouter-jev`, `openrouter-mercury`, `zenmux-jev`, `digitalocean-jev`, `custom`) |
+| `FLOCI_DECIDER_URL`, `FLOCI_DECIDER_MODEL`, `FLOCI_DECIDER_API_KEY` | the preset's, or required for `custom` |
+| `FLOCI_DECIDER_MIN_CONFIDENCE` | `0.5` |
+| `OPENROUTER_API_KEY`, `ZENMUX_API_KEY`, `MODEL_ACCESS_KEY` | the key a decider preset reads |
 | `FLOCI_PLUGINS_DIR` | `plugins/` next to the server |
 | `SIDECAR_STATE_DIR` | `~/.floci-mcp` |
 | `FLOCI_RECIPES_DIR` | `recipes/` next to the server |

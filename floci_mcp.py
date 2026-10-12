@@ -45,6 +45,12 @@ toolsets.register_toolset_info(mcp, SELECTION, READ_ONLY, DYNAMIC)
 if ALLOWED:
     toolsets.register_dynamic_tools(mcp, DYNAMIC)
 
+import decider  # noqa: E402
+
+DECIDER = decider.load_config()
+if DECIDER:
+    decider.register_decider_tool(mcp, DECIDER, DYNAMIC)
+
 
 def _load_community_plugins(mcp_instance) -> None:
     """Discover and load community plugin tools from mcp/plugins/<name>/tools.py."""

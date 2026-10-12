@@ -18,7 +18,9 @@
         "FLOCI_AZURE_ENDPOINT": "${user_config.azure_endpoint}",
         "FLOCI_GCP_ENDPOINT": "${user_config.gcp_endpoint}",
         "FLOCI_OCI_ENDPOINT": "${user_config.oci_endpoint}",
-        "FLOCI_TOOLSETS_ALLOWED": "${user_config.allowed_toolsets}"
+        "FLOCI_TOOLSETS_ALLOWED": "${user_config.allowed_toolsets}",
+        "FLOCI_DECIDER": "${user_config.decider}",
+        "FLOCI_DECIDER_API_KEY": "${user_config.decider_api_key}"
       }
     }
   }

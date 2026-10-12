@@ -36,8 +36,9 @@ GROUPS: list = []
 SKIPPED = {
     "run_ui_tests": "runs the Floci Studio Playwright suite; meaningless outside Studio",
     "list_toolsets": "covered by the toolsets and dynamic groups, which run it in a subprocess",
-    "enable_toolset": "only registered when FLOCI_TOOLSETS_ALLOWED is set; the dynamic group drives it over stdio",
-    "disable_toolset": "only registered when FLOCI_TOOLSETS_ALLOWED is set; the dynamic group drives it over stdio",
+    "enable_toolset": "registered unless switching is forbidden; the dynamic group drives it over stdio",
+    "suggest_toolsets": "only registered when FLOCI_DECIDER is set; the decider group drives it over stdio",
+    "disable_toolset": "registered unless switching is forbidden; the dynamic group drives it over stdio",
     "start_reverse_tunnel": "spawns an external tunnel binary; only its error path is checked",
     "stop_reverse_tunnel": "needs a live tunnel pid",
 }
@@ -171,14 +172,14 @@ async def docs_group():
     index = await __import__("toolsets").tool_index()
 
     # Every environment variable the code reads is documented.
-    pattern = re.compile(r"""(?:os\.environ\.get|os\.getenv|environ\[)\(?\s*['"]([A-Z][A-Z0-9_]{3,})['"]""")
+    pattern = re.compile(r"""(?:os\.environ\.get|os\.getenv|environ\[|env\.get)\(?\s*['"]([A-Z][A-Z0-9_]{3,})['"]""")
     read: set[str] = set()
     for folder in ("tools", "floci_backend"):
         for dirpath, _, files in os.walk(os.path.join(root, folder)):
             for name in files:
                 if name.endswith(".py"):
                     read |= set(pattern.findall(open(os.path.join(dirpath, name)).read()))
-    for name in ("floci_mcp.py", "toolsets.py"):
+    for name in ("floci_mcp.py", "toolsets.py", "decider.py"):
         read |= set(pattern.findall(open(os.path.join(root, name)).read()))
     internal = {"SIDECAR_HOST", "SIDECAR_PORT", "SIDECAR_ALLOWED_ORIGINS", "SIDECAR_MAX_BODY_MB", "SIDECAR_TOKEN",
                 "LAMBDA_DEFAULT_ROLE_ARN", "AWS_DEFAULT_REGION", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY",
@@ -314,6 +315,10 @@ async def toolsets_group():
        bad is None and "unknown toolset nope" in proc.stderr and "Available:" in proc.stderr, proc.stderr[-200:])
     ro, _ = run(FLOCI_TOOLSETS="all", FLOCI_READ_ONLY="1")
     ok("toolsets", "read-only mode leaves no writer", bool(ro) and ro["writers"] == [], ro and ro["writers"])
+    must_go = ["azure_create_container", "azure_create_queue", "gcp_create_bucket", "gcp_create_topic", "oci_create_bucket",
+               "create_s3_bucket", "put_s3_object", "delete_sqs_queue", "invoke_lambda", "deploy_marketplace_app", "run_local_aws_cmd"]
+    ok("toolsets", "read-only mode removes the cloud writers by name, not by the module's own rule",
+       bool(ro) and not [n for n in must_go if n in ro["names"]], ro and [n for n in must_go if n in ro["names"]])
     ok("toolsets", "read-only mode keeps the readers",
        bool(ro) and {"list_s3_buckets", "get_secret_value", "scan_dynamodb", "list_clouds"} <= set(ro["names"]))
     ok("toolsets", "read-only mode is reported", bool(ro) and ro["read_only"] is True)
@@ -964,6 +969,72 @@ async def dynamic_toolsets():
         restricted.close()
 
 
+# ------------------------------------------------------------------ decider
+@group
+async def decider_group():
+    import importlib
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    root = os.path.dirname(os.path.abspath(__file__))
+    spec2 = importlib.util.spec_from_file_location("test_decider", os.path.join(root, "tests", "test_decider.py"))
+    tests = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(tests)
+    for name in sorted(n for n in dir(tests) if n.startswith("test_")):
+        try:
+            await asyncio.to_thread(getattr(tests, name))
+            ok("decider", name.replace("_", " "), True)
+        except AssertionError as error:
+            ok("decider", name.replace("_", " "), False, str(error))
+
+    seen: dict = {}
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):  # noqa: N802
+            body = json.loads(self.rfile.read(int(self.headers["content-length"])))
+            seen["body"], seen["auth"], seen["path"] = body, self.headers.get("authorization"), self.path
+            answers = {n: {"type": "noul", "noul": 0.9 if n in ("ops", "messaging") else 0.05} for n in body["questions"]}
+            data = json.dumps({"model": body["model"], "answers": answers, "usage": {"input_tokens": 1, "output_tokens": 1}}).encode()
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+    client = StdioClient(FLOCI_TOOLSETS="core", FLOCI_DECIDER="custom", FLOCI_DECIDER_URL=f"http://127.0.0.1:{port}/v1/systemone",
+                         FLOCI_DECIDER_MODEL="typesafe/jev-latest", FLOCI_DECIDER_API_KEY="secret")
+    try:
+        client.initialize()
+        names = client.tool_names()
+        ok("decider", "suggest_toolsets is registered when a decider is configured", "suggest_toolsets" in names)
+        suggestion = client.call("suggest_toolsets", task="messages are stuck in my dead-letter queue")
+        ok("decider", "the model's answer is ranked and thresholded over a real HTTP call",
+           suggestion.get("recommended") == ["messaging", "ops"] or sorted(suggestion.get("recommended", [])) == ["messaging", "ops"], suggestion)
+        ok("decider", "the state and the key reach the endpoint",
+           seen.get("body", {}).get("state", "").startswith("messages are stuck") and seen.get("auth") == "Bearer secret" and seen.get("path") == "/v1/systemone", seen)
+        ok("decider", "without apply nothing is enabled", "list_dead_letter_queues" not in client.tool_names())
+        applied = client.call("suggest_toolsets", task="messages are stuck in my dead-letter queue", apply=True)
+        ok("decider", "with apply the recommended toolsets are enabled", sorted(applied.get("applied", [])) == ["messaging", "ops"], applied)
+        ok("decider", "applying announces the change and the tools appear",
+           "notifications/tools/list_changed" in client.notifications and "list_dead_letter_queues" in client.tool_names(), client.notifications)
+    finally:
+        client.close()
+        server.shutdown()
+
+    off = StdioClient(FLOCI_TOOLSETS="core")
+    try:
+        off.initialize()
+        ok("decider", "suggest_toolsets is absent when no decider is configured", "suggest_toolsets" not in off.tool_names())
+    finally:
+        off.close()
+
+
 # ------------------------------------------------------------------- cwd
 @group
 async def working_directory():
@@ -1046,7 +1117,9 @@ async def main(filters: list[str]) -> int:
     if not filters:
         names = {t.name for t in await server.mcp.list_tools()}
         unexercised = sorted(names - EXERCISED - set(SKIPPED))
-        stale = sorted(set(SKIPPED) - names)
+        # Registered only under some configuration, so the default server does not list them.
+        conditional = {"suggest_toolsets"}
+        stale = sorted(set(SKIPPED) - names - conditional)
         print("\n[coverage]")
         ok("coverage", f"every tool is exercised or skipped with a reason ({len(names)} tools)", not unexercised, unexercised)
         ok("coverage", "no stale entries in SKIPPED", not stale, stale)

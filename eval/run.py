@@ -7,6 +7,7 @@ against different toolset configurations.
     uv run python eval/run.py static                     # tokens per configuration
     uv run python eval/run.py retrieval                  # can BM25 find the tool? (offline)
     uv run python eval/run.py model                      # needs ANTHROPIC_API_KEY
+    uv run python eval/run.py decision                   # needs FLOCI_DECIDER and its key (Jev or Mercury Decide)
 
     --configs default,all,core+storage                   # "+" joins toolsets; default is the server default
     --tasks eval/tasks.json  --limit 10  --model <id>  --out eval/results/run.json
@@ -29,6 +30,7 @@ sys.path.insert(0, ROOT)
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
+import decider  # noqa: E402
 import toolsets  # noqa: E402
 
 DEFAULT_MODEL = os.environ.get("FLOCI_EVAL_MODEL", "claude-sonnet-5-5")
@@ -192,6 +194,43 @@ async def run_model(configs: list[str], tasks: list[dict], model: str, concurren
     return report
 
 
+# ------------------------------------------------------------------- decision
+async def run_decision(tasks: list[dict], concurrency: int) -> dict:
+    """Does the decision model recommend the toolset the expected tool lives in?"""
+    config = decider.load_config()
+    if config is None:
+        raise SystemExit("decision mode needs FLOCI_DECIDER (openrouter-jev, openrouter-mercury, zenmux-jev, digitalocean-jev or custom).")
+    index = await toolsets.tool_index()
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def one(task):
+        expected = task["tool"] if isinstance(task["tool"], list) else [task["tool"]]
+        wanted = {index[e]["toolset"] for e in expected if e in index and index[e]["toolset"]}
+        async with semaphore:
+            started = time.time()
+            try:
+                result = await decider.decide(config, task["prompt"])
+            except decider.DeciderError as error:
+                return {"task": task["id"], "error": str(error)}
+        recommended = set(result["recommended"])
+        top = result["ranked"][0]["toolset"] if result["ranked"] else None
+        return {
+            "task": task["id"], "wanted": sorted(wanted), "recommended": sorted(recommended), "top": top,
+            "hit": bool(wanted & recommended), "top_hit": top in wanted,
+            "seconds": round(time.time() - started, 2),
+        }
+
+    results = await asyncio.gather(*(one(t) for t in tasks))
+    good = [r for r in results if "error" not in r]
+    return {config.preset: {
+        "model": config.model, "tasks": len(tasks), "answered": len(good),
+        "hit": sum(r["hit"] for r in good), "top_hit": sum(r["top_hit"] for r in good),
+        "avg_recommended": round(sum(len(r["recommended"]) for r in good) / max(len(good), 1), 2),
+        "avg_seconds": round(sum(r["seconds"] for r in good) / max(len(good), 1), 2),
+        "errors": [r for r in results if "error" in r], "results": results,
+    }}
+
+
 # ---------------------------------------------------------------------- views
 def table(rows: list[list], header: list[str]) -> str:
     widths = [max(len(str(r[i])) for r in [header] + rows) for i in range(len(header))]
@@ -201,7 +240,7 @@ def table(rows: list[list], header: list[str]) -> str:
 
 async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["static", "retrieval", "model"])
+    parser.add_argument("mode", choices=["static", "retrieval", "model", "decision"])
     parser.add_argument("--configs", default="default,all,core,core+storage,core+messaging")
     parser.add_argument("--tasks", default=os.path.join(ROOT, "eval", "tasks.json"))
     parser.add_argument("--limit", type=int)
@@ -230,6 +269,11 @@ async def main() -> int:
                 print(f"\n[{config}] tasks where the tool is not in the top 3:")
                 for miss in r["misses"]:
                     print(f"  {miss['task']}: want {miss['expected']} (rank {miss['rank']}), got {miss['top']}")
+    elif args.mode == "decision":
+        report = await run_decision(tasks, args.concurrency)
+        rows = [[name, r["model"], f"{r['answered']}/{r['tasks']}", f"{r['hit']}/{r['answered']}", f"{r['top_hit']}/{r['answered']}",
+                 r["avg_recommended"], r["avg_seconds"], len(r["errors"])] for name, r in report.items()]
+        print(table(rows, ["decider", "model", "answered", "needed toolset found", "top-1", "avg toolsets", "secs", "errors"]))
     else:
         report = await run_model(configs, tasks, args.model, args.concurrency)
         rows = [[c, r["tools"], r["avg_input_tokens"], f"{r['answerable']}/{r['tasks']}",

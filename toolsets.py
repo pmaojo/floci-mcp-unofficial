@@ -38,6 +38,17 @@ TOOLSETS = {
     "hybrid": ("hybrid", "devtools", "extensibility"),
 }
 
+# One line per toolset, written for a decision model that has to say whether a task needs it.
+DESCRIPTIONS = {
+    "core": "Health, discovery and inventory of the local clouds, plus Azure, GCP and OCI storage, queues and secrets.",
+    "storage": "S3 buckets and objects, DynamoDB tables and items (including PartiQL), Secrets Manager and KMS keys.",
+    "messaging": "SQS queues, SNS topics and subscriptions, EventBridge rules and events, Step Functions and SES email.",
+    "compute": "Lambda functions (create, update, invoke, logs) and Athena SQL queries.",
+    "ops": "Dead-letter queues and message redrive, event capture and replay, the service graph, resource tags, and IaC drift detection.",
+    "marketplace": "Starting, inspecting and removing local Docker stacks such as databases and brokers, and promoting them between environments.",
+    "hybrid": "Seeding synthetic data, exporting infrastructure as Terraform, calling real AWS or arbitrary URLs, tunnels, webhooks and interceptors.",
+}
+
 DEFAULT_TOOLSETS = ("core", "storage", "messaging", "compute")
 
 WRITE_PREFIXES = (
@@ -53,12 +64,25 @@ DESTRUCTIVE_NAMES = {"run_local_aws_cmd", "execute_partiql_dynamodb"}
 OPEN_WORLD_NAMES = {"proxy_http_request", "seed_from_cloud_dynamodb", "proxy_cloud_sqs_to_local", "start_reverse_tunnel"}
 
 
+CLOUD_PREFIXES = ("gcp_", "azure_", "oci_")
+
+
+def _verb(name: str) -> str:
+    """The tool name without its cloud prefix, so azure_create_queue is judged as create_queue."""
+    for prefix in CLOUD_PREFIXES:
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
 def is_write(name: str) -> bool:
-    return name in WRITE_NAMES or name.startswith(WRITE_PREFIXES)
+    verb = _verb(name)
+    return name in WRITE_NAMES or verb in WRITE_NAMES or verb.startswith(WRITE_PREFIXES)
 
 
 def is_destructive(name: str) -> bool:
-    return name in DESTRUCTIVE_NAMES or name.startswith(DESTRUCTIVE_PREFIXES)
+    verb = _verb(name)
+    return name in DESTRUCTIVE_NAMES or verb in DESTRUCTIVE_NAMES or verb.startswith(DESTRUCTIVE_PREFIXES)
 
 
 def annotations_for(name: str) -> ToolAnnotations:
@@ -278,7 +302,7 @@ async def tool_index() -> dict[str, dict]:
         for tool in await server.list_tools():
             index[tool.name] = {"module": module_name, "toolset": toolset_of(module_name)}
     # Always registered, whatever the selection.
-    for always in ("list_toolsets", "enable_toolset", "disable_toolset"):
+    for always in ("list_toolsets", "enable_toolset", "disable_toolset", "suggest_toolsets"):
         index[always] = {"module": "toolsets", "toolset": None}
     return index
 

@@ -62,6 +62,19 @@
       "title": "Toolsets the agent may enable",
       "description": "Comma separated toolsets an agent can switch on at runtime with enable_toolset. Use all to give it full agency, or list a few to cap it. hybrid holds tools that reach real AWS credentials and arbitrary URLs.",
       "default": "all"
+    },
+    "decider": {
+      "type": "string",
+      "title": "Decision model router (optional)",
+      "description": "Adds suggest_toolsets, which asks a decision model which toolsets a task needs. One of openrouter-jev, openrouter-mercury, zenmux-jev, digitalocean-jev. Leave empty to keep it off.",
+      "default": ""
+    },
+    "decider_api_key": {
+      "type": "string",
+      "title": "Decision model API key",
+      "description": "Key for the provider chosen above. Stored in the system credential store.",
+      "default": "",
+      "sensitive": true
     }
   }
 }
