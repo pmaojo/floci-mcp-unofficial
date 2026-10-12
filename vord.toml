@@ -1,0 +1,32 @@
+[project]
+key = "floci-mcp-unofficial"
+name = "floci-mcp-unofficial"
+version = "0.1.0"
+
+[analysis]
+sources = ["floci_generic", "floci_tools", "floci_backend", "scripts", "eval", "floci_mcp.py", "toolsets.py", "decider.py", "skills_catalog.py"]
+# Generated data and public demo keys (Supabase's well-known local anon key) are not findings.
+exclusions = [
+  "**/.venv/**", "**/__pycache__/**", "floci_generic/data/**", "docs/**", "recipes/**", "uv.lock", "verify_*.py", "tests/**",
+]
+profile = "vord way"
+
+# The hexagon of floci_generic: dependencies point inward.
+#   domain   pure rules, no I/O and no SDK
+#   app      use cases over the ports
+#   adapters boto3, httpx, disk, Docker, subprocesses
+#   bootstrap the one place that wires them
+[[architecture.forbidden_dependencies]]
+from = "floci_generic/domain"
+to = "floci_generic/app"
+
+[[architecture.forbidden_dependencies]]
+from = "floci_generic/domain"
+to = "floci_generic/adapters"
+
+[[architecture.forbidden_dependencies]]
+from = "floci_generic/app"
+to = "floci_generic/adapters"
+
+[gate]
+min_health_score = 60

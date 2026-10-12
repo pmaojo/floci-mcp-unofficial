@@ -6,8 +6,8 @@ call is classified by the gateway, so the read-only tool cannot write whatever t
 code says. Use it when a task chains calls or needs to filter a large result before
 it reaches you.
 """
-from floci_generic import gateway
-from floci_generic.sandbox import run
+from floci_generic import bootstrap
+from floci_generic.adapters.sandbox_process import run
 
 DOC = """
 Runs Python 3 (standard library only) with three helpers:
@@ -22,7 +22,7 @@ itertools, statistics, base64, textwrap, string, functools, decimal, time, uuid,
 
 
 def register(mcp):
-    reader, writer = gateway.make_pair()
+    reader, writer = bootstrap.make_pair()
 
     @mcp.tool(description="Reads from AWS, Azure, GCP and OCI by running Python. Refuses any call that changes state." + DOC)
     async def code_read(code: str, timeout_seconds: int = 30) -> dict:

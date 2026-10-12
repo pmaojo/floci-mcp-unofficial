@@ -1,10 +1,9 @@
 """Which AWS services answer on the running Floci."""
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
-from botocore.exceptions import EndpointConnectionError
-
-from floci_generic import catalog
-from floci_generic.classify import split_name
+from floci_generic.app import catalog
+from floci_generic.domain.classify import split_name
 
 NOT_IMPLEMENTED = ("NotImplemented", "UnknownOperation", "UnsupportedOperation", "InvalidAction", "UnrecognizedClient")
 _VERB_ORDER = {"list": 0, "describe": 1, "get": 2}
@@ -29,16 +28,12 @@ def _answers(result: dict) -> bool:
     return not code or not any(marker in code for marker in NOT_IMPLEMENTED)
 
 
-def probe_aws(services: "list[str] | None" = None, workers: int = 16, attempts: int = 6) -> dict[str, str]:
+def probe_aws(gateway: Any, services: "list[str] | None" = None, workers: int = 16, attempts: int = 6) -> dict[str, str]:
     """service -> answers | not-implemented | unreachable | no-argument-free-read | error: <type>.
 
     A service answers when any of a few argument-free reads works. One failing operation says
     nothing about the service: Floci may implement ListTables and not DescribeEndpoints.
     """
-    from floci_generic.gateway import Gateway
-
-    gateway = Gateway()
-
     def one(service: str) -> tuple[str, str]:
         names = _candidates(service, attempts)
         if not names:
@@ -47,11 +42,11 @@ def probe_aws(services: "list[str] | None" = None, workers: int = 16, attempts: 
         for name in names:
             try:
                 result = gateway.aws_call(service, name, {})
-            except EndpointConnectionError:
-                return service, "unreachable"
             except Exception as exc:  # noqa: BLE001 - one odd operation must not hide the rest
                 outcome = f"error: {type(exc).__name__}"
                 continue
+            if result.get("error") == "EndpointConnectionError":
+                return service, "unreachable"
             if _answers(result):
                 return service, "answers"
         return service, outcome

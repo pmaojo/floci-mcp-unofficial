@@ -5,23 +5,22 @@ not), declared query parameters go to the query string, a `body` parameter or th
 become the JSON body, and the cloud's usual defaults (project, account, compartment...) fill
 what the caller left out.
 """
-import os
 import re
-from typing import Any, Callable
-from urllib.parse import quote
+import string
+from typing import Any, Callable, Mapping
 
-from floci_generic.errors import Blocked
+from floci_generic.domain.errors import Blocked
 
 _PLACEHOLDER = re.compile(r"{\+?(\w+)}")
+_UNRESERVED = frozenset(string.ascii_letters + string.digits + "-._~")
 DEFAULT_TENANCY = "ocid1.tenancy.oc1..flocilocaltenancy0000000000000000000000000000000000000000"
 
 
-def _env(name: str, default: str) -> str:
-    return os.environ.get(name, default)
-
-
-def defaults() -> dict[str, str]:
+def defaults(env: Mapping[str, str]) -> dict[str, str]:
     """Values for the parameters every cloud's routes share, from FLOCI_* or Floci's own defaults."""
+    def _env(name: str, default: str) -> str:
+        return env.get(name, default)
+
     project = _env("FLOCI_GCP_PROJECT", "floci-local")
     return {
         "project": project, "projectId": project, "projectsId": project, "projectNumber": project,
@@ -33,10 +32,20 @@ def defaults() -> dict[str, str]:
     }
 
 
+def is_runtime_path(path: str) -> bool:
+    """A path on the runtime (/storage/v1/b?project=x): absolute, no scheme or host, no '..' segment."""
+    return path.startswith("/") and "://" not in path and ".." not in path.split("?")[0].split("/")
+
+
+def percent_encode(value: str) -> str:
+    """Percent-encode everything but RFC 3986 unreserved characters, '/' included."""
+    return "".join(c if c in _UNRESERVED else "".join(f"%{b:02X}" for b in c.encode("utf-8")) for c in value)
+
+
 def _fill_path(path: str, names: list[str], values: dict[str, Any]) -> str:
     for name in names:
         value = str(values[name])
-        path = path.replace("{+" + name + "}", value).replace("{" + name + "}", quote(value, safe=""))
+        path = path.replace("{+" + name + "}", value).replace("{" + name + "}", percent_encode(value))
     return path
 
 
@@ -73,9 +82,9 @@ def _body(cloud: str, method: str, params: dict, leftovers: dict, query: dict, f
 
 
 def build_request(cloud: str, service: str, op: dict, params: dict,
-                  namespace: Callable[[], str]) -> dict:
+                  namespace: Callable[[], str], env: Mapping[str, str]) -> dict:
     """The {method, path, query?, json?} request for a catalogued operation."""
-    fallback = defaults()
+    fallback = defaults(env)
     values = {**fallback, **{k: v for k, v in params.items() if k != "body"}}
     used = _PLACEHOLDER.findall(op["path"])
     if "namespace" in used and "namespace" not in params:

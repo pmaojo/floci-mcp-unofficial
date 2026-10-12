@@ -1,4 +1,4 @@
-"""Errors shared by the gateway and the modules it delegates to."""
+"""Errors that cross the hexagon's boundary."""
 
 
 class Blocked(Exception):

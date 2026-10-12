@@ -15,4 +15,4 @@ class SidecarConfig(BaseSettings):
     max_body_mb: int = int(os.getenv('SIDECAR_MAX_BODY_MB', '60'))
 
 config = SidecarConfig()
-SIDECAR_TOKEN_HEADER = 'x-floci-sidecar-token'
+SIDECAR_HEADER_NAME = 'x-floci-sidecar-token'

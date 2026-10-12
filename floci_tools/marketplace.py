@@ -4,12 +4,12 @@ Reading is one tool; starting and removing are separate, so FLOCI_READ_ONLY remo
 the writers. The same operations are reachable with no extra tool definitions through
 the generic toolset (cloud="recipes"); this toolset is for clients that prefer named tools.
 """
-from floci_generic import recipes
+from floci_generic import bootstrap
 
 
 async def _call(operation: str, params: dict) -> dict:
     """A failure is a tool error (isError) for these named tools, as it was before recipes moved to the gateway."""
-    out = await recipes.call(operation, params)
+    out = await bootstrap.recipe_service.call(operation, params)
     if "error" in out:
         raise RuntimeError(out["error"])
     return out

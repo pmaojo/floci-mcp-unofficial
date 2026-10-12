@@ -13,9 +13,16 @@ import httpx  # noqa: E402
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 import toolsets  # noqa: E402
-from floci_generic import catalog, recipes, sandbox  # noqa: E402
-from floci_generic.classify import AWS_READ_HTTP_METHODS, JOINERS, MUTATING_WORDS, classify_aws, classify_rest, split_name  # noqa: E402
-from floci_generic.gateway import Blocked, Gateway  # noqa: E402
+from floci_generic import bootstrap  # noqa: E402,F401  configures the catalog with the real adapters
+from floci_generic.adapters import sandbox_process as sandbox  # noqa: E402
+from floci_generic.app import catalog  # noqa: E402
+from floci_generic.app.recipes import RecipeService  # noqa: E402
+from floci_generic.bootstrap import Blocked, Gateway  # noqa: E402
+from floci_generic.domain import recipes  # noqa: E402
+from floci_generic.domain.clouds import HAND_ROUTES  # noqa: E402
+from floci_generic.domain.classify import (  # noqa: E402
+    AWS_READ_HTTP_METHODS, JOINERS, MUTATING_WORDS, classify_aws, classify_rest, split_name,
+)
 
 
 def run(coro):
@@ -132,15 +139,30 @@ def test_rest_classification_by_method():
 
 
 # ----------------------------------------------------------------- gateway
-def test_gateway_refuses_a_write_before_a_client_exists():
-    gateway = Gateway(allow_write=False)
+class RecordingAws:
+    """An AWS transport that records what would have left the process."""
+
+    def __init__(self):
+        self.sent = []
+
+    def send(self, service, operation, params):
+        self.sent.append((service, operation))
+        return {}
+
+    def validate(self, service, operation, params):
+        return None
+
+
+def test_gateway_refuses_a_write_before_anything_is_sent():
+    transport = RecordingAws()
+    gateway = Gateway(allow_write=False, aws_transport=transport)
     try:
         gateway.call("aws", "s3", "PutObject", {"Bucket": "b", "Key": "k", "Body": "x"})
     except Blocked as exc:
         assert "read-only" in str(exc)
     else:
         raise AssertionError("write was not blocked")
-    assert gateway._clients == {}, "a boto3 client was built for a refused call"
+    assert transport.sent == [], "a refused call reached the transport"
     assert [e.get("blocked") for e in gateway.log] == ["write"], "the refusal is recorded, and nothing was sent"
 
 
@@ -181,10 +203,11 @@ def test_gateway_rest_refuses_writes_foreign_hosts_and_traversal():
 
 
 def test_gateway_dry_run_records_a_write_and_sends_nothing():
-    gateway = Gateway(allow_write=True, dry_run_writes=True)
+    transport = RecordingAws()
+    gateway = Gateway(allow_write=True, dry_run_writes=True, aws_transport=transport)
     out = gateway.call("aws", "s3", "CreateBucket", {"Bucket": "demo"})
     assert out["dry_run"] is True
-    assert gateway._clients == {}
+    assert transport.sent == []
     assert gateway.log[0]["operation"] == "CreateBucket" and gateway.log[0]["kind"] == "write"
 
 
@@ -209,7 +232,7 @@ def test_every_cloud_has_services_and_catalogued_routes():
     for cloud in ("aws", "azure", "gcp", "oci"):
         assert catalog.list_services(cloud), cloud
     for cloud in ("azure", "gcp", "oci"):
-        for service, operation, method, path, _ in catalog.REST_ROUTES[cloud]:
+        for service, operation, method, path, _ in HAND_ROUTES[cloud]:
             info = catalog.describe_rest(cloud, service, operation)
             assert info and info["method"] == method
             assert info["kind"] == classify_rest(cloud, method, path).kind
@@ -432,36 +455,42 @@ RECIPES = [
 ]
 
 
-class FakeBackend:
-    """Stands in for the in-process backend: records installs and reports RUNNING."""
-    def __init__(self, final="RUNNING"):
-        self.calls, self.state, self.final = [], {}, final
+class FakeRuntime:
+    """Stands in for Docker and the host: records installs and reports the state it was told to."""
 
-    async def __call__(self, method, path, json_data=None):
-        self.calls.append((method, path, json_data))
-        if path == "/api/marketplace/recipes":
-            return {"recipes": RECIPES}
-        if path == "/api/marketplace/installations":
-            return {"installations": self.state}
-        if method == "POST":
-            rid = json_data["recipeId"]
-            defaults = {v["key"]: v["default"] for r in RECIPES if r["id"] == rid for v in r["variables"]}
-            self.state[rid] = {"status": self.final, "vars": {**defaults, **json_data["vars"]},
-                               "error": "boom" if self.final == "FAILED" else None}
-            return {"ok": True}
-        if method == "DELETE":
-            self.state.pop(path.rsplit("/", 1)[1], None)
-            return {"ok": True}
-        if path.endswith("/logs"):
-            return {"logs": ["line 1", "line 2"]}
-        raise AssertionError(path)
+    def __init__(self, final="RUNNING", busy=()):
+        self.state, self.final, self.busy = {}, final, set(busy)
+        self.installed, self.removed = [], []
+
+    async def recipes(self):
+        return RECIPES
+
+    async def installations(self):
+        return self.state
+
+    async def logs(self, recipe_id):
+        return ["line 1", "line 2"]
+
+    async def install(self, recipe_id, variables):
+        self.installed.append((recipe_id, variables))
+        defaults = {v["key"]: v["default"] for r in RECIPES if r["id"] == recipe_id for v in r["variables"]}
+        self.state[recipe_id] = {"status": self.final, "vars": {**defaults, **variables},
+                                 "error": "boom" if self.final == "FAILED" else None}
+
+    async def uninstall(self, recipe_id):
+        self.removed.append(recipe_id)
+        self.state.pop(recipe_id, None)
+
+    def port_busy(self, port):
+        return port in self.busy
+
+    def answering_aws(self, services):
+        return set()
 
 
-def with_backend(backend, busy=()):
-    recipes._backend = backend
-    recipes._native_cache = {}
-    recipes.port_busy = lambda port: port in busy
-    return backend
+def service_with(**kw):
+    runtime = FakeRuntime(**kw)
+    return RecipeService(runtime), runtime
 
 
 def test_recipes_operations_are_classified_by_table_not_by_verb():
@@ -483,44 +512,43 @@ def test_recipes_every_recipe_on_disk_with_a_floci_equivalent_names_real_service
 
 
 def test_recipes_deploy_moves_a_busy_default_port_and_reports_it():
-    backend = with_backend(FakeBackend(), busy={5432})
-    out = run(recipes.call("DeployRecipe", {"recipe_id": "postgres", "wait_seconds": 2}))
+    service, runtime = service_with(busy={5432})
+    out = run(service.call("DeployRecipe", {"recipe_id": "postgres", "wait_seconds": 2}))
     assert out["status"] == "RUNNING", out
     assert out["ports_adjusted"] == {"POSTGRES_PORT": {"default": 5432, "using": 5433}}
     assert out["access_url"] == "postgresql://u:postgres123@localhost:5433/db"
-    posts = [c for c in backend.calls if c[0] == "POST"]
-    assert len(posts) == 1 and posts[0][2]["vars"] == {"POSTGRES_PORT": 5433}
+    assert runtime.installed == [("postgres", {"POSTGRES_PORT": 5433})]
 
 
 def test_recipes_deploy_refuses_a_busy_port_the_user_chose():
-    backend = with_backend(FakeBackend(), busy={7000})
-    out = run(recipes.call("DeployRecipe", {"recipe_id": "postgres", "vars": {"POSTGRES_PORT": 7000}}))
+    service, runtime = service_with(busy={7000})
+    out = run(service.call("DeployRecipe", {"recipe_id": "postgres", "vars": {"POSTGRES_PORT": 7000}}))
     assert "already in use" in out["error"] and out["suggestion"] == {"POSTGRES_PORT": 7001}
-    assert not any(c[0] == "POST" for c in backend.calls), "docker was asked to start despite the busy port"
+    assert runtime.installed == [], "docker was asked to start despite the busy port"
 
 
 def test_recipes_deploy_rejects_unknown_variables_and_recipes():
-    with_backend(FakeBackend())
-    assert "Unknown variable" in run(recipes.call("DeployRecipe", {"recipe_id": "postgres", "vars": {"NOPE": 1}}))["error"]
-    assert "Unknown recipe" in run(recipes.call("DeployRecipe", {"recipe_id": "nope"}))["error"]
+    service, _ = service_with()
+    assert "Unknown variable" in run(service.call("DeployRecipe", {"recipe_id": "postgres", "vars": {"NOPE": 1}}))["error"]
+    assert "Unknown recipe" in run(service.call("DeployRecipe", {"recipe_id": "nope"}))["error"]
 
 
 def test_recipes_failed_deploy_returns_the_error_and_the_log_tail():
-    with_backend(FakeBackend(final="FAILED"))
-    out = run(recipes.call("DeployRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
+    service, _ = service_with(final="FAILED")
+    out = run(service.call("DeployRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
     assert out["status"] == "FAILED" and out["error"] == "boom" and out["log_tail"] == ["line 1", "line 2"]
 
 
 def test_recipes_teardown_waits_for_idle():
-    backend = with_backend(FakeBackend())
-    run(recipes.call("DeployRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
-    out = run(recipes.call("TeardownRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
-    assert out == {"recipe_id": "keycloak", "status": "IDLE"}
+    service, runtime = service_with()
+    run(service.call("DeployRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
+    out = run(service.call("TeardownRecipe", {"recipe_id": "keycloak", "wait_seconds": 2}))
+    assert out == {"recipe_id": "keycloak", "status": "IDLE"} and runtime.removed == ["keycloak"]
 
 
 def test_recipes_through_the_gateway_follow_the_read_write_rule():
-    with_backend(FakeBackend())
-    read_only = Gateway(allow_write=False)
+    service, _ = service_with()
+    read_only = Gateway(allow_write=False, recipes=service)
     assert run(read_only.acall("recipes", operation="ListRecipes"))["count"] == 2
     for op in ("DeployRecipe", "TeardownRecipe"):
         try:
@@ -528,13 +556,13 @@ def test_recipes_through_the_gateway_follow_the_read_write_rule():
         except Blocked:
             continue
         raise AssertionError(op)
-    dry = Gateway(allow_write=True, dry_run_writes=True)
+    dry = Gateway(allow_write=True, dry_run_writes=True, recipes=service)
     assert run(dry.acall("recipes", operation="DeployRecipe", params={"recipe_id": "postgres"}))["dry_run"]
 
 
 def test_recipes_are_reachable_from_the_read_only_code_sandbox_and_cannot_deploy():
-    with_backend(FakeBackend())
-    gateway = Gateway(allow_write=False)
+    service, _ = service_with()
+    gateway = Gateway(allow_write=False, recipes=service)
     out = run(sandbox.run('result = call("recipes", "marketplace", "ListRecipes")["count"]', gateway))
     assert out["ok"] and out["result"] == 2, out
     out = run(sandbox.run('call("recipes", "marketplace", "DeployRecipe", recipe_id="postgres")', gateway))
@@ -589,8 +617,6 @@ def test_live_every_cloud_answers_a_read():
         assert out.get("status") == 200, out
         checks.append("oci")
     if _up("http://localhost:4566/"):
-        recipes._backend = __import__("floci_tools._client", fromlist=["backend"]).backend
-        recipes._native_cache = None
         out = run(Gateway().acall("recipes", operation="ListRecipes"))
         assert out["count"] >= 30, out
         checks.append(f"recipes({out['count']}, native: {sorted(r['id'] for r in out['recipes'] if 'floci_native' in r)})")

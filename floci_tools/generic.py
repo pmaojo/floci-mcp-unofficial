@@ -9,16 +9,16 @@ writer instead of guessing from a name.
 """
 import asyncio
 
-from floci_generic import catalog, recipes
-from floci_generic import gateway as gw
-from floci_generic.errors import Blocked
-from floci_generic.probe import probe_aws
+from floci_generic import bootstrap
+from floci_generic.app import catalog
+from floci_generic.domain import recipes
+from floci_generic.domain.errors import Blocked
 
 _probe_cache: dict[str, str] = {}
 
 
 def register(mcp):
-    reader, writer = gw.make_pair()
+    reader, writer = bootstrap.make_pair()
 
     @mcp.tool()
     async def list_services(cloud: str = "aws", probe: bool = False) -> dict:
@@ -32,7 +32,7 @@ def register(mcp):
             return {"error": f"Unknown cloud {cloud!r}. Use one of {', '.join(catalog.CLOUDS)}."}
         if cloud == "aws":
             if probe and not _probe_cache:
-                _probe_cache.update(await asyncio.to_thread(probe_aws))
+                _probe_cache.update(await asyncio.to_thread(bootstrap.probe))
             if _probe_cache:
                 answering = sorted(s for s, v in _probe_cache.items() if v == "answers")
                 return {"cloud": cloud, "answering": answering, "count": len(answering),

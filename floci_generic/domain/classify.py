@@ -83,6 +83,8 @@ AWS_READ_HTTP_METHODS = REST_READ_METHODS | {"POST"}
 
 @dataclass(frozen=True)
 class Verdict:
+    """How an operation is classified: read or write, and whether it destroys or reveals something."""
+
     kind: str  # "read" or "write"
     destructive: bool
     sensitive: bool
@@ -90,6 +92,7 @@ class Verdict:
 
     @property
     def read(self) -> bool:
+        """True for a read."""
         return self.kind == "read"
 
 
@@ -98,31 +101,50 @@ def split_name(operation: str) -> list[str]:
     return [t.lower() for t in _CAMEL.findall(operation)]
 
 
-def classify_aws(service: str, operation: str, http_method: str | None = None) -> Verdict:
-    tokens = split_name(operation)
+def _is_destructive(tokens: list[str]) -> bool:
     verb = tokens[0] if tokens else ""
+    if verb in DESTRUCTIVE_VERBS:
+        return True
+    return verb == "batch" and len(tokens) > 1 and tokens[1] in DESTRUCTIVE_VERBS
+
+
+def _verb_is_read(tokens: list[str]) -> tuple[str, bool]:
+    """The verb that decides (the word after "batch" for Batch*), and whether it is a read verb."""
+    verb = tokens[0] if tokens else ""
+    if verb == "batch":
+        effective = tokens[1] if len(tokens) > 1 else ""
+        return effective, effective in BATCH_READ_VERBS
+    return verb, verb in READ_VERBS
+
+
+def _joins_a_mutation(tokens: list[str]) -> bool:
+    """GetOrCreate*, DescribeAndStop*: a read verb, a joiner, then a mutating word."""
+    return len(tokens) > 2 and tokens[1] in JOINERS and any(t in MUTATING_WORDS for t in tokens[2:])
+
+
+def classify_aws(service: str, operation: str, http_method: str | None = None) -> Verdict:
+    """Read or write for one AWS operation. Default deny: a read needs a read verb and nothing against it."""
+    tokens = split_name(operation)
     key = (service, operation)
-    destructive = verb in DESTRUCTIVE_VERBS or (verb == "batch" and len(tokens) > 1 and tokens[1] in DESTRUCTIVE_VERBS)
+    destructive = _is_destructive(tokens)
 
     if key in READ_VERB_BUT_WRITES:
         return Verdict("write", destructive, False, READ_VERB_BUT_WRITES[key])
     if key in READ_BY_NAME:
         return Verdict("read", False, key in SENSITIVE, "reviewed read")
 
-    effective = tokens[1] if verb == "batch" and len(tokens) > 1 else verb
-    allowed = BATCH_READ_VERBS if verb == "batch" else READ_VERBS
-    if effective not in allowed:
+    effective, is_read = _verb_is_read(tokens)
+    if not is_read:
         return Verdict("write", destructive, False, f"verb {effective!r} is not a read verb")
-
-    if len(tokens) > 2 and tokens[1] in JOINERS and any(t in MUTATING_WORDS for t in tokens[2:]):
+    if _joins_a_mutation(tokens):
         return Verdict("write", destructive, False, "name combines a read verb with a mutating word")
-
     if http_method and http_method.upper() not in AWS_READ_HTTP_METHODS:
         return Verdict("write", destructive, False, f"read-looking name but the model says HTTP {http_method.upper()}")
     return Verdict("read", False, key in SENSITIVE, "read verb")
 
 
 def classify_rest(cloud: str, method: str, path: str) -> Verdict:
+    """Read or write for one REST call, from its HTTP method and path."""
     method = method.upper()
     bare = path.split("?", 1)[0].rstrip("/")
     sensitive = bool(REST_SENSITIVE.search(bare))

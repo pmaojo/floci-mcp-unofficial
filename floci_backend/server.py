@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from floci_backend.config import config, SIDECAR_TOKEN_HEADER
+from floci_backend.config import config, SIDECAR_HEADER_NAME
 
 from floci_backend.infrastructure.aws_cli import AwsCli
 from floci_backend.application.lambda_service import LambdaService
@@ -82,7 +82,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*", SIDECAR_TOKEN_HEADER],
+    allow_headers=["*", SIDECAR_HEADER_NAME],
 )
 
 @app.middleware("http")
@@ -91,7 +91,7 @@ async def token_middleware(request: Request, call_next):
         return await call_next(request)
 
     if config.token:
-        provided_header = request.headers.get(SIDECAR_TOKEN_HEADER, '').strip()
+        provided_header = request.headers.get(SIDECAR_HEADER_NAME, '').strip()
         auth_header = request.headers.get('authorization', '')
 
         token_valid = False

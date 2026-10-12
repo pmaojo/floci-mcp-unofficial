@@ -27,8 +27,9 @@ sys.path.insert(0, ROOT)
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 import toolsets  # noqa: E402
-from floci_generic import catalog, gateway as gateway_module  # noqa: E402
-from floci_generic.classify import classify_rest  # noqa: E402
+from floci_generic import bootstrap  # noqa: E402
+from floci_generic.app import catalog  # noqa: E402
+from floci_generic.domain.classify import classify_rest  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location("floci_eval_run", os.path.join(ROOT, "eval", "run.py"))
 curated = importlib.util.module_from_spec(_spec)
@@ -227,14 +228,14 @@ async def run_arm(arm: str, tasks: list[dict], model: str, concurrency: int) -> 
 
     async def one(task: dict) -> dict:
         # Fresh gateways per task: writes are recorded, never sent.
-        pair = (gateway_module.Gateway(allow_write=False), gateway_module.Gateway(allow_write=True, dry_run_writes=True))
-        original = gateway_module.make_pair
-        gateway_module.make_pair = lambda: pair
+        pair = (bootstrap.Gateway(allow_write=False), bootstrap.Gateway(allow_write=True, dry_run_writes=True))
+        original = bootstrap.make_pair
+        bootstrap.make_pair = lambda: pair
         try:
             server = FastMCP("eval")
             toolsets.register_selected(server, arm_selection(arm))
         finally:
-            gateway_module.make_pair = original
+            bootstrap.make_pair = original
         defs = [{"name": t.name, "description": t.description or "", "input_schema": t.inputSchema} for t in await server.list_tools()]
         messages = [{"role": "user", "content": task["prompt"]}]
         usage = {"input": 0, "output": 0, "turns": 0}
