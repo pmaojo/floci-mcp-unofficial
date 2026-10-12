@@ -1,3 +1,4 @@
+from floci_backend.config import config
 import docker
 import json
 import os
@@ -55,8 +56,8 @@ class TopologyMapper:
 
         # Save to file for UI to render
         try:
-            os.makedirs("state", exist_ok=True)
-            with open("state/network_topology.md", "w") as f:
+            os.makedirs(config.state_dir, exist_ok=True)
+            with open(os.path.join(config.state_dir, "network_topology.md"), "w") as f:
                 f.write("```mermaid\n" + diagram + "\n```")
         except Exception as e:
             pass # Non-blocking if file save fails

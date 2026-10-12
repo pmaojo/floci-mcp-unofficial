@@ -9,8 +9,10 @@ from floci_backend.config import config
 class RecipeService:
     def __init__(self):
         self.state_file_path = os.path.join(config.state_dir, 'marketplace-installations.json')
-        # Point to the real 'recipes' directory at the root of the project
-        self.recipes_dir_path = os.path.abspath(os.path.join(os.getcwd(), 'recipes'))
+        # An MCP client starts the server from its own working directory, so the
+        # catalog is found relative to the code, not to the cwd.
+        default_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'recipes')
+        self.recipes_dir_path = os.path.abspath(os.environ.get('FLOCI_RECIPES_DIR') or default_dir)
         self.log_map: Dict[str, List[str]] = {}
 
     async def list_recipes(self) -> List[Dict[str, Any]]:

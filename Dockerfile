@@ -11,7 +11,7 @@ COPY pyproject.toml uv.lock README.md ./
 RUN uv sync --no-install-project --no-dev
 
 # Copiar el código del servidor
-COPY floci_mcp.py ./
+COPY floci_mcp.py toolsets.py ./
 COPY tools/ ./tools/
 COPY plugins/ ./plugins/
 COPY recipes/ ./recipes/
@@ -20,6 +20,10 @@ RUN uv sync --no-dev
 
 # Capa de ejecucion limpia
 FROM python:3.12-alpine
+
+# run_local_aws_cmd, the Glue catalog and Lambda deployment call the aws CLI;
+# the marketplace tools call docker compose (mount the host socket to use them).
+RUN apk add --no-cache aws-cli docker-cli docker-cli-compose
 
 WORKDIR /app
 
