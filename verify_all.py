@@ -34,7 +34,6 @@ EXERCISED: set[str] = set()
 GROUPS: list = []
 
 SKIPPED = {
-    "run_ui_tests": "runs the Floci Studio Playwright suite; meaningless outside Studio",
     "list_toolsets": "covered by the toolsets and dynamic groups, which run it in a subprocess",
     "enable_toolset": "registered unless switching is forbidden; the dynamic group drives it over stdio",
     "suggest_toolsets": "only registered when FLOCI_DECIDER is set; the decider group drives it over stdio",
@@ -746,9 +745,9 @@ async def marketplace():
     ok("marketplace", f"{len(ids)} recipes", len(ids) >= 30)
     ok("marketplace", "recipe ids are unique", len(ids) == len(set(ids)))
     ok("marketplace", "every recipe has a name and variables list", all("name" in r for r in recipes))
-    ok("marketplace", "installations answer", "installations" in await call("get_marketplace_installations"))
-    missing = await attempt("get_marketplace_logs", recipe_id="absent-recipe")
-    ok("marketplace", "logs of an unknown recipe do not crash", isinstance(missing, dict), missing)
+    ok("marketplace", "installations answer", "installed" in await call("list_marketplace_recipes", status=True))
+    missing = await attempt("list_marketplace_recipes", recipe_id="absent-recipe", logs=True)
+    ok("marketplace", "an unknown recipe is an error, not a crash", has_error(missing), missing)
     ok("marketplace", "deploying an unknown recipe is an error",
        has_error(await attempt("deploy_marketplace_app", recipe_id="absent-recipe")))
     ok("pipeline", "copilot manifests for a recipe", not has_error(await attempt("generate_copilot_manifests", recipe_id="redis")))
@@ -772,8 +771,8 @@ async def marketplace():
         return False, last
 
     async def marketplace_status():
-        state = await call("get_marketplace_installations")
-        return state.get("installations", {}).get("redis", {}).get("status")
+        state = await call("list_marketplace_recipes", status=True)
+        return state.get("installed", {}).get("redis", {}).get("status")
 
     async def env_status(env):
         envs = (await call("list_pipeline_environments"))["environments"]
@@ -900,6 +899,53 @@ class StdioClient:
 
 
 @group
+async def generic():
+    """The generic and code toolsets: discovery, guarded reads and writes, the sandbox, and recipes as a cloud."""
+    services = await call("list_services", cloud="aws")
+    ok("generic", "list_services knows the AWS model", "s3" in services.get("services", []) and len(services["services"]) > 300)
+    for cloud in ("azure", "gcp", "oci", "recipes"):
+        listed = await call("list_services", cloud=cloud)
+        ok("generic", f"list_services({cloud}) answers", bool(listed.get("services")), listed)
+    found = await call("search_operations", query="list buckets", cloud="aws", service="s3")
+    ok("generic", "search_operations finds ListBuckets", any(h["operation"] == "ListBuckets" for h in found["hits"]), found)
+    described = await call("describe_operation", cloud="aws", service="sqs", operation="CreateQueue")
+    ok("generic", "describe_operation says CreateQueue is a write with a QueueName",
+       described.get("kind") == "write" and "QueueName" in described.get("params", {}), described)
+    read = await call("call_read", cloud="aws", service="s3", operation="ListBuckets")
+    ok("generic", "call_read ListBuckets", "Buckets" in read, read)
+    refused = await call("call_read", cloud="aws", service="s3", operation="CreateBucket", params={"Bucket": f"vfy-no-{X}"})
+    ok("generic", "call_read refuses a write", "blocked" in refused, refused)
+    queue = f"vfy-gen-{X}"
+    created = await call("call_write", cloud="aws", service="sqs", operation="CreateQueue", params={"QueueName": queue})
+    ok("generic", "call_write CreateQueue", "QueueUrl" in created, created)
+    if "QueueUrl" in created:
+        deleted = await call("call_write", cloud="aws", service="sqs", operation="DeleteQueue", params={"QueueUrl": created["QueueUrl"]})
+        ok("generic", "call_write DeleteQueue", "error" not in deleted, deleted)
+    for cloud, port, service, op in (("gcp", 4588, "storage", "ListBuckets"), ("azure", 4577, "blob", "ListContainers"),
+                                     ("oci", 4599, "objectstorage", "ListBuckets")):
+        if runtime_up(port):
+            out = await call("call_read", cloud=cloud, service=service, operation=op)
+            ok("generic", f"call_read {cloud} {service}.{op}", out.get("status") == 200, out)
+        else:
+            skip("generic", f"{cloud} read", f"runtime on :{port} not reachable")
+
+    code = await call("code_read", code='b = aws("s3", "ListBuckets")["Buckets"]\nresult = len(b)')
+    ok("generic", "code_read runs Python against AWS", code.get("ok") and isinstance(code.get("result"), int), code)
+    blocked = await call("code_read", code='aws("s3", "CreateBucket", Bucket="vfy-never")')
+    ok("generic", "code_read cannot write whatever the code says", not blocked.get("ok") and blocked.get("blocked"), blocked)
+    topic = f"vfy-code-{X}"
+    if runtime_up(4588):
+        written = await call("code_write", code=f'r = call("gcp", "pubsub", "CreateTopic", topic="{topic}")\n'
+                                              f'result = r["status"]\n'
+                                              f'call("gcp", "pubsub", "DeleteTopic", topic="projects/floci-local/topics/{topic}")')
+        ok("generic", "code_write creates and removes a GCP topic", written.get("ok") and written.get("result") == 200, written)
+    recipes_listed = await call("call_read", cloud="recipes", operation="ListRecipes")
+    ok("generic", "recipes are a cloud: ListRecipes", recipes_listed.get("count", 0) >= 30, recipes_listed)
+    unknown = await call("call_write", cloud="recipes", operation="DeployRecipe", params={"recipe_id": "absent-recipe"})
+    ok("generic", "DeployRecipe of an unknown recipe is an error, not a crash", "error" in unknown, unknown)
+
+
+@group
 async def dynamic_toolsets():
     forbidden = StdioClient(FLOCI_TOOLSETS="core", FLOCI_TOOLSETS_ALLOWED="")
     try:
@@ -922,7 +968,7 @@ async def dynamic_toolsets():
            granted.get("enabled") is True and "seed_mock_data" in free.tool_names(), granted)
         listing_free = free.call("list_toolsets")
         ok("dynamic", "list_toolsets reports every toolset as reachable",
-           len(listing_free["allowed_at_runtime"]) == 7, listing_free["allowed_at_runtime"])
+           len(listing_free["allowed_at_runtime"]) == len(toolsets_module.TOOLSETS), listing_free["allowed_at_runtime"])
     finally:
         free.close()
 

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0,<2",
+    "pydantic-settings>=2.0.0",
     "httpx>=0.27.0",
     "fastapi>=0.136.3",
     "uvicorn[standard]>=0.48.0",
@@ -17,3 +18,20 @@ dependencies = [
     "faker>=40.19.1",
     "pyjwt>=2.13.0",
 ]
+
+[project.scripts]
+floci-mcp = "floci_mcp:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "floci_mcp.py", "toolsets.py", "decider.py", "skills_catalog.py",
+    "floci_backend", "floci_generic", "tools",
+]
+
+# The recipe catalog travels inside the wheel so `uvx floci-mcp` needs no clone.
+[tool.hatch.build.targets.wheel.force-include]
+"recipes" = "floci_recipes"

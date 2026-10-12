@@ -1,50 +1,51 @@
-"""Herramientas Marketplace: recetas de software local en Docker."""
-from tools._client import backend
+"""Marketplace: local Docker recipes, three tools.
+
+Reading is one tool; starting and removing are separate, so FLOCI_READ_ONLY removes
+the writers. The same operations are reachable with no extra tool definitions through
+the generic toolset (cloud="recipes"); this toolset is for clients that prefer named tools.
+"""
+from floci_generic import recipes
+
+
+async def _call(operation: str, params: dict) -> dict:
+    """A failure is a tool error (isError) for these named tools, as it was before recipes moved to the gateway."""
+    out = await recipes.call(operation, params)
+    if "error" in out:
+        raise RuntimeError(out["error"])
+    return out
 
 
 def register(mcp):
 
     @mcp.tool()
-    async def list_marketplace_recipes() -> dict:
+    async def list_marketplace_recipes(recipe_id: str = "", status: bool = False, logs: bool = False) -> dict:
         """
-        Lists every Marketplace recipe with its configurable variables.
+        Lists the Docker recipes (postgres, redis, kafka, keycloak, ollama...), or details one.
 
-        Recipes include postgres, redis, mongodb, rabbitmq, keycloak, mailpit, minio, redpanda,
-        observability, jaeger, meilisearch, pocketbase, nginx-proxy-manager, dynamodb-admin,
-        n8n, temporal, nats, kafka, ollama and more. Use it before deploy_marketplace_app.
+        Each recipe says which AWS service it stands in for and floci_native when Floci emulates that
+        service itself: prefer that one. With recipe_id you get its variables and defaults. status=true
+        adds the state of installed recipes (IDLE, INSTALLING, RUNNING, UNINSTALLING, FAILED) with the
+        access URL; logs=true adds the last lines of that recipe's output.
         """
-        return await backend("GET", "/api/marketplace/recipes")
-
-    @mcp.tool()
-    async def get_marketplace_installations() -> dict:
-        """
-        Gets the state of every Marketplace installation.
-
-        Possible states: IDLE, INSTALLING, RUNNING, UNINSTALLING, FAILED.
-        """
-        return await backend("GET", "/api/marketplace/installations")
+        out = await _call("GetRecipe" if recipe_id else "ListRecipes", {"recipe_id": recipe_id})
+        if status or logs:
+            out["installed"] = (await _call("GetStatus", {"recipe_id": recipe_id}))["installed"]
+        if logs and recipe_id:
+            out["log_lines"] = (await _call("GetLogs", {"recipe_id": recipe_id}))["lines"]
+        return out
 
     @mcp.tool()
-    async def get_marketplace_logs(recipe_id: str) -> dict:
+    async def deploy_marketplace_app(recipe_id: str, vars: dict | None = None, wait_seconds: int = 90) -> dict:
         """
-        Gets the Docker Compose logs of a Marketplace recipe.
+        Starts a recipe on local Docker and waits until it is RUNNING or FAILED.
 
-        Useful to diagnose failures during installation or while running.
+        Returns the access URL. A default port that is already taken is moved to a free one and reported;
+        a port you set yourself that is taken is refused with a suggestion. vars are the recipe's variables.
+        Example: deploy_marketplace_app('postgres', {'POSTGRES_PASSWORD': 'secret'})
         """
-        return await backend("GET", f"/api/marketplace/recipes/{recipe_id}/logs")
-
-    @mcp.tool()
-    async def deploy_marketplace_app(recipe_id: str, vars: dict | None = None) -> dict:
-        """
-        Installs and starts a Marketplace recipe on local Docker.
-
-        vars holds the recipe's configuration variables (ports, passwords, ...).
-        Use list_marketplace_recipes to see the available variables.
-        Example: deploy_marketplace_app('postgres', {'POSTGRES_PASSWORD': 'secret', 'POSTGRES_PORT': 5432})
-        """
-        return await backend("POST", "/api/marketplace/install", json_data={"recipeId": recipe_id, "vars": vars or {}})
+        return await _call("DeployRecipe", {"recipe_id": recipe_id, "vars": vars or {}, "wait_seconds": wait_seconds})
 
     @mcp.tool()
-    async def teardown_marketplace_app(recipe_id: str) -> dict:
-        """Stops and removes the containers and volumes of a Marketplace recipe."""
-        return await backend("DELETE", f"/api/marketplace/install/{recipe_id}")
+    async def teardown_marketplace_app(recipe_id: str, wait_seconds: int = 60) -> dict:
+        """Stops a recipe and removes its containers AND volumes (its data). Confirm with the user first."""
+        return await _call("TeardownRecipe", {"recipe_id": recipe_id, "wait_seconds": wait_seconds})

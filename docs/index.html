@@ -134,6 +134,34 @@
   footer p { margin: 6px 0; max-width: 90ch; }
 
 
+
+  .star {
+    position: relative; overflow: hidden; border-bottom: var(--line) solid var(--ink);
+    background: repeating-linear-gradient(-45deg, var(--red) 0 22px, #ff5a3d 22px 44px);
+    padding: 32px 16px 32px 16px;
+  }
+  .star-body {
+    position: relative; max-width: min(78ch, calc(100% - 150px)); background: var(--paper); border: var(--line) solid var(--ink);
+    box-shadow: 10px 10px 0 var(--ink); padding: 20px 20px 18px;
+  }
+  .star-kicker { margin: 0; font-size: 18px; font-weight: 700; text-transform: uppercase; }
+  .star-body h2 { margin: 8px 0 6px; font-size: clamp(22px, 5.2vw, 58px); line-height: 1; letter-spacing: -.04em; overflow-wrap: anywhere; }
+  .star-body h2 code { background: var(--yellow); border: var(--line) solid var(--ink); padding: 0 .12em; font-size: inherit; overflow-wrap: anywhere; }
+  .star-tag { margin: 0 0 12px; font-size: 20px; font-weight: 700; }
+  .star-list { margin: 0 0 14px; padding-left: 22px; font-size: 16px; }
+  .star-list li { margin: 7px 0; }
+  .star-quote { border: 3px dashed var(--ink); padding: 10px 12px; margin: 0 0 12px; font-weight: 700; background: #fff8b8; }
+  .star-quote .stars { display: block; font-size: 22px; letter-spacing: .1em; }
+  .star-quote small { display: block; margin-top: 4px; font-weight: 400; }
+  .star-fine { margin: 12px 0 0; font-size: 11px; line-height: 1.35; }
+  .star-burst {
+    position: absolute; right: 18px; top: 14px; width: 128px; height: 128px; display: grid; place-items: center;
+    text-align: center; font-weight: 700; font-size: 17px; line-height: 1.05; text-transform: uppercase;
+    background: var(--yellow); border: var(--line) solid var(--ink); transform: rotate(14deg);
+    clip-path: polygon(50% 0, 61% 12%, 77% 6%, 80% 22%, 96% 24%, 90% 40%, 100% 50%, 90% 60%, 96% 76%, 80% 78%, 77% 94%, 61% 88%, 50% 100%, 39% 88%, 23% 94%, 20% 78%, 4% 76%, 10% 60%, 0 50%, 10% 40%, 4% 24%, 20% 22%, 23% 6%, 39% 12%);
+    border: 0; padding: 10px;
+  }
+  @media (max-width: 760px) { .star-burst { position: relative; right: auto; top: auto; margin: 0 0 14px; } .star-body { max-width: none; box-shadow: 6px 6px 0 var(--ink); } }
   .skills { background: var(--yellow); }
   .skills-head { padding: 28px 16px 8px; max-width: 90ch; }
   .skills-head h2 { margin: 12px 0 8px; font-size: clamp(36px, 7vw, 84px); line-height: .9; letter-spacing: -.04em; text-transform: uppercase; }
@@ -196,6 +224,7 @@
   <span>floci-mcp-unofficial</span>
   <span class="flag">unofficial</span>
   <span id="generated">catalog: loading</span>
+  <a class="nav" href="#generic">whole cloud</a>
   <a class="nav" href="#skills">skills</a>
   <a class="nav" href="#market">catalog</a>
   <a class="nav" href="#guide">guide</a>
@@ -205,12 +234,54 @@
 
 <header class="hero">
   <h1>Floci<br>for <mark>agents.</mark></h1>
-  <p class="lede">An MCP server that lets an AI agent inspect and provision your local AWS, Azure, GCP and OCI.
-    Tools below are the real ones the server registers. Recipes are the Docker stacks it can start for you.</p>
+  <p class="lede">An MCP server that lets an AI agent reach your local AWS, Azure, GCP and OCI, and the Docker recipes,
+    through two to five tools (about 1K tokens) with reads and writes kept apart. The curated tools below are the
+    named alternative. Recipes are the Docker stacks it can start for you.</p>
   <p class="disclaimer">Unofficial community project. Not affiliated with or endorsed by the Floci project.
     Floci does the emulation; this server only talks to it.
     Support <a href="https://github.com/floci-io/floci">floci-io/floci</a>.</p>
 </header>
+
+<section class="install" id="generic" aria-label="Whole-cloud access">
+  <div>
+    <span class="label">whole cloud</span>
+    <h2>Five tools. Every cloud.</h2>
+    <p>The <code>generic</code> toolset can address <b>every operation</b> in the boto3 service models (~18,000) and reaches
+      Azure, GCP, OCI and the Docker recipes, with five tools. What answers is what Floci emulates:
+      <code>list_services(probe=true)</code> shows which AWS services do. The <code>code</code> toolset does the same by running Python,
+      so a task that chains calls or filters a big result costs one round trip.</p>
+    <pre class="code">search_operations("send a message to a queue")   # -> sqs.SendMessage (write)
+describe_operation("aws", "sqs", "SendMessage")   # parameters, required ones marked
+call_write("aws", "sqs", "SendMessage",
+           {"QueueUrl": "...", "MessageBody": "hi"})
+
+code_read("""
+buckets = aws("s3", "ListBuckets")["Buckets"]
+topics  = call("gcp", "pubsub", "ListTopics")
+result  = {"s3": len(buckets), "gcp": topics["body"]}
+""")</pre>
+  </div>
+  <div>
+    <span class="label">context</span>
+    <h2>About 1K tokens.</h2>
+    <table>
+      <thead><tr><th>arm</th><th>tools</th><th>~tokens</th></tr></thead>
+      <tbody>
+        <tr><td>curated, default</td><td>90</td><td>9,300</td></tr>
+        <tr><td>curated, all</td><td>135</td><td>15,600</td></tr>
+        <tr><td><code>generic</code></td><td>5</td><td>940</td></tr>
+        <tr><td><code>code</code></td><td>2</td><td>580</td></tr>
+      </tbody>
+    </table>
+    <p>Reads and writes are separate tools, so <code>FLOCI_READ_ONLY=1</code> removes the writer. The rule is also enforced
+      inside the gateway: <code>code_read</code> cannot write whatever the code says. Classification is default-deny and is tested against every
+      operation of every service model. Secret values need <code>FLOCI_ALLOW_SECRET_VALUES=1</code>.</p>
+    <p><b>Recipes cost no context.</b> <code>ListRecipes</code> marks the ones Floci already emulates natively
+      (RDS for <code>postgres</code>, ElastiCache for <code>redis</code>...), checked against your running Floci.
+      <code>DeployRecipe</code> waits for <code>RUNNING</code> and moves a taken default port to a free one.</p>
+    <p><b>The code sandbox is a guardrail, not isolation.</b> Point it at local emulators only, never at a real cloud.</p>
+  </div>
+</section>
 
 <div class="counters" aria-label="Catalog counters">
   <div class="counter"><b id="c-tools">&ndash;</b><span>tools</span></div>
@@ -317,11 +388,37 @@ floci_mcp.py  -- toolsets decide which tools are registered
   <div class="trouble" id="trouble"></div>
 </section>
 
+<section class="star" id="star" aria-label="Optional router">
+  <div class="star-burst" aria-hidden="true">OPT-<br>IONAL</div>
+  <div class="star-body">
+    <p class="star-kicker">Only if you keep the curated toolsets</p>
+    <h2><code>suggest_toolsets</code></h2>
+    <p class="star-tag">142 tools in 10 toolsets. Which ones does this task need? The <code>generic</code> and <code>code</code> toolsets make the question unnecessary.</p>
+    <ul class="star-list">
+      <li><b>TEN (10!) yes/no questions</b> answered in <b>ONE call</b>. We counted. Twice.</li>
+      <li><b>Calibrated probabilities!</b> Not vibes. Okay, vibes with decimals.</li>
+      <li>Powered by <b>TypeSafe Jev</b> <i>or</i> <b>Mercury Decide</b>. Pick your fighter.</li>
+      <li><code>apply=true</code> and the toolsets switch themselves on. It's like magic, but with HTTP.</li>
+      <li>Thinks so your agent doesn't have to. (Thinking is <i>expensive</i>.)</li>
+      <li>Off by default, because we respect your wallet.</li>
+    </ul>
+    <div class="star-quote">
+      <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      &ldquo;I said <i>messages are stuck</i> and it said <b>messaging, ops</b>. Ten out of ten.&rdquo;
+      <small>&mdash; a test fixture</small>
+    </div>
+    <pre class="code">FLOCI_DECIDER=openrouter-jev OPENROUTER_API_KEY=... uv run python floci_mcp.py</pre>
+    <p class="star-fine">*Tested end to end against a very convincing fake, not yet against a live provider. Needs an API key.
+      The probabilities are the model's, not ours. The OpenRouter path is <code>alpha</code>. Not a substitute for reading the tool list.
+      May contain nouls (that is what the request calls a yes/no).</p>
+  </div>
+</section>
+
 <section class="docs" id="docs" aria-label="Documentation">
   <div class="docs-grid">
     <div>
       <span class="label">toolsets</span>
-      <h2>Not all 138 at once.</h2>
+      <h2>Not all 142 at once.</h2>
       <p>A client sends every tool definition on every conversation, and models pick worse among many similar tools.
         Only the enabled toolsets are registered.</p>
       <table id="toolset-table"><thead><tr><th>toolset</th><th>tools</th><th>default</th></tr></thead><tbody></tbody></table>
@@ -332,14 +429,15 @@ FLOCI_TOOLSETS_ALLOWED=ops     # optional cap; unset: the agent may enable any</
     </div>
     <div>
       <span class="label">clouds</span>
-      <h2>Four runtimes.</h2>
+      <h2>Four runtimes, plus recipes.</h2>
       <table>
         <thead><tr><th>cloud</th><th>port</th><th>covers</th></tr></thead>
         <tbody>
           <tr><td>AWS</td><td>4566</td><td>the full surface, through boto3</td></tr>
-          <tr><td>Azure</td><td>4577</td><td>blobs, queues, Key Vault names</td></tr>
-          <tr><td>GCP</td><td>4588</td><td>Cloud Storage, Pub/Sub, Secret Manager names</td></tr>
-          <tr><td>OCI</td><td>4599</td><td>Object Storage</td></tr>
+          <tr><td>Azure</td><td>4577</td><td>data plane plus 15 ARM resource types that answer (storage, SQL, Redis, VMs, AKS...)</td></tr>
+          <tr><td>GCP</td><td>4588</td><td>20 APIs, 2,283 operations from Google's discovery documents; 70 list reads verified</td></tr>
+          <tr><td>OCI</td><td>4599</td><td>all 8 services: list, get, create, delete</td></tr>
+          <tr><td>recipes</td><td>Docker</td><td>35 local stacks, reached as the cloud <code>recipes</code></td></tr>
         </tbody>
       </table>
       <p>Start with <code>list_clouds</code>: it says which runtimes answer.</p>

@@ -76,5 +76,10 @@ def _load_community_plugins(mcp_instance) -> None:
 _load_community_plugins(mcp)
 toolsets.finalize(mcp, READ_ONLY)
 
-if __name__ == "__main__":
+def main() -> None:
+    """Console entry point (`floci-mcp`, `uvx floci-mcp`): serve over stdio."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()

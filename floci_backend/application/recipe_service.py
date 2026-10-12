@@ -19,7 +19,10 @@ class RecipeService:
         self.state_file_path = os.path.join(config.state_dir, 'marketplace-installations.json')
         # An MCP client starts the server from its own working directory, so the
         # catalog is found relative to the code, not to the cwd.
-        default_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'recipes')
+        # In a checkout the catalog is recipes/; an installed wheel carries it as floci_recipes/.
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+        candidates = [os.path.join(root, 'recipes'), os.path.join(root, 'floci_recipes')]
+        default_dir = next((c for c in candidates if os.path.isdir(c)), candidates[0])
         self.recipes_dir_path = os.path.abspath(os.environ.get('FLOCI_RECIPES_DIR') or default_dir)
         self.log_map: Dict[str, List[str]] = {}
 
