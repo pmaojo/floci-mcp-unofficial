@@ -1,3 +1,4 @@
+from floci_backend.infrastructure.boto_factory import make_client
 from fastapi import APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from floci_backend.application.resource_explorer import ResourceExplorer
@@ -133,33 +134,33 @@ async def get_architecture():
         return node_id
 
     try:
-        s3_client = aws_cli.get_client("s3")
+        s3_client = make_client("s3")
         buckets = s3_client.list_buckets().get("Buckets", [])
         for b in buckets:
             add_node(b["Name"], "S3")
 
-        sqs_client = aws_cli.get_client("sqs")
+        sqs_client = make_client("sqs")
         queues = sqs_client.list_queues().get("QueueUrls", [])
         for q_url in queues:
             q_name = q_url.split("/")[-1]
             add_node(q_name, "SQS")
 
-        dynamo_client = aws_cli.get_client("dynamodb")
+        dynamo_client = make_client("dynamodb")
         tables = dynamo_client.list_tables().get("TableNames", [])
         for t in tables:
             add_node(t, "DynamoDB")
 
-        lambda_client = aws_cli.get_client("lambda")
+        lambda_client = make_client("lambda")
         functions = lambda_client.list_functions().get("Functions", [])
         for f in functions:
             add_node(f["FunctionName"], "Lambda")
 
-        apigw_client = aws_cli.get_client("apigateway")
+        apigw_client = make_client("apigateway")
         apis = apigw_client.get_rest_apis().get("items", [])
         for api in apis:
             add_node(api["name"], "ApiGateway")
 
-        kms_client = aws_cli.get_client("kms")
+        kms_client = make_client("kms")
         keys = kms_client.list_keys().get("Keys", [])
         for k in keys:
             add_node(k["KeyId"], "KMS")

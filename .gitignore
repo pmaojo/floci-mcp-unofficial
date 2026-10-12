@@ -5,3 +5,4 @@ __pycache__/
 !.env.example
 .sidecar-state/
 .DS_Store
+state/
