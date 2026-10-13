@@ -310,7 +310,7 @@ async def tool_index() -> dict[str, dict]:
         for tool in await server.list_tools():
             index[tool.name] = {"module": module_name, "toolset": toolset_of(module_name)}
     # Always registered, whatever the selection.
-    for always in ("list_toolsets", "enable_toolset", "disable_toolset", "suggest_toolsets"):
+    for always in ("list_toolsets", "enable_toolset", "disable_toolset", "search_tools", "suggest_toolsets"):
         index[always] = {"module": "toolsets", "toolset": None}
     return index
 

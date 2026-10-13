@@ -182,14 +182,17 @@ Claude Code applies `list_changed` in interactive sessions and in `-p` mode. Oth
 
 ### How toolsets get chosen
 
-Two paths decide which toolsets are registered while the server runs. They are independent and there is no fallback from one to the other.
+Three paths decide which toolsets are registered while the server runs. They are independent and there is no fallback from one to the other.
 
 | | Path | Decides by | Needs |
 |---|---|---|---|
 | 1 | **Agent judgement** (default): `FLOCI_TOOLSETS` at startup, then `list_toolsets` and `enable_toolset` | The agent reads the toolset descriptions | Nothing |
-| 2 | **Decision model** (opt-in): `suggest_toolsets` | A remote model answers one yes/no question per toolset with a probability | `FLOCI_DECIDER` and an API key |
+| 2 | **Tool retrieval**: `search_tools(query, apply)` | BM25 over every tool of every toolset, ranked toolset first, then tool (after [RAG-MCP](https://arxiv.org/abs/2505.03275) and [MCP-Zero](https://arxiv.org/abs/2506.01056)); `apply=true` enables the best toolsets | Nothing, offline |
+| 3 | **Decision model** (opt-in): `suggest_toolsets` | A remote model answers one yes/no question per toolset with a probability | `FLOCI_DECIDER` and an API key |
 
-Path 2 is a model call, not a heuristic, and it is only registered when `FLOCI_DECIDER` is set. If it errors, `suggest_toolsets` returns `{suggested: false, reason}` and the agent carries on with path 1.
+Path 2 is registered whenever toolsets may be enabled at runtime and respects `FLOCI_TOOLSETS_ALLOWED`. On the 40 tasks of `eval/tasks.json` it puts the expected tool first in 37, in the top 3 in 40, and the right toolset first in 39 (the flat BM25 of `eval/run.py retrieval` gives 35 and 40). That measures findability, not what a model does with the result.
+
+Path 3 is a model call, not a heuristic, and it is only registered when `FLOCI_DECIDER` is set. If it errors, `suggest_toolsets` returns `{suggested: false, reason}` and the agent carries on with path 1.
 
 Two things look like paths and are not:
 

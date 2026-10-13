@@ -4,7 +4,7 @@ name = "floci-mcp-unofficial"
 version = "0.1.0"
 
 [analysis]
-sources = ["floci_generic", "floci_tools", "floci_backend", "scripts", "eval", "floci_mcp.py", "toolsets.py", "decider.py", "skills_catalog.py"]
+sources = ["floci_generic", "floci_tools", "floci_backend", "scripts", "eval", "floci_mcp.py", "toolsets.py", "decider.py", "tool_search.py", "skills_catalog.py"]
 # Generated data and public demo keys (Supabase's well-known local anon key) are not findings.
 exclusions = [
   "**/.venv/**", "**/__pycache__/**", "floci_generic/data/**", "docs/**", "recipes/**", "uv.lock", "verify_*.py", "tests/**",
