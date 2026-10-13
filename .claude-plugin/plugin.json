@@ -60,7 +60,7 @@
     "allowed_toolsets": {
       "type": "string",
       "title": "Toolsets the agent may enable",
-      "description": "Comma separated toolsets an agent can switch on at runtime with enable_toolset. Use all to give it full agency, or list a few to cap it. hybrid holds tools that reach real AWS credentials and arbitrary URLs.",
+      "description": "Comma separated toolsets an agent can switch on at runtime with enable_toolset or search_tools. Use all to give it full agency, or list a few to cap it. hybrid holds tools that reach real AWS credentials and arbitrary URLs.",
       "default": "all"
     },
     "decider": {

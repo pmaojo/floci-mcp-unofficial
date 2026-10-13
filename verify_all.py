@@ -36,6 +36,7 @@ GROUPS: list = []
 SKIPPED = {
     "list_toolsets": "covered by the toolsets and dynamic groups, which run it in a subprocess",
     "enable_toolset": "registered unless switching is forbidden; the dynamic group drives it over stdio",
+    "search_tools": "registered unless switching is forbidden; the dynamic group drives it over stdio",
     "suggest_toolsets": "only registered when FLOCI_DECIDER is set; the decider group drives it over stdio",
     "disable_toolset": "registered unless switching is forbidden; the dynamic group drives it over stdio",
     "start_reverse_tunnel": "spawns an external tunnel binary; only its error path is checked",
@@ -979,6 +980,7 @@ async def dynamic_toolsets():
         before = client.tool_names()
         digest_before = client.call("list_toolsets")["definitions_sha256"]
         ok("dynamic", "enable_toolset and disable_toolset are registered", {"enable_toolset", "disable_toolset"} <= set(before))
+        ok("dynamic", "search_tools is registered next to them", "search_tools" in before)
         ok("dynamic", "ops tools are absent at the start", "list_dead_letter_queues" not in before)
 
         rejected = client.call("enable_toolset", name="hybrid")
@@ -1000,6 +1002,15 @@ async def dynamic_toolsets():
         ok("dynamic", "disabling removes the tools again", disabled.get("disabled") is True and sorted(client.tool_names()) == sorted(before), disabled)
         ok("dynamic", "the digest changes while a toolset is enabled and returns after disabling it",
            listing["definitions_sha256"] != digest_before and client.call("list_toolsets")["definitions_sha256"] == digest_before)
+
+        found = client.call("search_tools", query="redrive messages from a dead letter queue")
+        ok("dynamic", "search_tools finds a tool of a toolset that is not enabled, without enabling it",
+           any(r["toolset"] == "ops" and not r["enabled"] for r in found["results"]) and sorted(client.tool_names()) == sorted(before), found)
+        applied = client.call("search_tools", query="redrive messages from a dead letter queue", apply=True)
+        ok("dynamic", "search_tools with apply enables the toolset it found", "ops" in applied.get("enabled_now", []) and "list_dead_letter_queues" in client.tool_names(), applied)
+        refused = client.call("search_tools", query="seed mock data into dynamodb", apply=True)
+        ok("dynamic", "apply respects FLOCI_TOOLSETS_ALLOWED", "hybrid" in refused.get("refused", {}) and "seed_mock_data" not in client.tool_names(), refused)
+        client.call("disable_toolset", name="ops")
     finally:
         client.close()
 

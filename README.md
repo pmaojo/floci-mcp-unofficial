@@ -99,7 +99,7 @@ Skills that need a toolset which is not enabled by default tell the agent to ask
 
 ## Cookbook
 
-Things to ask the agent, and what it ends up calling. The toolset in brackets is where the tools live; an agent can enable a missing one with `enable_toolset`.
+Things to ask the agent, and what it ends up calling. The toolset in brackets is where the tools live; an agent can find the tool with `search_tools` and enable a missing toolset with `enable_toolset`.
 
 | Ask | It calls | Toolset |
 |---|---|---|
@@ -168,7 +168,7 @@ Claude Code also defers MCP tool definitions by itself (tool search is on by def
 
 ### Switching toolsets while it runs
 
-The agent decides what it needs. The server registers `enable_toolset` and `disable_toolset`, advertises `tools.listChanged` and sends `notifications/tools/list_changed` after each change, so a toolset that was not registered at the start can be switched on without a restart and switched off again to save context. Read-only mode still applies to whatever gets enabled.
+The agent decides what it needs. The server registers `search_tools`, `enable_toolset` and `disable_toolset`, advertises `tools.listChanged` and sends `notifications/tools/list_changed` after each change, so a toolset that was not registered at the start can be switched on without a restart and switched off again to save context. Read-only mode still applies to whatever gets enabled.
 
 ```bash
 FLOCI_TOOLSETS=core                          # what is registered at the start
@@ -398,7 +398,7 @@ The messages below are the ones the server returns.
 | `list_clouds` shows `unreachable` | Same, one entry per runtime | Same |
 | `The aws CLI is not on PATH. Install it from https://aws.amazon.com/cli/` | `run_local_aws_cmd`, the Glue catalog and Lambda deployment shell out to `aws` | Install the CLI, or use the Docker image, which includes it |
 | An installation ends `FAILED` with `'docker' was not found on PATH` | The marketplace runs `docker compose` | Install Docker with Compose, or mount the socket into the image |
-| The tool you want is not in the list | Its toolset is not registered | `list_toolsets`, then `enable_toolset`; or set `FLOCI_TOOLSETS` and restart |
+| The tool you want is not in the list | Its toolset is not registered | `search_tools` with what you want to do (add `apply=true` to enable the toolset it finds), or `list_toolsets` then `enable_toolset`; or set `FLOCI_TOOLSETS` and restart |
 | `Toolset 'x' is not allowed to be enabled at runtime` | The server was started with `FLOCI_TOOLSETS_ALLOWED` | Change that variable and restart |
 | `FLOCI_TOOLSETS: unknown toolset ...` at startup | A typo in the toolset list | The message lists the valid names |
 | `Statement wasn't well formed` on PartiQL | More than one statement in a call | One statement per `execute_partiql_dynamodb` |
