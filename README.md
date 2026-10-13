@@ -180,6 +180,22 @@ Unset, an agent can reach every toolset, `hybrid` included. That toolset holds t
 
 Claude Code applies `list_changed` in interactive sessions and in `-p` mode. Other clients vary; if yours ignores it, set the toolsets up front.
 
+### How toolsets get chosen
+
+Two paths decide which toolsets are registered while the server runs. They are independent and there is no fallback from one to the other.
+
+| | Path | Decides by | Needs |
+|---|---|---|---|
+| 1 | **Agent judgement** (default): `FLOCI_TOOLSETS` at startup, then `list_toolsets` and `enable_toolset` | The agent reads the toolset descriptions | Nothing |
+| 2 | **Decision model** (opt-in): `suggest_toolsets` | A remote model answers one yes/no question per toolset with a probability | `FLOCI_DECIDER` and an API key |
+
+Path 2 is a model call, not a heuristic, and it is only registered when `FLOCI_DECIDER` is set. If it errors, `suggest_toolsets` returns `{suggested: false, reason}` and the agent carries on with path 1.
+
+Two things look like paths and are not:
+
+- **Skills** are client-side playbooks (`skills/*/SKILL.md`) that the client loads from its own skills folder. The server does not expose them over MCP. Each one names the toolsets it needs, so it works as a hand-written router for one workflow.
+- **`eval/run.py retrieval`** ranks tools with BM25 offline to measure how findable they are. It is a measuring tool and is not wired into the server.
+
 ### Decision-model router (optional)
 
 > **★ `suggest_toolsets`.** One yes/no question per toolset, answered in one call by a decision model (**TypeSafe Jev** or **Mercury Decide**),
