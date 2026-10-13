@@ -44,6 +44,9 @@ DYNAMIC = toolsets.DynamicToolsets(mcp, SELECTION, ALLOWED, READ_ONLY)
 toolsets.register_toolset_info(mcp, SELECTION, READ_ONLY, DYNAMIC)
 if ALLOWED:
     toolsets.register_dynamic_tools(mcp, DYNAMIC)
+    import tool_search  # noqa: E402
+
+    tool_search.register(mcp, DYNAMIC)
 
 import decider  # noqa: E402
 
